@@ -13,7 +13,7 @@ sys.path.insert(0, os.getcwd())
 
 from backend import notification
 
-class TestNotification(unittest.TestCase):
+class Test_notification(unittest.TestCase):
     def test_create_notification(self):
         """
         Tests if the create_notification function inputs name, date and time correctly into the message
