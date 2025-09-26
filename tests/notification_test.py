@@ -18,11 +18,15 @@ class TestNotification(unittest.TestCase):
         """
         Tests if the create_notification function inputs name, date and time correctly into the message
         """
+        # Arrange
         name = "Test User"
         date = "January 1, 2025"
         time = "10:00 AM"
         expected_message = "Hello Test User, this is a reminder that your cleaning is scheduled for January 1, 2025 at 10:00 AM."
-        self.assertEqual(notification.create_notification(name, date, time), expected_message)
+        # Act
+        text = notification.create_notification(name, date, time)
+        #Assert
+        self.assertEqual(text, expected_message)
 
 # These lines makes it so that the code in this file only runs when the file is run directly, and not when imported
 if __name__ == '__main__':
