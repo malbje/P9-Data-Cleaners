@@ -7,7 +7,6 @@ import mysql.connector as m
 # Get DB config from db_config.py (what a process...)
 import db_config
 DB = db_config.DB
-# Use ADDRESS_COL from db_config if present; otherwise default to "address"
 ADDRESS_COL = getattr(db_config, "ADDRESS_COL", "address")
 
 def _read_csv(path: Path):
@@ -23,6 +22,15 @@ def _read_csv(path: Path):
         r = csv.DictReader(f, delimiter=";")
         r.fieldnames = [h.lstrip("\ufeff").strip() for h in r.fieldnames]
         return f, r
+
+# Helper: accept multiple date formats (DD-MM-YYYY, YYYY-MM-DD, DD/MM/YYYY) and return ISO 'YYYY-MM-DD'
+def _parse_date(s: str) -> str:
+    for fmt in ("%d-%m-%Y", "%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(s.strip(), fmt).date().isoformat()
+        except ValueError:
+            pass
+    raise ValueError(f"Unsupported date format: {s!r}")
 
 def import_customers(csv_path: Path):
     """Upsert customers from CSV into the customers table."""
@@ -62,9 +70,9 @@ def import_appointments(csv_path: Path):
         for idx, row in enumerate(reader, start=2):
             try:
                 appt_id     = int(row["id"])
-                customer_id = int(row.get("customer") or row["customer_id"]) 
+                customer_id = int(row.get("customer") or row["customer_id"])
                 # CSV is dd-mm-YYYY → convert to YYYY-mm-dd for MySQL DATE så det bliver sat korrekt op
-                appt_date   = datetime.strptime(row["appointment_date"].strip(), "%d-%m-%Y").date().isoformat()
+                appt_date   = _parse_date(row["appointment_date"])
                 t           = row["appointment_time"].strip()   # "HH:MM" or "HH:MM:SS"
                 appt_time   = t if len(t) >= 8 else (t + ":00") #defines hour:minute
                 location    = row["address"].strip()
