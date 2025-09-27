@@ -2,7 +2,7 @@
 DB = {
     "host": "localhost",
     "user": "root",
-    "password": "26Aalb0rgUni26@",
+    "password": "26Aalb0rgUni26@",# den her skal I rette til jeres egen login til workbenc/mysql
     "database": "customerdb",
 }
 
