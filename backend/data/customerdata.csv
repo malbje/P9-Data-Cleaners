@@ -1,0 +1,11 @@
+id;full_name;email;street;city;postal_code
+1;Anna Jensen;anna.jensen@example.com;Boulevarden 12;Aalborg;9000
+2;Peter Sorensen;peter.sorensen@example.com;osterbro 45;Aalborg;9000
+3;Sofie Mikkelsen;sofie.mikkelsen@example.com;Norregade 7;Aalborg;9000
+4;Jonas Kristensen;jonas.k@example.com;Kastetvej 88;Aalborg;9000
+5;Maria Andersen;maria.andersen@example.com;Danmarksgade 101;Aalborg;9000
+6;Lars Holm;lars.holm@example.com;Vesterbro 22;Aalborg;9000
+7;Emma Poulsen;emma.p@example.com;Hasserisvej 130;Aalborg;9000
+8;Frederik Hansen;frederik.h@example.com;Kastanjevej 4;Aalborg;9000
+9;Ida Thomsen;ida.thomsen@example.com;Sondergade 55;Aalborg;9000
+10;Mads Pedersen;mads.pedersen@example.com;Lindholmvej 3;Norresundby;9400

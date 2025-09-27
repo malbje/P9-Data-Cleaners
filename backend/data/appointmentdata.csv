@@ -1,0 +1,11 @@
+id;customer_id;appointment_date;appointment_time;address
+1;1;2025-09-26;10:00;Boulevarden 12
+2;2;2025-09-26;12:00;Østerbro 45
+3;3;2025-09-27;14:00;Nørregade 7
+4;4;2025-09-27;09:00;Kastetvej 88
+5;5;2025-09-28;11:30;Danmarksgade 101
+6;6;2025-09-28;15:00;Vesterbro 22
+7;7;2025-09-29;08:30;Hasserisvej 130
+8;8;2025-09-29;13:00;Kastanjevej 4
+9;9;2025-09-30;16:00;Søndergade 55
+10;10;2025-09-30;09:30;Lindholmvej 3
