@@ -1,21 +1,17 @@
-import mysql.connector
+# backend/backend.py
+import mysql.connector as m
+from db_config import DB 
 
-try:
-    db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="26Aalb0rgUni26@",   # husk at sætte dit eget password
-        database="customerdb"
-    )
+def main():
+    conn = m.connect(**DB)
+    print("Connected:", conn.is_connected())
+    cur = conn.cursor()
+    cur.execute("SHOW TABLES;")
+    print("Tabels in customerdb:")
+    for (t,) in cur.fetchall():
+        print("-", t)
+    cur.close(); conn.close()
 
-    print("Connected to MySQL!")
+if __name__ == "__main__":
+    main()
 
-    cursor = db.cursor()
-    cursor.execute("SHOW TABLES;")
-
-    print("Tabeller i customerdb:")
-    for (table,) in cursor.fetchall():
-        print("-", table)
-
-except mysql.connector.Error as err:
-    print("Error to connect:", err)

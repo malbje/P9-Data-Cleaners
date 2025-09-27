@@ -1,18 +1,21 @@
+# backend/import_csv.py
 import csv
 from pathlib import Path
 from datetime import datetime
-import mysql.connector
+import mysql.connector as m
 
-DB = {"host": "localhost", "user": "root", "password": "26AalborgUni26@", "database": "customerdb"}
-
-ADDRESS_COL = "address"
+# Get DB config from db_config.py (what a process...)
+import db_config
+DB = db_config.DB
+# Use ADDRESS_COL from db_config if present; otherwise default to "address"
+ADDRESS_COL = getattr(db_config, "ADDRESS_COL", "address")
 
 def _read_csv(path: Path):
-    """Åbn CSV med semikolon-delimiter. Prøv UTF-8 først, falder tilbage til cp1252."""
+    """Open a semicolon-separated CSV. Try UTF-8 first, fall back to cp1252 (Excel)."""
     try:
         f = open(path, newline="", encoding="utf-8-sig")
         r = csv.DictReader(f, delimiter=";")
-        # fjern evt. BOM fra headernavne
+        # Strip a possible BOM from headers and trim whitespace
         r.fieldnames = [h.lstrip("\ufeff").strip() for h in r.fieldnames]
         return f, r
     except UnicodeDecodeError:
@@ -22,12 +25,13 @@ def _read_csv(path: Path):
         return f, r
 
 def import_customers(csv_path: Path):
-    db = mysql.connector.connect(**DB)
+    """Upsert customers from CSV into the customers table."""
+    db = m.connect(**DB)
     cur = db.cursor()
 
     f, reader = _read_csv(csv_path)
     with f:
-        for idx, row in enumerate(reader, start=2):
+        for idx, row in enumerate(reader, start=2):   # start=2 to reflect CSV line numbers incl. header
             try:
                 cust_id = int(row["id"])
                 name    = row["full_name"].strip()
@@ -42,14 +46,15 @@ def import_customers(csv_path: Path):
                 )
                 cur.execute(sql, (cust_id, name, address, email))
             except Exception as e:
-                print(f" Skips row {idx} in customers: {e}")
+                print(f"Skip row {idx} in customers: {e}")
 
     db.commit()
     cur.close(); db.close()
-    print("Customers importet")
+    print("Customers imported")
 
 def import_appointments(csv_path: Path):
-    db = mysql.connector.connect(**DB)
+    """Upsert appointments from CSV into the appointments table."""
+    db = m.connect(**DB)
     cur = db.cursor()
 
     f, reader = _read_csv(csv_path)
@@ -57,11 +62,11 @@ def import_appointments(csv_path: Path):
         for idx, row in enumerate(reader, start=2):
             try:
                 appt_id     = int(row["id"])
-                customer_id = int(row["customer"])  # refers to customers.id
-                # CSV is dd-mm-YYYY → makes to YYYY-mm-dd (MySQL DATE)
+                customer_id = int(row.get("customer") or row["customer_id"]) 
+                # CSV is dd-mm-YYYY → convert to YYYY-mm-dd for MySQL DATE så det bliver sat korrekt op
                 appt_date   = datetime.strptime(row["appointment_date"].strip(), "%d-%m-%Y").date().isoformat()
-                t           = row["appointment_time"].strip()   # "HH:MM" eller "HH:MM:SS"
-                appt_time   = t if len(t) >= 8 else (t + ":00")
+                t           = row["appointment_time"].strip()   # "HH:MM" or "HH:MM:SS"
+                appt_time   = t if len(t) >= 8 else (t + ":00") #defines hour:minute
                 location    = row["address"].strip()
 
                 cur.execute(
@@ -75,14 +80,14 @@ def import_appointments(csv_path: Path):
                     (appt_id, customer_id, location, appt_date, appt_time)
                 )
             except Exception as e:
-                print(f"Skips row {idx} in appointments: {e}")
+                print(f"Skip row {idx} in appointments: {e}")
 
     db.commit()
     cur.close(); db.close()
-    print("Appointments importet")
+    print("Appointments imported")
 
 if __name__ == "__main__":
-    BASE = Path(__file__).resolve().parent / "data"   # backend/data
-    import_customers(BASE / "customerdata.csv")
+    BASE = Path(__file__).resolve().parent / "data"
     import_appointments(BASE / "appointmentdata.csv")
     print("Done!")
+    #What a rollercoaster of a process for a db
