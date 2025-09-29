@@ -12,12 +12,12 @@ if DEMO_MODE:
     class ValidationError(Exception):
         pass
     if "rows" not in st.session_state:
-        st.session:state.rows = [] # en lille fake DB i lokalhukommelsen
+        st.session_state.rows = [] # en lille fake DB i lokalhukommelsen
 
-        def_find_index_by_email(email):
-        for i, r in enumerate(st.session_state.rows):
-            if r["email"].lower().strip() == email.lower().strip():
-                return i
+        def find_index_by_email(email):
+            for i, r in enumerate(st.session_state.rows):
+                if r["email"].lower().strip() == email.lower().strip():
+                    return i
             return -1
         
         def create_customer_logic(name: str, email: str, adress, str, cleaning_date_str: str):
@@ -88,7 +88,7 @@ if DEMO_MODE:
                 df = pd.DataFrame(st.session_state.rows)
                 if df.empty:
                     st.info("Ingen kunder endnu.")
-                else
+                else:
                     df_show = df.rename(columns={
                         "name": "Navn", "email": "Email", "adress": "Adresse", "cleaning_date": "Rengøringsdato" 
                     })
@@ -107,15 +107,15 @@ if DEMO_MODE:
             # data_input er mere brugervenligt - konverter til YYYY-MM-DD
             d = st.date_input("Rengøringsdato", value=date.today())
             created_clicked = st.form_submit_button("Opret kunde")
-            ift create_clicked:
-            try:
-                res = create_customer_logic(name, email, adress, d.isformat())
-                st.success("Kunde oprettet.")
-                if DEMO_MODE: st.experimental_rerun()
-            except ValidationError as e:
-                st.error(str(e))
-            except Exception as e:
-                st.errorr(f"Uventet fejl: {e}")
+            if create_clicked:
+                try:
+                    res = create_customer_logic(name, email, adress, d.isformat())
+                    st.success("Kunde oprettet.")
+                    if DEMO_MODE: st.experimental_rerun()
+                except ValidationError as e:
+                    st.error(str(e))
+                except Exception as e:
+                    st.error(f"Uventet fejl: {e}")
 
         st.divider()
 
