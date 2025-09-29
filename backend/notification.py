@@ -17,7 +17,7 @@ SMTP_PASS = "ogypbjdvvfkihrua"        # vores app-password (BØR IKKE INKLUDERES
 FROM = SMTP_USER
 
 # Slå til/fra for test (True = print kun til terminalen, False = send mails)
-DRY_RUN = False
+DRY_RUN = True
 
 
 # Notification message
