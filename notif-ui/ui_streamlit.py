@@ -1,5 +1,8 @@
-# Frontend knapper i Streamlit - KUN UI. Ingen databasekode her.
-# For at køre: streamlit run ui_streamlit.py
+# ------------------------------
+# This page creates the buttons in the frontend via the 'Streamlit' framework.
+#
+# To run type the following command in the terminal: streamlit run ui_streamlit.py
+# ------------------------------
 
 import streamlit as st
 from datetime import date, datetime
