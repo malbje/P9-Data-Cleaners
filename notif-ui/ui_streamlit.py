@@ -1,5 +1,5 @@
 # Frontend knapper i Streamlit - KUN UI. Ingen databasekode her.
-# For at køre: streamlit run ui_streamlit.py
+# For at køre: streamlit run notif-ui/ui_streamlit.py
 
 import streamlit as st
 from datetime import date, datetime
