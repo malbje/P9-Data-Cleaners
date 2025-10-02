@@ -77,7 +77,7 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
         raise ValidationError("Date MUST be in the format YYYY-MM-DD.")
     
     # Business rule: cleaning date cannot be in the past
-    if d < date.today():
+    if cleaning_date_str < date.today():
         raise ValidationError("Cleaning date cannot be in the past.")
     
     # Business rule: email must be unique across all customers
