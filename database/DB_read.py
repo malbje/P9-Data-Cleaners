@@ -59,14 +59,14 @@ class DB_read:
         try:
             database, cursorObject = self.__open_DB_connection() # Always start with opening a new connection
 
-            query = "SELECT * FROM customers"                  # The SQL query to be executed
+            query = "SELECT * FROM customers"          # The SQL query to be executed
 
-            cursorObject.execute(query)                        # Executing the query
-            customers = cursorObject.fetchall()                # Getting all results from the executed query
+            cursorObject.execute(query)                # Executing the query
+            customers = cursorObject.fetchall()        # Getting all results from the executed query
 
         # ...But if the qurry fails for some reason, we always close the connection
         finally:
-            self.__close_DB_connection(database)               # Always remember to close the database connection when done
+            self.__close_DB_connection(database)       # Always remember to close the database connection when done
 
         return customers
     
@@ -183,7 +183,7 @@ class DB_read:
             database, cursorObject = self.__open_DB_connection()
 
             query = "SELECT name, address, email, location_addr, appt_date, appt_time " \
-                    "FROM customers INNER JOIN appointments ON customers.id = appointments.customer_id"
+                    "FROM customers JOIN appointments ON customers.id = appointments.customer_id"
 
             cursorObject.execute(query)
             result = cursorObject.fetchall()
