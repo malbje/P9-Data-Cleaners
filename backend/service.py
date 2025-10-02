@@ -21,11 +21,30 @@ class ValidationError(Exception):
 _CUSTOMERS = {}  # key = email, value = dict(name, address, cleaning_date)
 
 def _require(value: str, field: str) -> str:
+    """
+    Ensure that a required field is provided and not empty.
+    Args:
+        value (str): The value to check.
+        field (str): The name of the field (for error messages).
+    Returns:
+        str: The stripped value if valid.
+    Raises:
+        ValidationError: If the value is missing or empty.
+    """
     if not value or not value.strip():
         raise ValidationError(f"{field} er påkrævet.")
     return value.strip()
 
 def _parse_date(iso: str) -> date:
+    """
+    Parse and validate a date string in ISO format (YYYY-MM-DD).
+    Args:
+        iso (str): The date string to parse.
+    Returns:
+        date: The parsed date object.
+    Raises:
+        ValidationError: If the date is invalid or in the past.
+    """
     try:
         d = datetime.strptime(iso.strip(), "%Y-%m-%d").date()
     except Exception:
@@ -35,6 +54,18 @@ def _parse_date(iso: str) -> date:
     return d
 
 def create_customer_logic(name: str, email: str, address: str, cleaning_date_str: str):
+    """
+    Create a new customer with validation and add to in-memory storage.
+    Args:
+        name (str): Customer's name.
+        email (str): Customer's email (must be unique).
+        address (str): Customer's address.
+        cleaning_date_str (str): Cleaning date in YYYY-MM-DD format.
+    Returns:
+        dict: Status and customer ID if successful.
+    Raises:
+        ValidationError: If any validation fails or customer already exists.
+    """
     name = _require(name, "Navn")
     email = _require(email, "Email")
     if "@" not in email:
@@ -54,6 +85,16 @@ def create_customer_logic(name: str, email: str, address: str, cleaning_date_str
     return {"status": "ok", "customer_id": email}  # email as ID in this simple version
 
 def update_date_logic(email: str, new_date_str: str):
+    """
+    Update the cleaning date for an existing customer.
+    Args:
+        email (str): Customer's email to identify the record.
+        new_date_str (str): New cleaning date in YYYY-MM-DD format.
+    Returns:
+        dict: Status and update count if successful.
+    Raises:
+        ValidationError: If customer not found or date is invalid.
+    """
     email = _require(email, "Email")
     _parse_date(new_date_str)
     if email not in _CUSTOMERS:
@@ -62,6 +103,15 @@ def update_date_logic(email: str, new_date_str: str):
     return {"status": "ok", "updated": 1}
 
 def delete_customer_logic(email: str):
+    """
+    Delete a customer from in-memory storage by email.
+    Args:
+        email (str): Customer's email to identify the record.
+    Returns:
+        dict: Status and delete count if successful.
+    Raises:
+        ValidationError: If customer not found.
+    """
     email = _require(email, "Email")
     if email not in _CUSTOMERS:
         raise ValidationError("Ingen kunde fundet med den email.")
