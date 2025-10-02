@@ -1,7 +1,7 @@
 #------------------------------
 #  Collection of methods used for reading data from the database.
 #
-#  Use this by creating a DB_read object in the file you're working in.
+#  Use this by creating a DB_read object in the file you're working on.
 #  Example: import database.DB_read as DB_reader
 #          DB_read_object = DB_reader.DB_read()
 #          data = DB_read_object.all_customers()
@@ -18,22 +18,19 @@ import mysql.connector, private_settings
 
 class DB_read:
 
-    global cursorObject # The object that executes queries on the database
-    
-    global dataBase     # The object that holds the database connection
-
     def __init__(self): # Constructor
+        pass
+
+    def open_DB_connection(self):
         """
-        Setting up the database connection and cursor object when a new DB_read object is created.
+        Method for opening a new database connection and returning the new connection and cursor object.
+        The cursor object is used for executing queries.
 
-        Args:
-            "Self" means that this method is an instance method
+        Returns:
+            The database connection object AND The cursor object for executing queries  
         """
-
-        global cursorObject, dataBase        # Gives this method access to these global objects
-
         dataBase = mysql.connector.connect(  # Creates the database connection
-        host = private_settings.host,
+        host = private_settings.host,        # Remember to edit private_settings.py with your own connection password
         user = private_settings.user,
         passwd = private_settings.passwd,
         database = private_settings.database
@@ -41,32 +38,34 @@ class DB_read:
 
         cursorObject = dataBase.cursor()     # Defines the cursor object used for executing queries
 
-    def open_DB_connection(self):
-        """
-        Method for opening a new database connection and returning the new connection and cursor object.
-        Same as in the constructor, but can be called again if needed.
-        """
-        dataBase = mysql.connector.connect(
-        host = private_settings.host,
-        user = private_settings.user,
-        passwd = private_settings.passwd,
-        database = private_settings.database
-        )
+        return dataBase, cursorObject        # dataBase: The object that executes queries on the database
+                                             # cursorObject: The object that holds the database connection
 
-        cursorObject = dataBase.cursor()
-
-        return dataBase, cursorObject
 
     def close_DB_connection(self, dataBase):
+        """
+        Remember to close the database connection when done, with this.
+        """
         dataBase.close()
 
-    def all_customers(self):
-        dataBase, cursorObject = self.open_DB_connection()
+    def get_all_customers(self):
+        """
+        Method for getting a list of all customers from the database.
 
-        query = "SELECT * FROM customers"
-        cursorObject.execute(query)
+        Returns:
+            List of tuples, each containing customer data.
+        """
+        # We try to qurry successfully...
+        try:
+            dataBase, cursorObject = self.open_DB_connection() # Always start with opening a new connection
 
-        customors = cursorObject.fetchall()
-        self.close_DB_connection(dataBase)
+            query = "SELECT * FROM customers"                  # The SQL query to be executed
+            cursorObject.execute(query)                        # Executing the query
 
-        return customors
+            customers = cursorObject.fetchall()                # Getting all results from the executed query
+
+        # ...But if the qurry fails for some reason, we always close the connection
+        finally:
+            self.close_DB_connection(dataBase)                 # Always remember to close the database connection when done
+
+        return customers
