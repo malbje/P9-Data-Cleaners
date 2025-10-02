@@ -1,5 +1,5 @@
 # -----------------------------
-# This page tests exists for testing the different methods in notification.py
+# This page exists for testing the different methods in notification.py
 # (Only create_notification is tested rn, as send_notification doesn't have any agreeded upon 'return's yet)
 # -----------------------------
 
