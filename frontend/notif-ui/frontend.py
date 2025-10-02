@@ -5,7 +5,11 @@
 #Note: st is the abriviation for streamlit and refered to in the import. 
 #
 #
+<<<<<<< Updated upstream
 # To run, type the following command in the terminal: streamlit run frontend/notif-ui/frontend.py
+=======
+# To run, type the following command in the terminal: streamlit runstreamlit run frontend\notif-ui\frontend.py
+>>>>>>> Stashed changes
 # ------------------------------
 
 import streamlit as st
