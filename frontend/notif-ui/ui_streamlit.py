@@ -1,5 +1,9 @@
 # ------------------------------
-# This page creates the buttons in the frontend via the 'Streamlit' framework.
+# This page creates the buttons in the frontend via the 'Streamlit' framework, with backend-like logic.
+# It is currently using in-memory storage (a list) to simulate a database for demo purposes.
+#
+#Note: st is the abriviation for streamlit and refered to in the import. 
+#
 #
 # To run type the following command in the terminal: streamlit run frontend\notif-ui\ui_streamlit.py
 # ------------------------------
