@@ -5,7 +5,7 @@
 #Note: st is the abriviation for streamlit and refered to in the import. 
 #
 #
-# To run type the following command in the terminal: streamlit run frontend\notif-ui\ui_streamlit.py
+# To run, type the following command in the terminal: streamlit run frontend\notif-ui\ui_streamlit.py
 # ------------------------------
 
 import streamlit as st
@@ -64,25 +64,25 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
 
     # Validate required fields
     if not name: 
-        raise ValidationError("Navn er påkrævet.")
+        raise ValidationError("Name is required.")
     if "@" not in email: 
-        raise ValidationError("Ikke en rigtig email adresse.")
+        raise ValidationError("Not a valid email address.")
     if not adress: 
-        raise ValidationError("Adresse er påkrævet.")
+        raise ValidationError("Address is required.")
     
     # Validate date format and parse it
     try:
-        d = datetime.strptime(cleaning_date_string, "%Y-%m-%d").date()
+        cleaning_date_str = datetime.strptime(cleaning_date_string, "%Y-%m-%d").date()
     except Exception:
-        raise ValidationError("Dato SKAL være i formatet YYYY-MM-DD.")
+        raise ValidationError("Date MUST be in the format YYYY-MM-DD.")
     
     # Business rule: cleaning date cannot be in the past
     if d < date.today():
-        raise ValidationError("Rengøringsdato må ikke ligge i fortiden.")
+        raise ValidationError("Cleaning date cannot be in the past.")
     
     # Business rule: email must be unique across all customers
     if find_index_by_email(email) != -1:
-        raise ValidationError("Der findes allerede en kunde med denne email.")
+        raise ValidationError("A customer with this email already exists.")
     
     # All validations passed - add new customer to our in-memory database
     st.session_state.rows.append({
@@ -114,21 +114,21 @@ def update_date_logic(email: str, new_date_str: str):
     
     # Validate and parse the new date
     try:
-        d = datetime.strptime(new_date_string, "%Y-%m-%d").date()
+        cleaning_date = datetime.strptime(new_date_string, "%Y-%m-%d").date()
     except Exception:
-        raise ValidationError("Ny dato skal være i formatet YYYY-MM-DD.")
+        raise ValidationError("New date must be in the format YYYY-MM-DD.")
     
     # Business rule: new date cannot be in the past
-    if d < date.today():
-        raise ValidationError("Ny dato må ikke ligge i fortiden.")
+    if cleaning_date < date.today():
+        raise ValidationError("New date cannot be in the past.")
     
     # Find the customer record
-    idx = find_index_by_email(email)
-    if idx == -1:
-        raise ValidationError("Ingen kunde fundet med den email.")
+    index = find_index_by_email(email)
+    if index == -1:
+        raise ValidationError("No customer found with that email.")
     
     # Update the cleaning date for the found customer
-    st.session_state.rows[idx]["cleaning_date"] = new_date_string
+    st.session_state.rows[index]["cleaning_date"] = new_date_string
     return {"status": "ok"}
 
 def delete_customer_logic(email: str):
@@ -148,71 +148,70 @@ def delete_customer_logic(email: str):
     email = (email or "").strip()
     
     # Find the customer record
-    idx = find_index_by_email(email)
-    if idx == -1:
-        raise ValidationError("Ingen kunde fundet med den email.")
+    index = find_index_by_email(email)
+    if index == -1:
+        raise ValidationError("No customer found with that email.")
     
     # Remove the customer from our in-memory database
-    st.session_state.rows.pop(idx)
+    st.session_state.rows.pop(index)
     return {"status": "ok"}
 
 # ========== Streamlit UI (User Interface) ==========
 
 # Configure the Streamlit page with title, icon, and layout
-st.set_page_config(page_title="Rengøringsplan - Admin", page_icon="🧹", layout="centered")
-st.title("🧹 Rengøringsplan - Admin")
-st.caption("Frontend (knapper) til at oprette, opdatere og slette kunder.")
+st.set_page_config(page_title="Cleaning Schedule - Admin", page_icon="🧹", layout="centered")
+st.title("🧹 Cleaning Schedule - Admin")
+st.caption("Frontend (buttons) to create, update, and delete customers.")
 
 # Display current customers in an expandable table (for demo purposes)
-with st.expander("📋 Aktuelle kunder (demo)", expanded=True):
+with st.expander("📋 Current customers (demo)", expanded=True):
     # Convert our list of dictionaries to a pandas DataFrame for display
-    df = pd.DataFrame(st.session_state.rows)
-    
-    if df.empty:
+    dataFrame = pd.DataFrame(st.session_state.rows)
+    if dataFrame.empty:
         # Show informational message when no customers exist
-        st.info("Ingen kunder endnu.")
+        st.info("No customers yet.")
     else:
-        # Rename columns to Danish for better user experience
-        df_show = df.rename(columns={
-            "name": "Navn", 
+        # Rename columns to English for better user experience
+        dataFrame_show = dataFrame.rename(columns={
+            "name": "Name", 
             "email": "Email", 
-            "adress": "Adresse", 
-            "cleaning_date": "Rengøringsdato" 
+            "adress": "Address", 
+            "cleaning_date": "Cleaning date" 
         })
         # Display the data in a nice table format
-        st.dataframe(df_show, use_container_width=True, hide_index=True)
+        st.dataframe(dataFrame_show, use_container_width=True, hide_index=True)
 
 # Visual separator between sections
 st.divider()
 
 # ---------- Customer Creation Form ----------
-st.subheader("➕ Opret kunde")
+st.subheader("Create customer")
 
 # Use Streamlit form to group related inputs and handle submission together
 with st.form("form_create", clear_on_submit=True):
     # Create two columns for better layout
-    c1, c2 = st.columns(2)
+    columnLeft, columnRight = st.columns(2)
     
     # Input fields for customer data
-    name = c1.text_input("Navn")  # Customer name
-    email = c2.text_input("Email")  # Customer email
-    adress = st.text_input("Adresse")  # Customer address
+    name = columnLeft.text_input("Name")  # Customer name
+    email = columnRight.text_input("Email")  # Customer email
+    adress = st.text_input("Address")  # Customer address
     
     # Date picker for cleaning date (defaults to today)
-    d = st.date_input("Rengøringsdato", value=date.today())
+    dateChosen = st.date_input("Cleaning date", value=date.today())
     
     # Form submission button
-    create_clicked = st.form_submit_button("Opret kunde")
+    create_clicked = st.form_submit_button("Create customer")
     
     # Handle form submission when button is clicked
     if create_clicked:
         try:
             # Call our business logic function with form data
             # Convert date to ISO format (YYYY-MM-DD) for consistency
-            res = create_customer_logic(name, email, adress, d.isoformat())
+            customerResult = create_customer_logic(name, email, adress, dateChosen.isoformat())
             
             # Show success message to user
-            st.success("Kunde oprettet.")
+            st.success("Customer created.")
             
             # Refresh the page to show updated customer list
             st.rerun()
@@ -222,33 +221,33 @@ with st.form("form_create", clear_on_submit=True):
             st.error(str(e))
         except Exception as e:
             # Catch any unexpected errors and display them
-            st.error(f"Uventet fejl: {e}")
+            st.error(f"Unexpected error: {e}")
 
 st.divider()
 
 # ---------- Date Update Form ----------
-st.subheader("✏️ Opdater rengøringsdato")
+st.subheader("✏️ Update cleaning date")
 
 # Form for updating existing customer's cleaning date
 with st.form("form_update"):
     # Create two columns for better layout
-    u1, u2 = st.columns(2)
+    updateColumnLeft, updateColumnRight = st.columns(2)
     
     # Input fields for update operation
-    email_u = u1.text_input("Kunden email")  # Email to identify customer
-    d_new = u2.date_input("Ny dato", value=date.today())  # New cleaning date
+    email_update = updateColumnLeft.text_input("Customer email")  # Email to identify customer
+    new_cleaning_date = updateColumnRight.date_input("New date", value=date.today())  # New cleaning date
     
     # Form submission button
-    update_clicked = st.form_submit_button("Opdatér dato")
+    update_clicked = st.form_submit_button("Update date")
     
     # Handle form submission
     if update_clicked:
         try:
             # Call business logic to update the date
-            update_date_logic(email_u, d_new.isoformat())
+            update_date_logic(email_update, new_cleaning_date.isoformat())
             
             # Show success message
-            st.success("Dato opdateret")
+            st.success("Date updated")
             
             # Refresh page to show changes
             st.rerun()
@@ -258,33 +257,33 @@ with st.form("form_update"):
             st.error(str(e))
         except Exception as e:
             # Show unexpected errors
-            st.error(f"Uventet fejl: {e}")
+            st.error(f"Unexpected error: {e}")
 
 st.divider()
 
 # ---------- Customer Deletion Form ----------
-st.subheader("🗑️ Slet kunde")
+st.subheader("Delete customer")
 
 # Form for deleting customers
 with st.form("form_delete"):
     # Input field for customer email to delete
-    email_d = st.text_input("Kundens email")
+    email_delete = st.text_input("Customer email")
     
     # Form submission button (primary type makes it more prominent)
-    delete_clicked = st.form_submit_button("Slet kunde", type="primary")
+    delete_clicked = st.form_submit_button("Delete customer", type="primary")
     
     # Handle deletion with confirmation
     if delete_clicked:
         # Require user confirmation to prevent accidental deletions
-        confirm = st.checkbox("Ja, jeg er sikker")
+        confirm = st.checkbox("Yes, I am sure")
         
         if confirm:
             try:
                 # Call business logic to delete customer
-                delete_customer_logic(email_d)
+                delete_customer_logic(email_delete)
                 
                 # Show success message
-                st.success("Kunde slettet")
+                st.success("Customer deleted")
                 
                 # Refresh page to show updated list
                 st.rerun()
@@ -294,7 +293,7 @@ with st.form("form_delete"):
                 st.error(str(e))
             except Exception as e:
                 # Show unexpected errors
-                st.error(f"Uventet fejl: {e}")
+                st.error(f"Unexpected error: {e}")
         else:
             # Remind user to confirm deletion
-            st.info("Sæt flueben for at bekræfte sletning")
+            st.info("Check the box to confirm deletion")
