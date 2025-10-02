@@ -60,7 +60,7 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
     name = (name or "").strip()
     email = (email or "").strip()
     adress = (adress or "").strip()
-    dstr = (cleaning_date_str or "").strip()
+    cleaning_date_string = (cleaning_date_str or "").strip()
 
     # Validate required fields
     if not name: 
@@ -72,7 +72,7 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
     
     # Validate date format and parse it
     try:
-        d = datetime.strptime(dstr, "%Y-%m-%d").date()
+        d = datetime.strptime(cleaning_date_string, "%Y-%m-%d").date()
     except Exception:
         raise ValidationError("Dato SKAL være i formatet YYYY-MM-DD.")
     
@@ -89,7 +89,7 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
         "name": name, 
         "email": email, 
         "adress": adress, 
-        "cleaning_date": dstr
+        "cleaning_date": cleaning_date_string
     })
     
     return {"status": "ok"}
@@ -110,11 +110,11 @@ def update_date_logic(email: str, new_date_str: str):
     """
     # Clean input data
     email = (email or "").strip()
-    dstr = (new_date_str or "").strip()
+    new_date_string = (new_date_str or "").strip()
     
     # Validate and parse the new date
     try:
-        d = datetime.strptime(dstr, "%Y-%m-%d").date()
+        d = datetime.strptime(new_date_string, "%Y-%m-%d").date()
     except Exception:
         raise ValidationError("Ny dato skal være i formatet YYYY-MM-DD.")
     
@@ -128,7 +128,7 @@ def update_date_logic(email: str, new_date_str: str):
         raise ValidationError("Ingen kunde fundet med den email.")
     
     # Update the cleaning date for the found customer
-    st.session_state.rows[idx]["cleaning_date"] = dstr
+    st.session_state.rows[idx]["cleaning_date"] = new_date_string
     return {"status": "ok"}
 
 def delete_customer_logic(email: str):
