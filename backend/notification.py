@@ -1,8 +1,7 @@
 # -----------------------------
 # This page works with creating and sending notifications based on 
-# 
-# Lige nu bliver der bare printet 3 reminders i terminalen baseret på mock database
-# -----------------------------
+#
+# Currently it is printing 3 reminders in the terminal based on the mock data## -----------------------------
 import os
 import smtplib
 from email.message import EmailMessage
