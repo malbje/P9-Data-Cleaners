@@ -50,28 +50,42 @@ class Test_DB_read(unittest.TestCase):
         Tests if the get_appointments_by_customer_id function returns a list of tuples
         """
         # Arrange
-        db_reader = DB_reader.DB_read()              # Create an instance of DB_read
-        test_customer_id = 1                         # Use a test customer id (make sure this id exists in your test database)
+        db_reader = DB_reader.DB_read()              
+        test_customer_id = 1                         
         # Act
-        result = db_reader.get_appointments_by_customer_id(test_customer_id)  # Call the method on the instance
+        result = db_reader.get_appointments_by_customer_id(test_customer_id)  
         # Assert
         if type(result) == str:
             self.assertEqual(result, "No appointments found for this customer ID.")
-        else: self.assertIsInstance(result, list)     # Check if the result is a list
+        else: self.assertIsInstance(result, list) 
 
     def test_get_customer_by_id(self):
         """
         Tests if the get_customer_by_id function returns a list of tuples
         """
         # Arrange
-        db_reader = DB_reader.DB_read()              # Create an instance of DB_read
-        test_customer_id = 1111                       # Use a test customer id (make sure this id exists in your test database)
+        db_reader = DB_reader.DB_read()              
+        test_customer_id = 1111                      
         # Act
-        result_by_id = db_reader.get_customer_by_id(customer_id=test_customer_id)  # Call the method on the instance with id
+        result_by_id = db_reader.get_customer_by_id(customer_id=test_customer_id)  
         # Assert
         if type(result_by_id) == str:
             self.assertEqual(result_by_id, "No customer found with this ID.")
-        else: self.assertIsInstance(result_by_id, list)  # Check if the result is a list
+        else: self.assertIsInstance(result_by_id, list)  
+
+    def test_get_appointment_by_id(self):
+        """
+        Tests if the get_appointment_by_id function returns a list of tuples
+        """
+        # Arrange
+        db_reader = DB_reader.DB_read()             
+        test_appointment_id = 1                      
+        # Act
+        result_by_id = db_reader.get_appointment_by_id(appointment_id=test_appointment_id)
+        # Assert
+        if type(result_by_id) == str:
+            self.assertEqual(result_by_id, "No appointment found with this ID.")
+        else: self.assertIsInstance(result_by_id, list)  
 
 # These lines makes it so that the code in this file only runs when the file is run directly, and not when imported
 if __name__ == '__main__':
