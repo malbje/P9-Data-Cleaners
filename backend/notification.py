@@ -43,7 +43,7 @@ appointments = [
     #{"name": "Charlie", "date": "October 12, 2025", "time": "4:15 PM", "email": "charlie@example.com"}
 ]
 
-# Function to send notification (Mathias du ændre bare som det passer)
+# Function to send notification
 def send_notification(notification, email):
     """
     Send a notification to a given email address.
