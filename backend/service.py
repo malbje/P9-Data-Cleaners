@@ -1,14 +1,22 @@
-# app/service.py
+# -----------------------------
+# This page works as the 'rule book' for the business logic. (a custom set of rules, algorithms that defines how data is defined, processed, etc.).
+# It contains:
+    # ValidationError class for handling validation errors.
+    # Helper functions for input validation and date parsing.
+    # In-memory storage for customer data.
+    # Functions for creating, updating, and deleting customers.
+    # Each function includes validation checks and raises ValidationError for any issues.
+# Currently it is printing 3 reminders in the terminal based on the mock data
+# -----------------------------
 from datetime import datetime, date
 
-# Gør mappen til en Python-pakke: husk også en tom fil app/__init__.py
+# Gør mappen til en Python-pakke: husk også en tom fil __init__.py
 
 class ValidationError(Exception):
     """Fejl som UI viser som rød besked."""
     pass
 
-# Enkel "in-memory" storage til demo.
-# Skift dette ud med rigtig database senere.
+# Simple "in-memory" storage.
 _CUSTOMERS = {}  # key = email, value = dict(name, address, cleaning_date)
 
 def _require(value: str, field: str) -> str:
@@ -42,7 +50,7 @@ def create_customer_logic(name: str, email: str, address: str, cleaning_date_str
         "address": address,
         "cleaning_date": cleaning_date_str,
     }
-    return {"status": "ok", "customer_id": email}  # email som ID i denne simple version
+    return {"status": "ok", "customer_id": email}  # email as ID in this simple version
 
 def update_date_logic(email: str, new_date_str: str):
     email = _require(email, "Email")
