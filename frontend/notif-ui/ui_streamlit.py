@@ -1,7 +1,7 @@
 # ------------------------------
 # This page creates the buttons in the frontend via the 'Streamlit' framework.
 #
-# To run type the following command in the terminal: streamlit run notif-ui/ui_streamlit.py
+# To run type the following command in the terminal: streamlit run frontend\notif-ui\ui_streamlit.py
 # ------------------------------
 
 import streamlit as st
