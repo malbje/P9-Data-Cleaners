@@ -4,16 +4,22 @@
 # Currently it is printing 3 reminders in the terminal based on the mock data
 # -----------------------------
 
-import os
+# This defines the current working directory as the root directory, so we can import from backend
+# Otherwise notification.py and its methods won't be found
+import sys, os
+sys.path.insert(0, os.getcwd())
+# ------------------------------
+
 import smtplib
 from email.message import EmailMessage
+import private_settings
 
 # Notification system
 # ----- SMTP CONFIGURATION (change these two lines) -----
-SMTP_HOST = "smtp.gmail.com"   # standadard for gmail
-SMTP_PORT = 587                # Typically 587 (TLS)
-SMTP_USER = "data.cleaners2@gmail.com"   # our shared test-mail (SHOULD NOT BE INCLUDED IN GIT, WE'LL FIND A BETTER SOLUTION)
-SMTP_PASS = "ogypbjdvvfkihrua"        # our app-password (SHOULD NOT BE INCLUDED IN GIT, WE'LL FIND A BETTER SOLUTION)
+SMTP_HOST = private_settings.SMTP_HOST
+SMTP_PORT = private_settings.SMTP_PORT
+SMTP_USER = private_settings.SMTP_USER
+SMTP_PASS = private_settings.SMTP_PASS
 
 FROM = SMTP_USER
 
