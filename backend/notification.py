@@ -1,21 +1,23 @@
 # -----------------------------
-# This page works with creating and sending notifications based on 
+# This page works with creating and sending notifications
 #
-# Currently it is printing 3 reminders in the terminal based on the mock data## -----------------------------
+# Currently it is printing 3 reminders in the terminal based on the mock data
+# -----------------------------
+
 import os
 import smtplib
 from email.message import EmailMessage
 
 # Notification system
-# ----- SMTP KONFIGURATION (skift disse to linjer) -----
+# ----- SMTP CONFIGURATION (change these two lines) -----
 SMTP_HOST = "smtp.gmail.com"   # standadard for gmail
-SMTP_PORT = 587                # Typisk 587 (TLS)
-SMTP_USER = "data.cleaners2@gmail.com"   # vores fælles test-mail (BØR IKKE INKLUDERES I GIT, VI FINDER EN BEDRE LØSNING SENERE)
-SMTP_PASS = "ogypbjdvvfkihrua"        # vores app-password (BØR IKKE INKLUDERES I GIT, VI FINDER EN BEDRE LØSNING SENERE)
+SMTP_PORT = 587                # Typically 587 (TLS)
+SMTP_USER = "data.cleaners2@gmail.com"   # our shared test-mail (SHOULD NOT BE INCLUDED IN GIT, WE'LL FIND A BETTER SOLUTION)
+SMTP_PASS = "ogypbjdvvfkihrua"        # our app-password (SHOULD NOT BE INCLUDED IN GIT, WE'LL FIND A BETTER SOLUTION)
 
 FROM = SMTP_USER
 
-# Slå til/fra for test (True = print kun til terminalen, False = send mails)
+# Turn on/off for testing (True = print to terminal, False = send mails)
 DRY_RUN = True
 
 
@@ -35,7 +37,7 @@ def create_notification(name, date, time):
    
     return f"Hello {name}, this is a reminder that your cleaning is scheduled for {date} at {time}."
 
-# Mock "database" (laves om senere, når vi har en database) *rettet til kommentare for afprøvning*
+# Mock "database" (change later when having functioning database)
 appointments = [
     {"name": "Alice", "date": "October 10, 2025", "time": "2:30 PM", "email": "data.cleaners2@gmail.com"},
     #{"name": "Bob", "date": "October 11, 2025", "time": "11:00 AM", "email": "bob@example.com"},
