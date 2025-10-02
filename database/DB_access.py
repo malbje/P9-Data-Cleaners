@@ -8,7 +8,8 @@ import DB_connection_settings
 
 dataBase = mysql.connector.connect(
 
-    # Go to database/DB_connection_settings.py to edit these settings to your own
+    # Create a file called "database/DB_connection_settings.py" in the "database"-folder 
+    # and edit password to the same as you have for your MySQL Workbench
     host = DB_connection_settings.host,
     user = DB_connection_settings.user,
     passwd = DB_connection_settings.passwd,
@@ -16,7 +17,7 @@ dataBase = mysql.connector.connect(
 
 cursorObject = dataBase.cursor()
 
-# Test qurrie
+# Test query
 query = "SELECT * FROM appointments"
 cursorObject.execute(query)
 
