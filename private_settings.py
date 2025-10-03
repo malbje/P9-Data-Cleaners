@@ -4,11 +4,9 @@
 #------------------------------
 host = '127.0.0.1'
 user = "root"
-passwd = "WildfireBook4Ever"
+passwd = "___"
 database = "datacleaners"
 
-f
-wefawe
 #------------------------------
 # Email settings
 #------------------------------
