@@ -4,7 +4,7 @@
 #------------------------------
 host = '127.0.0.1'
 user = "root"
-passwd = "WildfireBook4Ever"
+passwd = "Ppb62zuj8685!!!"
 database = "datacleaners"
 
 #------------------------------
