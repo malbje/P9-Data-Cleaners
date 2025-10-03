@@ -48,6 +48,8 @@ class DB_read:
         """
         dataBase.close()
 
+    def query_DB
+
     def get_all_customers(self):
         """
         Method for getting a list of all customers from the database.

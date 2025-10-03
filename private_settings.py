@@ -7,6 +7,8 @@ user = "root"
 passwd = "WildfireBook4Ever"
 database = "datacleaners"
 
+rg3rh3
+
 #------------------------------
 # Email settings
 #------------------------------
