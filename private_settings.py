@@ -7,6 +7,8 @@ user = "root"
 passwd = "Ppb62zuj8685!!!"
 database = "datacleaners"
 
+f
+wefawe
 #------------------------------
 # Email settings
 #------------------------------
