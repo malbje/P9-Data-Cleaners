@@ -7,22 +7,11 @@ import mysql.connector
 import private_settings
 
 dataBase = mysql.connector.connect(
+        host=private_settings.host,
+        user=private_settings.user,
+        passwd=private_settings.passwd,
+        database=private_settings.database, 
+        autocommit=False          # vi committer eksplicit på writes
+    )
 
-    # Create a file called "database/DB_connection_settings.py" in the "database"-folder 
-    # and edit password to the same as you have for your MySQL Workbench
-    host = private_settings.host,
-    user = private_settings.user,
-    passwd = private_settings.passwd,
-    database = private_settings.database)
-
-cursorObject = dataBase.cursor()
-
-# Test query
-query = "SELECT * FROM appointments"
-cursorObject.execute(query)
-
-for row in cursorObject.fetchall():
-    print(row)
-
-dataBase.close()
-
+curserObject = dataBase.cursor()
