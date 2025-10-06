@@ -6,12 +6,11 @@
 import mysql.connector
 import private_settings
 
-dataBase = mysql.connector.connect(
+def get_connection():
+    return mysql.connector.connect(
         host=private_settings.host,
         user=private_settings.user,
         passwd=private_settings.passwd,
-        database=private_settings.database, 
-        autocommit=False          # vi committer eksplicit på writes
+        database="datacleaners",
+        autocommit=False,
     )
-
-curserObject = dataBase.cursor()

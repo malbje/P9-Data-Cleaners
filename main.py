@@ -1,18 +1,17 @@
-#------------------------------
-# main.py right now only tests the DB_read class
-#------------------------------
+# ------------------------------
+# main.py – MCP server for DataCleaners
+# ------------------------------
 
-import mcp
-import database.DB_read as DB_reader # Importing the file (module) containing the DB_read class
-import asyncio
-from fastmcp import FastMCP
-from database.DB_access import dataBase
+from mcp.server.fastmcp import FastMCP
 from mysql.connector import IntegrityError
+from database.DB_access import get_connection
 
+# Opret MCP-server
 mcp = FastMCP("DataCleaners")
 
+# ---------- Helper functions ----------
 def _query_all(sql, params=None):
-    db = dataBase()
+    db = get_connection()
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(sql, params or ())
@@ -21,7 +20,7 @@ def _query_all(sql, params=None):
         db.close()
 
 def _execute(sql, params=None):
-    db = dataBase()
+    db = get_connection()
     try:
         cur = db.cursor()
         cur.execute(sql, params or ())
@@ -33,36 +32,56 @@ def _execute(sql, params=None):
     finally:
         db.close()
 
-@mcp.tool
-async def list_customers():
-    """Returnér alle kunder."""
+# ---------- MCP tools ----------
+@mcp.tool()
+def ping() -> str:
+    """Bruges til at teste at serveren kører."""
+    return "pong"
+
+@mcp.tool()
+def list_customers():
+    """Alle kunder (ingen input)."""
     return _query_all("SELECT id, name, address, email FROM customers ORDER BY id")
 
-@mcp.tool
-async def get_customer_by_email(email: str):
-    """Hent én kunde via email."""
-    rows = _query_all("SELECT id, name, address, email FROM customers WHERE email = %s", (email,))
+@mcp.tool()
+def list_customers_by_name(customer_name: str):
+    """Find kunder via navn (LIKE-søgning)."""
+    return _query_all(
+        "SELECT id, name, address, email FROM customers WHERE name LIKE %s ORDER BY id",
+        (f"%{customer_name}%",),
+    )
+
+@mcp.tool()
+def get_customer_by_email(email: str):
+    """Hent en kunde via email."""
+    rows = _query_all(
+        "SELECT id, name, address, email FROM customers WHERE email = %s",
+        (email,),
+    )
     return rows[0] if rows else None
 
-@mcp.tool
-async def add_customer(name: str, address: str, email: str):
-    """Opret kunde. Fejler hvis email allerede findes (UNIQUE)."""
+@mcp.tool()
+def add_customer(name: str, address: str, email: str):
+    """Opret en kunde. Fejler hvis email allerede findes."""
     try:
         new_id = _execute(
             "INSERT INTO customers (name, address, email) VALUES (%s, %s, %s)",
-            (name, address, email)
+            (name, address, email),
         )
         return {"id": new_id, "name": name, "address": address, "email": email}
     except IntegrityError as e:
         return {"error": "Email already exists", "details": str(e)}
 
-@mcp.tool
-async def update_customer_address(customer_id: int, new_address: str):
-    """Opdater adresse på kunde-id."""
-    db = dataBase()
+@mcp.tool()
+def update_customer_address(customer_id: int, new_address: str):
+    """Opdater kundeadresse."""
+    db = get_connection()
     try:
         cur = db.cursor()
-        cur.execute("UPDATE customers SET address = %s WHERE id = %s", (new_address, customer_id))
+        cur.execute(
+            "UPDATE customers SET address = %s WHERE id = %s",
+            (new_address, customer_id),
+        )
         db.commit()
         return {"updated_rows": cur.rowcount}
     except:
@@ -71,10 +90,10 @@ async def update_customer_address(customer_id: int, new_address: str):
     finally:
         db.close()
 
-@mcp.tool
-async def delete_customer(customer_id: int):
+@mcp.tool()
+def delete_customer(customer_id: int):
     """Slet kunde."""
-    db = dataBase()
+    db = get_connection()
     try:
         cur = db.cursor()
         cur.execute("DELETE FROM customers WHERE id = %s", (customer_id,))
@@ -86,5 +105,6 @@ async def delete_customer(customer_id: int):
     finally:
         db.close()
 
+# ---------- Run ----------
 if __name__ == "__main__":
-    mcp.run()   # FastMCP.run() er synkron – drop asyncio her
+    mcp.run(transport="stdio")
