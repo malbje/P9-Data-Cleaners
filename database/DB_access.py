@@ -4,16 +4,16 @@
 # ------------------------------
 
 import mysql.connector
-import DB_connection_settings
+import private_settings
 
 dataBase = mysql.connector.connect(
 
     # Create a file called "database/DB_connection_settings.py" in the "database"-folder 
     # and edit password to the same as you have for your MySQL Workbench
-    host = DB_connection_settings.host,
-    user = DB_connection_settings.user,
-    passwd = DB_connection_settings.passwd,
-    database = DB_connection_settings.database)
+    host = private_settings.host,
+    user = private_settings.user,
+    passwd = private_settings.passwd,
+    database = private_settings.database)
 
 cursorObject = dataBase.cursor()
 
