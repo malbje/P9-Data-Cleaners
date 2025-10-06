@@ -179,6 +179,7 @@ class DB_read:
         Returns:
             List of tuples, each containing data on a customer and their appointments.
         """
+        database = None  # Ensure database is always defined
         try:
             database, cursorObject = self.__open_DB_connection()
 
@@ -191,4 +192,5 @@ class DB_read:
             return result
         
         finally:
-            self.__close_DB_connection(database)
+            if database is not None:
+                self.__close_DB_connection(database)

@@ -12,6 +12,5 @@ customer = readDB.get_customer_by_id(1) # Calling the get_customer_by_id() metho
 
 all = readDB.get_joint_customers_appointments_data() # Calling the get_all_appointments() method from the DB_read object
 
-for touple in all:
-    for item in touple:
-        print(item)
+for item in all:
+    print(item)

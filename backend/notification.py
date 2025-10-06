@@ -43,12 +43,16 @@ def create_notification(name, date, time):
    
     return f"Hello {name}, this is a reminder that your cleaning is scheduled for {date} at {time}."
 
-# Mock "database" (change later when having functioning database)
-appointments = [
-    {"name": "Alice", "date": "October 10, 2025", "time": "2:30 PM", "email": "data.cleaners2@gmail.com"},
-    #{"name": "Bob", "date": "October 11, 2025", "time": "11:00 AM", "email": "bob@example.com"},
-    #{"name": "Charlie", "date": "October 12, 2025", "time": "4:15 PM", "email": "charlie@example.com"}
-]
+# Reference:
+# Using get_appointments_to_notify() from get_function.py to fetch real data from DB
+from backend.get_upcoming_appt import get_appointments_to_notify
+
+appointments = get_appointments_to_notify()
+
+print(f"Found {len(appointments)} appointments to notify.")
+for appt in appointments:
+    print("Appointment data:", appt)
+
 
 # Function to send notification
 def send_notification(notification, email):
