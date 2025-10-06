@@ -29,7 +29,7 @@ def get_appointments_to_notify():
 
     for row in raw_data:
         # Extract values from DB row (must match coloumn order from SQL query)
-        name, address, email, location_addr, appt_date, appt_time = row
+        name, address, email, appt_addr, appt_date, appt_time = row
 
         # combine date and time from database into a single datetime object
         try:

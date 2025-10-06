@@ -12,7 +12,7 @@ import streamlit as st
 from datetime import date, datetime
 import pandas as pd
 
-# Demo mode flag - when True, uses in-memory storage instead of real database
+# Demo mode flag
 DEMO_MODE = True
 
 # Custom exception class for validation errors in our business logic

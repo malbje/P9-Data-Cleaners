@@ -45,7 +45,7 @@ def create_notification(name, date, time):
 
 # Reference:
 # Using get_appointments_to_notify() from get_function.py to fetch real data from DB
-from backend.get_function import get_appointments_to_notify
+from backend.get_upcoming_appt import get_appointments_to_notify
 
 appointments = get_appointments_to_notify()
 
