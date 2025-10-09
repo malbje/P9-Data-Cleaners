@@ -72,12 +72,12 @@ def create_customer_logic(name: str, email: str, adress: str, cleaning_date_str:
     
     # Validate date format and parse it
     try:
-        cleaning_date_str = datetime.strptime(cleaning_date_string, "%Y-%m-%d").date()
+        cleaning_date_str = datetime.strptime(cleaning_date_string, "%Y-%m-%d").date() # type: ignore
     except Exception:
         raise ValidationError("Date MUST be in the format YYYY-MM-DD.")
     
     # Business rule: cleaning date cannot be in the past
-    if cleaning_date_str < date.today():
+    if cleaning_date_str < date.today(): # type: ignore
         raise ValidationError("Cleaning date cannot be in the past.")
     
     # Business rule: email must be unique across all customers
