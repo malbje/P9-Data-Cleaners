@@ -12,6 +12,13 @@ import streamlit as st
 from datetime import date, datetime
 import pandas as pd
 
+# This defines the current working directory as the root directory, so we can import from backend
+# Otherwise notification.py and its methods won't be found
+import sys, os
+sys.path.insert(0, os.getcwd())
+# ------------------------------
+
+import database.DB_write as DB_write
 
 # Demo mode flag
 DEMO_MODE = True
@@ -211,7 +218,8 @@ with st.form("form_create", clear_on_submit=True):
             # Convert date to ISO format (YYYY-MM-DD) for consistency
             customerResult = create_customer_logic(name, email, adress, dateChosen.isoformat())
 
-
+            db_writer = DB_write.DB_write()
+            db_writer.create_user(name, adress, email)
             
             # Show success message to user
             st.success("Customer created.")
