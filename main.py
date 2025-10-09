@@ -38,10 +38,6 @@ def ping() -> str:
     """Bruges til at teste at serveren kører."""
     return "pong"
 
-<<<<<<< HEAD
-for item in all:
-    print(item)
-=======
 @mcp.tool()
 def list_customers():
     """Alle kunder (ingen input)."""
@@ -112,4 +108,3 @@ def delete_customer(customer_id: int):
 # ---------- Run ----------
 if __name__ == "__main__":
     mcp.run(transport="stdio")
->>>>>>> LLM
