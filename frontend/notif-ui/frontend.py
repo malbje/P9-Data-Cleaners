@@ -12,6 +12,7 @@ import streamlit as st
 from datetime import date, datetime
 import pandas as pd
 
+
 # Demo mode flag
 DEMO_MODE = True
 
@@ -209,6 +210,8 @@ with st.form("form_create", clear_on_submit=True):
             # Call our business logic function with form data
             # Convert date to ISO format (YYYY-MM-DD) for consistency
             customerResult = create_customer_logic(name, email, adress, dateChosen.isoformat())
+
+
             
             # Show success message to user
             st.success("Customer created.")
