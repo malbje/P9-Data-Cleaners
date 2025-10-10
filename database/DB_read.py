@@ -41,7 +41,6 @@ class DB_read:
         return database, cursorObject        # dataBase: The object that executes queries on the database
                                              # cursorObject: The object that holds the database connection
 
-
     def __close_DB_connection(self, dataBase): # The '__'at in the name means it's a private method
         """
         Remember to close the database connection when done, with this.
@@ -183,7 +182,7 @@ class DB_read:
         try:
             database, cursorObject = self.__open_DB_connection()
 
-            query = "SELECT name, address, email, location_addr, appt_date, appt_time " \
+            query = "SELECT customers.id, name, address, email, location_addr, appt_date, appt_time " \
                     "FROM customers JOIN appointments ON customers.id = appointments.customer_id"
 
             cursorObject.execute(query)

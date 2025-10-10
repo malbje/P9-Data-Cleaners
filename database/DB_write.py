@@ -34,7 +34,6 @@ class DB_write:
         return database, cursorObject        # dataBase: The object that executes queries on the database
                                              # cursorObject: The object that holds the database connection
 
-
     def __close_DB_connection(self, dataBase): # The '__'at in the name means it's a private method
         """
         Remember to close the database connection when done, with this.
@@ -85,6 +84,36 @@ class DB_write:
             dataBase.commit()                                    # Commits the changes to the database
         finally:
             self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def update_user_id_by_name(self, name, id):
+        """
+        Updates a user's id in the database by its name.
+        """
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "UPDATE customers SET id = %s WHERE name = %s" # The query to be executed
+            updated_user_id = (id, name)                           # The updated user id, as a tuple
+
+            cursorObject.execute(query, updated_user_id)          # Executes the query
+            dataBase.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def update_appointment_id_by_customer_id(self, customer_id):
+        """
+        Updates an appointment's id in the database by its customer_id.
+        """
+        try:
+            database, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "UPDATE appointments SET id = -1 WHERE customer_id = %s" # The query to be executed
+            customer_id = (customer_id,)                               # as a tuple
+
+            cursorObject.execute(query, customer_id)           # Executes the query
+            database.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(database)                 # Closes the database connection
 
     def update_appointment_by_id(self, id, customer_id, location_addr, appt_date, appt_time):
 
