@@ -19,6 +19,7 @@ sys.path.insert(0, os.getcwd())
 # ------------------------------
 
 import database.DB_write as DB_write
+import database.DB_read as DB_read
 
 # Demo mode flag
 DEMO_MODE = True
@@ -129,15 +130,6 @@ def update_date_logic(email: str, new_date_str: str):
     # Business rule: new date cannot be in the past
     if cleaning_date < date.today():
         raise ValidationError("New date cannot be in the past.")
-    
-    # Find the customer record
-    index = find_index_by_email(email)
-    if index == -1:
-        raise ValidationError("No customer found with that email.")
-    
-    # Update the cleaning date for the found customer
-    st.session_state.rows[index]["cleaning_date"] = new_date_string
-    return {"status": "ok"}
 
 def delete_customer_logic(email: str):
     """
@@ -257,6 +249,12 @@ with st.form("form_update"):
             # Call business logic to update the date
             update_date_logic(email_update, new_cleaning_date.isoformat())
             
+            db_reader = DB_read.DB_read()
+            db_writer = DB_write.DB_write()
+
+            id = db_reader.get_appointment_id_by_customer_email(email_update)
+            db_writer.update_appointment_date_by_id(id, new_cleaning_date.isoformat())
+
             # Show success message
             st.success("Date updated")
             
@@ -268,7 +266,7 @@ with st.form("form_update"):
             st.error(str(e))
         except Exception as e:
             # Show unexpected errors
-            st.error(f"Unexpected error: {e}")
+            st.error(f"Non existing email: {e}")
 
 st.divider()
 

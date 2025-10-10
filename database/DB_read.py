@@ -194,3 +194,19 @@ class DB_read:
         finally:
             if database is not None:
                 self.__close_DB_connection(database)
+
+    def get_appointment_id_by_customer_email(self, custumor_email):
+        
+        customers = self.get_all_customers()
+
+        customer_id = 1
+
+        for customer in customers:
+            id, _, _, email = customer
+            if  custumor_email == email:
+                customer_id = id
+                break
+
+        id = self.get_appointments_by_customer_id(customer_id)
+
+        return id

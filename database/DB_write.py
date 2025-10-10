@@ -1,5 +1,6 @@
 # This defines the current working directory as the root directory, so we can import from backend
 # Otherwise notification.py and its methods won't be found
+from datetime import date
 import sys, os
 sys.path.insert(0, os.getcwd())
 # ------------------------------
@@ -178,11 +179,22 @@ class DB_write:
         id, customer_id, location_addr, appt_date, _ = appointment[0]
         self.update_appointment_by_id(id, customer_id, location_addr, appt_date, appt_time)
 
-
-db_writer = DB_write()
+#db_reader = DB_reader.DB_read()
+#db_writer = DB_write()
 
 # db_writer.create_user("mig", "min adresse", "min email")
 
 # db_writer.update_user_by_id(16, "dig", "din adresse", "din email")
 
-db_writer.update_user_name_by_id(15, "Henrik")
+# db_writer.update_user_name_by_id(15, "Henrik")
+
+#email_update = "mynewmail"
+#new_cleaning_date = date(2024, 12, 25)
+
+#id = db_reader.get_appointment_id_by_customer_email(email_update)
+#ids, = id
+#print("N?")
+#print(ids)
+#print(id)
+#print('sikker?')
+#db_writer.update_appointment_date_by_id(id, new_cleaning_date.isoformat())
