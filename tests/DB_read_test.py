@@ -15,20 +15,19 @@ import database.DB_read as DB_reader
 
 class Test_DB_read(unittest.TestCase):
 
+    import database.DB_write as DB_writer
+    db_writer = DB_writer.DB_write()
+    db_reader= DB_reader.DB_read()
+
     def setUp(self):
-        import database.DB_write as DB_writer
-        db_writer = DB_writer.DB_write()
-        db_reader= DB_reader.DB_read()
 
-        test_customer = db_reader.get_customer_by_id(-1)
+        test_customer = self.db_reader.get_customer_by_id(-1)
         if type(test_customer) == str: # If the test customer doesn't exist, create it
-            db_writer.create_user(name="Test User", address="Test Address", email="Test Email")
-            db_writer.update_user_id_by_name("Test User", -1) # Set the new user's id to -1
+            self.db_writer.create_customer_including_id(-1, "Test User", "Test Address", "Test Email")
 
-        test_appointment = db_reader.get_appointment_by_id(-1)
+        test_appointment = self.db_reader.get_appointment_by_id(-1)
         if type(test_appointment) == str: # If the test appointment doesn't exist, create
-            db_writer.create_appointment(customer_id = -1, location_addr = "Test Location", appt_date = "2000-01-01", appt_time = "12:00:00")
-            db_writer.update_appointment_id_by_customer_id(-1) # Set the new appointment's id to -1
+            self.db_writer.create_appointment_including_id(-1, -1, "Test Location", "2000-01-01", "12:00:00")
 
     def test_get_all_customers(self):
         """
