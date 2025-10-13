@@ -241,6 +241,34 @@ class Test_DB_write(unittest.TestCase):
         finally:
             self.db_writer.delete_appointment_by_id(-1)
 
+    def test_delete_customer_by_id(self):
+
+        #Arrange
+        customer = self.db_reader.get_customer_by_id(-1)
+
+        #Act
+        self.db_writer.delete_customer_by_id(-1)
+
+        #Assert
+        assert isinstance(customer[0], tuple)
+
+        customer = self.db_reader.get_customer_by_id(-1)
+        assert isinstance(customer, str)
+
+    def test_delete_appointment_by_id(self):
+
+        #Arrange
+        appointment = self.db_reader.get_appointment_by_id(-1)
+
+        #Act
+        self.db_writer.delete_appointment_by_id(-1)
+
+        #Assert
+        assert isinstance(appointment[0], tuple)
+
+        appointment = self.db_reader.get_appointment_by_id(-1)
+        assert isinstance(appointment, str)
+
 # These lines makes it so that the code in this file only runs when the file is run directly, and not when imported
 if __name__ == '__main__':
     unittest.main()
