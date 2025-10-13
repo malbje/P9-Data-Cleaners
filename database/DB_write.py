@@ -1,5 +1,6 @@
 # This defines the current working directory as the root directory, so we can import from backend
 # Otherwise notification.py and its methods won't be found
+from datetime import date
 import sys, os
 sys.path.insert(0, os.getcwd())
 # ------------------------------
@@ -33,14 +34,13 @@ class DB_write:
         return database, cursorObject        # dataBase: The object that executes queries on the database
                                              # cursorObject: The object that holds the database connection
 
-
     def __close_DB_connection(self, dataBase): # The '__'at in the name means it's a private method
         """
         Remember to close the database connection when done, with this.
         """
         dataBase.close()
 
-    def create_user(self, name, address, email):
+    def create_customer(self, name, address, email):
         """
         Creates a new user in the database.
         """
@@ -49,6 +49,21 @@ class DB_write:
 
             query = "INSERT INTO customers (name, address, email) VALUES (%s, %s, %s)" # The query to be executed
             new_user = (name, address, email)                                          # The new user to be added, as a tuple
+
+            cursorObject.execute(query, new_user)               # Executes the query
+            dataBase.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def create_customer_including_id(self, id, name, address, email):
+        """
+        Creates a new user in the database, including a specific id.
+        """
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "INSERT INTO customers (id, name, address, email) VALUES (%s, %s, %s, %s)" # The query to be executed
+            new_user = (id, name, address, email)                                          # The new user to be added, as a tuple
 
             cursorObject.execute(query, new_user)               # Executes the query
             dataBase.commit()                                    # Commits the changes to the database
@@ -70,7 +85,22 @@ class DB_write:
         finally:
             self.__close_DB_connection(database)                 # Closes the database connection
 
-    def update_user_by_id(self, id, name, address, email):
+    def create_appointment_including_id(self, id, customer_id, location_addr, appt_date, appt_time):
+        """
+        Creates a new appointment in the database, including a specific id.
+        """
+        try:
+            database, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "INSERT INTO appointments (id, customer_id, location_addr, appt_date, appt_time) VALUES (%s, %s, %s, %s, %s)" # The query to be executed
+            new_appointment = (id, customer_id, location_addr, appt_date, appt_time)                                          # The new appointment to be added, as a tuple
+
+            cursorObject.execute(query, new_appointment)               # Executes the query
+            database.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(database)                 # Closes the database connection
+
+    def update_customer_by_id(self, id, name, address, email):
         """
         Updates a user in the database by its id.
         """
@@ -84,6 +114,40 @@ class DB_write:
             dataBase.commit()                                    # Commits the changes to the database
         finally:
             self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def update_customer_id_by_name(self, name, id):
+        """
+        Updates a user's id in the database by its name.
+        """
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "UPDATE customers SET id = %s WHERE name = %s" # The query to be executed
+            updated_user_id = (id, name)                           # The updated user id, as a tuple
+
+            cursorObject.execute(query, updated_user_id)          # Executes the query
+            dataBase.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def update_appointment_id_by_customer_id(self, id, customer_id): # probably not needed
+        """
+        Updates an appointment's id in the database by its customer_id.
+
+        Args:
+            id (int): The new id for the appointment.
+            customer_id (int): The customer_id of the appointment to be updated.
+        """
+        try:
+            database, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "UPDATE appointments SET id = %s WHERE customer_id = %s" # The query to be executed
+            ids = (id, customer_id)                               # as a tuple
+
+            cursorObject.execute(query, ids)           # Executes the query
+            database.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(database)                 # Closes the database connection
 
     def update_appointment_by_id(self, id, customer_id, location_addr, appt_date, appt_time):
 
@@ -99,60 +163,29 @@ class DB_write:
         finally:
             self.__close_DB_connection(database)                 # Closes the database connection
 
-    def delete_user_by_id(self, id):
-        """
-        Deletes a user from the database by its id.
-        """
-        try:
-            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
-
-            query = "DELETE FROM customers WHERE id = %s"            # The query to be executed
-            customer_id = (id,)                                           # The id to be deleted, as a tuple
-
-            cursorObject.execute(query, customer_id)                 # Executes the query
-            dataBase.commit()      
-                                          # Commits the changes to the database
-        finally:
-            self.__close_DB_connection(dataBase)                 # Closes the database connection
-
-    def delete_appointment_by_id(self, id):
-        """
-        Deletes an appointment from the database by its id.
-        """
-        try:
-            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
-
-            query = "DELETE FROM appointments WHERE id = %s"     # The query to be executed
-            appointment_id = (id,)                               # The id to be deleted, as a tuple
-
-            cursorObject.execute(query, appointment_id)          # Executes the query
-            dataBase.commit()                                    # Commits the changes to the database
-        finally:
-            self.__close_DB_connection(dataBase)                 # Closes the database connection
-
-    def update_user_name_by_id(self, id, name):
+    def update_customer_name_by_id(self, id, name):
 
         db_reader = DB_reader.DB_read()
         customer = db_reader.get_customer_by_id(id)
 
         id, _, address, email = customer[0]
-        self.update_user_by_id(id, name, address, email)
+        self.update_customer_by_id(id, name, address, email)
 
-    def update_user_address_by_id(self, id, address):
+    def update_customer_address_by_id(self, id, address):
 
         db_reader = DB_reader.DB_read()
         customer = db_reader.get_customer_by_id(id)
 
         id, name, _, email = customer[0]
-        self.update_user_by_id(id, name, address, email)
+        self.update_customer_by_id(id, name, address, email)
 
-    def update_user_email_by_id(self, id, email):
+    def update_customer_email_by_id(self, id, email):
 
         db_reader = DB_reader.DB_read()
         customer = db_reader.get_customer_by_id(id)
 
         id, name, address, _ = customer[0]
-        self.update_user_by_id(id, name, address, email)
+        self.update_customer_by_id(id, name, address, email)
 
     def update_appointment_location_by_id(self, id, location_addr):
 
@@ -178,11 +211,66 @@ class DB_write:
         id, customer_id, location_addr, appt_date, _ = appointment[0]
         self.update_appointment_by_id(id, customer_id, location_addr, appt_date, appt_time)
 
+    def delete_customer_by_id(self, id):
+        """
+        Deletes a user from the database by its id.
+        """
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
 
-db_writer = DB_write()
+            query = "DELETE FROM customers WHERE id = %s"            # The query to be executed
+            customer_id = (id,)                                           # The id to be deleted, as a tuple
+
+            cursorObject.execute(query, customer_id)                 # Executes the query
+            dataBase.commit()      
+                                          # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def delete_customers_by_name(self, name):
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "DELETE FROM customers WHERE name = %s"            # The query to be executed
+            customer_name = (name,)                                           # The name to be deleted, as a tuple
+
+            cursorObject.execute(query, customer_name)                 # Executes the query
+            dataBase.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+    def delete_appointment_by_id(self, id):
+        """
+        Deletes an appointment from the database by its id.
+        """
+        try:
+            dataBase, cursorObject = self.__open_DB_connection() # Opens a new database connection
+
+            query = "DELETE FROM appointments WHERE id = %s"     # The query to be executed
+            appointment_id = (id,)                               # The id to be deleted, as a tuple
+
+            cursorObject.execute(query, appointment_id)          # Executes the query
+            dataBase.commit()                                    # Commits the changes to the database
+        finally:
+            self.__close_DB_connection(dataBase)                 # Closes the database connection
+
+
+#db_reader = DB_reader.DB_read()
+#db_writer = DB_write()
 
 # db_writer.create_user("mig", "min adresse", "min email")
 
 # db_writer.update_user_by_id(16, "dig", "din adresse", "din email")
 
-db_writer.update_user_name_by_id(15, "Henrik")
+# db_writer.update_user_name_by_id(15, "Henrik")
+
+#email_update = "mynewmail"
+#new_cleaning_date = date(2024, 12, 25)
+
+#id = db_reader.get_appointment_id_by_customer_email(email_update)
+#ids, = id
+#print("N?")
+#print(ids)
+#print(id)
+#print('sikker?')
+#db_writer.update_appointment_date_by_id(id, new_cleaning_date.isoformat())
