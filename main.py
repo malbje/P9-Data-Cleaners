@@ -5,9 +5,26 @@
 from mcp.server.fastmcp import FastMCP
 from mysql.connector import IntegrityError
 from database.DB_access import get_connection
+import private_settings
+import json
+from openai import OpenAI
+from tenacity import retry, wait_random_exponential, stop_after_attempt
+from termcolor import colored  
+
+GPT_MODEL = "gpt-5"
+client = OpenAI()
 
 # Opret MCP-server
 mcp = FastMCP("DataCleaners")
+
+client = OpenAI(api_key=private_settings.OPENAI_API_KEY)
+
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": "Sig hej"}]
+)
+
+print(response.choices[0].message.content)
 
 # ---------- Helper functions ----------
 def _query_all(sql, params=None):
