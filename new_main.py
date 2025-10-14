@@ -1,6 +1,7 @@
 # app_chat.py
 # Kør LLM + function calling for list_customers_by_name (uden MCP/Cursor)
 
+from sqlite3 import IntegrityError
 from openai import OpenAI
 import json
 import private_settings  # indeholder OPENAI_API_KEY
@@ -10,7 +11,7 @@ from database.DB_access import get_connection
 # 1) Din "rigtige" Python-funktion (genbrug af din DB-adgang)
 # ----------------------------
 def list_customers_by_name(customer_name: str):
-    """Find kunder via navn (LIKE-søgning). Returnerer liste af dicts."""
+    """Find kunder via navn (LIKE-søgning)"""
     db = get_connection()
     try:
         cur = db.cursor(dictionary=True)
@@ -21,6 +22,21 @@ def list_customers_by_name(customer_name: str):
         return cur.fetchall()
     finally:
         db.close()
+
+
+def add_customer(name: str, address: str, email: str):
+    """Opret en kunde. Fejler hvis email allerede findes."""
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO customers (name, address, email) VALUES (%s, %s, %s)",
+            (name, address, email),
+        )
+        db.commit()
+        return {"id": cur.lastrowid, "name": name, "address": address, "email": email}
+    except IntegrityError as e:
+        return {"error": "Email already exists", "details": str(e)}
 
 # ----------------------------
 # 2) Definér tool-schema (JSON Schema) til modellen
@@ -40,6 +56,22 @@ TOOLS = [
                     }
                 },
                 "required": ["customer_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_customer",
+            "description": "Opretter en ny kunde i databasen.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "address": {"type": "string"},
+                    "email": {"type": "string"}
+                },
+                "required": ["name", "email"]
             }
         }
     }
@@ -75,6 +107,8 @@ def ask_llm(user_prompt: str):
 
         if name == "list_customers_by_name":
             result = list_customers_by_name(**args)
+        elif name == "add_customer":
+            result = add_customer(**args)
         else:
             result = {"error": f"Ukendt funktion: {name}"}
 
@@ -98,6 +132,6 @@ def ask_llm(user_prompt: str):
 # ----------------------------
 if __name__ == "__main__":
     # Eksempel: spørg efter kunder hvor navnet indeholder "Jensen"
-    prompt = "Vis kunder med navn der indeholder 'Jensen', og list id + navn + email pænt."
+    prompt = "tilføj en kunde med navn 'Lars Larsen', adresse 'Nørregade 1, 8000 Aarhus' og email 'lars@example.com'"
     answer = ask_llm(prompt)
     print(answer)
