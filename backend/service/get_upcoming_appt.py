@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # imports
 from datetime import datetime, timedelta
-import database.DB_read as DB_reader #Reference to the database read class
+import backend.service.database.DB_read as DB_reader #Reference to the database read class
 
 def get_appointments_to_notify():
     """
