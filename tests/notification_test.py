@@ -11,7 +11,7 @@ import sys, os
 sys.path.insert(0, os.getcwd())
 # ------------------------------
 
-from backend import notification
+from backend.service import notification
 
 class Test_notification(unittest.TestCase):
     def test_create_notification(self):
