@@ -7,7 +7,7 @@ sys.path.insert(0, os.getcwd())
 
 # Imports
 import mysql.connector, private_settings
-import database.DB_read as DB_reader
+import backend.service.database.DB_read as DB_reader
 
 class DB_write:
 
