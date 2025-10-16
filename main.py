@@ -71,6 +71,6 @@ def ask_llm(user_prompt: str):
 # ----------------------------
 if __name__ == "__main__":
     # Eksempel: spørg efter kunder hvor navnet indeholder "Jensen"
-    prompt = "tilføj en kunde med navn 'Lars Larsen', adresse 'Nørregade 1, 8000 Aarhus' og email 'lars@example.com'"
+    prompt = "va makker ka du ik lige giv mig listen over alle de der dumme mennesker i vores database tak du ja mojn"
     answer = ask_llm(prompt)
     print(answer)

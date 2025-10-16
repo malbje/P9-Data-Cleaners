@@ -52,152 +52,6 @@ class DB_read:
         """
         dataBase.close()
 
-    def get_all_customers(self):
-        """
-        Method for getting a list of all customers from the database.
-
-        Returns:
-            List of tuples, each containing customer data.
-        """
-        # We try to qurry successfully...
-        try:
-            database, cursorObject = self.__open_DB_connection() # Always start with opening a new connection
-
-            query = "SELECT * FROM customers"          # The SQL query to be executed
-
-            cursorObject.execute(query)                # Executing the query
-            customers = cursorObject.fetchall()        # Getting all results from the executed query
-
-        # ...But if the qurry fails for some reason, we always close the connection
-        finally:
-            self.__close_DB_connection(database)       # Always remember to close the database connection when done
-
-        return customers
-    
-    def get_all_appointments(self):
-        """
-        Method for getting a list of all cleaning appointments from the database.
-
-        Returns:
-            List of tuples, each containing appointment data.
-        """
-        # We try to qurry successfully...
-        try:
-            database, cursorObject = self.__open_DB_connection() # Always start with opening a new connection
-
-            query = "SELECT * FROM appointments"               # The SQL query to be executed
-
-            cursorObject.execute(query)                        # Executing the query
-            appointments = cursorObject.fetchall()             # Getting all results from the executed query
-
-        # ...But if the qurry fails for some reason, we always close the connection
-        finally:
-            self.__close_DB_connection(database)               # Always remember to close the database connection when done
-
-        return appointments
-    
-    def get_appointments_by_customer_id(self, customer_id):
-        """
-        Method for getting a list of all cleaning appointments for a specific customer from the database.
-
-        Args:
-            customer_id (int): The ID of the customer.
-        
-        Returns:
-            List of tuples, each containing appointment data for the specified customer.
-            If no appointments are found, returns a message saying so.
-        """
-        try:
-            database, curserObject = self.__open_DB_connection()
-
-            query = "SELECT * FROM appointments WHERE customer_id = %s"
-
-            curserObject.execute(query, (customer_id,))
-            appointments = curserObject.fetchall()
-
-            if appointments:
-                return appointments
-            else:
-                return "No appointments found for this customer ID."
-            
-        finally:
-            self.__close_DB_connection(database)
-
-    def get_customer_by_id(self, customer_id):
-        """
-        A method for getting the customer with given ID number
-        
-        Args:
-            customer_id (int): The ID (primary key) of the customer.
-
-        Resturns:
-            List of tuples, each containing customer data matching the ID.
-            If no customer is found, returns a message saying so.
-        """
-        try:
-            database, cursorObject = self.__open_DB_connection()
-
-            query = "SELECT * FROM customers WHERE id = %s"
-
-            cursorObject.execute(query, (customer_id,))
-            customer = cursorObject.fetchall()
-
-            if customer:
-                return customer
-            else:
-                return "No customer found with this ID."
-            
-        finally:
-            self.__close_DB_connection(database)
-
-    def get_appointment_by_id(self, appointment_id):
-        """
-        Method for getting a specific appointment by its ID.
-
-        Args:
-            appointment_id (int): The ID of the appointment.
-
-        Returns:
-            List of tuples, each containing appointment data matching the ID.
-            If no appointment is found, returns a message saying so.
-        """
-        try:
-            database, cursorObject = self.__open_DB_connection()
-
-            query = "SELECT * FROM appointments WHERE id = %s"
-
-            cursorObject.execute(query, (appointment_id,))
-            appointment = cursorObject.fetchall()
-
-            if appointment:
-                return appointment
-            else:
-                return "No appointment found with this ID."
-        finally:
-            self.__close_DB_connection(database)
-
-    def get_joint_customers_appointments_data(self):
-        """
-        Creates a joint table of customers with their appointments.
-
-        Returns:
-            List of tuples, each containing data on a customer and their appointments.
-        """
-        database = None  # Ensure database is always defined
-        try:
-            database, cursorObject = self.__open_DB_connection()
-
-            query = "SELECT name, address, email, location_addr, appt_date, appt_time " \
-                    "FROM customers JOIN appointments ON customers.id = appointments.customer_id"
-
-            cursorObject.execute(query)
-            result = cursorObject.fetchall()
-
-            return result
-        
-        finally:
-            if database is not None:
-                self.__close_DB_connection(database)
 
 #### Functions from Main.py ####
 
@@ -208,7 +62,7 @@ def list_customers():
     db = get_connection()
     try: 
         cur = db.cursor(dictionary=True)
-        cur.execute("SELECT id, name, surname, address, email, notification_preference FROM customers ORDER BY id")
+        cur.execute("SELECT * FROM customers ORDER BY id")
         return cur.fetchall()
     finally:
         db.close()
@@ -222,7 +76,7 @@ def list_customers_by_name(name: str, surname: str):
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "SELECT id, name, surname, email, notification_preference FROM customers WHERE name LIKE %s AND surname LIKE %s ORDER BY id", 
+            "SELECT * FROM customers WHERE name LIKE %s AND surname LIKE %s ORDER BY id",
             (f"%{name}%", f"%{surname}%")
         )
         return cur.fetchall()
@@ -237,10 +91,25 @@ def get_customer_by_email(email: str):
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "SELECT id, name, surname, address, email, notification_preference FROM customers WHERE email = %s",
+            "SELECT * FROM customers WHERE email = %s",
             (email,),
         )
         return cur.fetchone()  # Antager email er unik, så vi forventer kun én række
+    finally:
+        db.close()
+
+def get_customer_by_id(customer_id: int):
+    """
+    Hent en kunde via dens ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT * FROM customers WHERE id = %s",
+            (customer_id,),
+        )
+        return cur.fetchone()  # Antager ID er unik, så vi forventer kun én række
     finally:
         db.close()
 
@@ -261,7 +130,7 @@ def add_customer(name: str, surname: str, email: str, notification_preference: s
     except IntegrityError as e:
         return {"error": "Email already exists", "details": str(e)}
 
-def add_address(customer_id: int, address: str):
+def add_address(city_name: str, postal_code: str, street_and_number: str):
     """
     Tilføjer en adresse til en kunde baseret på deres ID.
     """
@@ -269,27 +138,65 @@ def add_address(customer_id: int, address: str):
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "INSERT INTO Address (customer_id, address) VALUES (%s, %s)",
-            (customer_id, address),
+            "INSERT INTO addresses (city_name, postal_code, street_and_number) VALUES (%s, %s, %s)",
+            (city_name, postal_code, street_and_number),
         )
         db.commit()
         return {"updated_rows": cur.rowcount}
     finally:
         db.close()
 
-def update_customer_address(customer_id: int, address: str):
+def update_customer_address(customer_id: int, address_id: int , city_name: str, postal_code: str, street_and_number: str):
     """
     Opdaterer en kundes adresse baseret på deres ID.
+    UPDATE addresses → vi vil ændre data i tabellen addresses.
+
+    JOIN lives_in ON lives_in.address_id = addresses.id → vi kobler addresses sammen med lives_in.
+    Det betyder: “Kun de adresser, som faktisk optræder i lives_in, kan ændres.”
+
+    SET addresses.city_name = %s, ... → sætter de nye værdier for felterne.
+
+    WHERE addresses.id = %s AND lives_in.customer_id = %s → betyder:
     """
     db = get_connection()
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "UPDATE customers SET address = %s WHERE id = %s",
-            (address, customer_id),
+            "UPDATE addresses JOIN lives_in ON lives_in.address_id = addresses.id SET addresses.city_name = %s, addresses.postal_code = %s, addresses.street_and_number = %s WHERE addresses.id = %s AND lives_in.customer_id = %s",
+            (city_name, postal_code, street_and_number, address_id, customer_id),
         )
         db.commit()
         return {"updated_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def get_appointment_by_id(appointment_id: int):
+    """
+    Hent en specifik aftale via dens ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT * FROM appointments WHERE id = %s",
+            (appointment_id,),
+        )
+        return cur.fetchone()  # Antager ID er unik, så vi forventer kun én række
+    finally:
+        db.close()
+
+def get_appointments_by_customer_id(customer_id: int):
+    """
+    Hent alle aftaler for en specifik kunde via kundens ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT * FROM appointments WHERE customer_id = %s ORDER BY date, time",
+            (customer_id,),
+        )
+        return cur.fetchall()
     finally:
         db.close()
 
