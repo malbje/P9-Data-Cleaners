@@ -71,6 +71,24 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "get_customer_by_id",
+            "description": "Retrieve a customer by their unique ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer",
+                        "description": "The unique ID of the customer."
+                    }
+                },
+                "required": ["customer_id"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
             "name": "add_customer",
             "description": "Opretter en ny kunde i databasen.",
             "parameters": {
@@ -110,21 +128,31 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "update_customer_address",
-            "description": "Updates a customer's address based on their ID and previous address.",
+            "description": "Updates a customer's address based on their ID.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "customer_id": {
                         "type": "integer"
                     },
-                    "address": {
+                    "address_id": {
+                        "type": "integer"
+                    },
+                    "city_name": {
+                        "type": "string"
+                    },
+                    "postal_code": {
+                        "type": "string"
+                    },
+                    "street_and_number": {
                         "type": "string"
                     }
                 },
-                "required": ["customer_id", "address"]
+                "required": ["customer_id", "address_id", "city_name", "postal_code", "street_and_number"]
             }
         }
     },
+
     {
         "type": "function",
         "function": {
@@ -141,4 +169,39 @@ TOOLS = [
             }
         }
     },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_appointments_by_address_id",
+            "description": "Retrieve all appointments for a specific address by its ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_appointments_by_id",
+            "description": "Retrieve specific appointment by its ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "The unique ID of the appointment."
+                    }
+                },
+                "required": ["id"]
+            }
+        }
+    }
 ]

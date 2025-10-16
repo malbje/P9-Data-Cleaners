@@ -5,7 +5,7 @@ from openai import OpenAI
 import json
 import private_settings  # indeholder OPENAI_API_KEY
 from backend.llm_tools import TOOLS
-from database.DB_read import list_customers, list_customers_by_name, get_customer_by_email, add_address, update_customer_address, delete_customer, add_customer
+from database.DB_read import get_appointment_by_id, get_appointments_by_address_id, get_customer_by_id, list_customers, list_customers_by_name, get_customer_by_email, add_address, update_customer_address, delete_customer, add_customer
 
 
 def ask_llm(user_prompt: str):
@@ -41,10 +41,16 @@ def ask_llm(user_prompt: str):
             result = add_customer(**args)
         elif name == "get_customer_by_email":
             result = get_customer_by_email(**args)
+        elif name == "get_customer_by_id":
+            result = get_customer_by_id(**args)
         elif name == "add_address":
             result = add_address(**args)
         elif name == "update_customer_address":
             result = update_customer_address(**args)
+        elif name == "get_appointments_by_address_id":
+            result = get_appointments_by_address_id(**args)
+        elif name == "get_appointment_by_id":
+            result = get_appointment_by_id(**args)
         elif name == "delete_customer":
             result = delete_customer(**args)
         else:
@@ -71,6 +77,6 @@ def ask_llm(user_prompt: str):
 # ----------------------------
 if __name__ == "__main__":
     # Eksempel: spørg efter kunder hvor navnet indeholder "Jensen"
-    prompt = "va makker ka du ik lige giv mig listen over alle de der dumme mennesker i vores database tak du ja mojn"
+    prompt = "giv mig en oversigt over Fiona Clars aftaler og generelle info. "
     answer = ask_llm(prompt)
     print(answer)

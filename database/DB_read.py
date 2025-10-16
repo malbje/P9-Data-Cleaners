@@ -185,16 +185,16 @@ def get_appointment_by_id(appointment_id: int):
     finally:
         db.close()
 
-def get_appointments_by_customer_id(customer_id: int):
+def get_appointments_by_address_id(address_id: int):
     """
-    Hent alle aftaler for en specifik kunde via kundens ID.
+    Hent alle aftaler for en specifik kunde via addressens ID.
     """
     db = get_connection()
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "SELECT * FROM appointments WHERE customer_id = %s ORDER BY date, time",
-            (customer_id,),
+            "SELECT * FROM appointments WHERE address_id = %s ORDER BY date, time",
+            (address_id,),
         )
         return cur.fetchall()
     finally:
