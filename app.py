@@ -91,11 +91,15 @@ def update_date_logic(email, data):
     return CUSTOMERS[index]
 
 # --- API Endpoints ---
-
 @app.route('/')
-def index():
-    """Serves the main HTML page."""
-    return render_template('index.html')
+def dashboard():
+    """Serves the new main_page page."""
+    return render_template('main_page.html')
+
+@app.route('/manual')
+def manual_insert():
+    """Serves the manual insert HTML page."""
+    return render_template('manual_insert.html')
 
 @app.route('/api/customers', methods=['GET', 'POST'])
 def handle_customers():

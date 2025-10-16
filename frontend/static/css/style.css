@@ -154,3 +154,132 @@ th {
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+
+/* --- Dashboard Specific Styles --- */
+body {
+    background-color: #f0f2f6; /* A slightly different background for the app */
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1em 2em;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 2em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.dashboard-header nav a {
+    margin-left: 1em;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 500;
+}
+.dashboard-header nav a:hover {
+    text-decoration: underline;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 2em;
+    min-height: 75vh;
+}
+
+.widget-panel, .chatbot-panel {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 1.5em;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Widget Styles */
+.widget {
+    background-color: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1em;
+    margin-top: 1em;
+}
+
+.widget h3 {
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5em;
+}
+
+/* Chatbot Styles */
+.chatbot-panel {
+    display: flex;
+    flex-direction: column; /* Stacks messages on top of the input form */
+}
+
+.chat-messages {
+    flex-grow: 1; /* Allows this area to fill available space */
+    overflow-y: auto; /* Adds scrolling for long conversations */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1em;
+    margin-bottom: 1em;
+    background-color: #f9f9f9;
+}
+
+.message {
+    padding: 0.7em 1em;
+    border-radius: 15px;
+    margin-bottom: 0.7em;
+    max-width: 80%;
+    line-height: 1.4;
+}
+
+.message.bot {
+    background-color: #e9ecef;
+    color: #333;
+    border-bottom-left-radius: 2px;
+    align-self: flex-start;
+}
+
+.message.user {
+    background-color: #007bff;
+    color: white;
+    border-bottom-right-radius: 2px;
+    align-self: flex-end; /* Aligns user message to the right */
+    margin-left: auto; /* Pushes it to the right */
+}
+
+
+.chat-form {
+    display: flex;
+    gap: 0.5em;
+}
+
+.chat-form input {
+    flex-grow: 1; /* Input field takes up most of the space */
+    padding: 0.8em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.chat-form button {
+    padding: 0.8em 1.5em;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    width: auto; /* Override the 100% width from previous styles */
+}

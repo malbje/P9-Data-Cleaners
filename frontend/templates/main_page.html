@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Data Cleaners - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Data Cleaners Dashboard</h1>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/manual">Manual Entry</a>
+            </nav>
+        </header>
+
+        <main class="dashboard-grid">
+            <section class="widget-panel">
+                <h2>Widgets</h2>
+                <div class="widget">
+                    <h3>Vejr 🌦️</h3>
+                    <p>Weather information will be displayed here. (e.g., Sunny, 18°C)</p>
+                </div>
+                <div class="widget">
+                    <h3>Ugeplan 🗓️</h3>
+                    <p>The weekly schedule overview will be shown here.</p>
+                    </div>
+                 <div class="widget">
+                    <h3>Quick Stats 📊</h3>
+                    <p>Upcoming Cleanings: 5</p>
+                    <p>Total Customers: 12</p>
+                </div>
+            </section>
+
+            <section class="chatbot-panel">
+                <h2>🤖 AI Assistent til Booking</h2>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message bot">
+                        Hej! How can I help you book a cleaning today? You can say "Book a cleaning for a new customer."
+                    </div>
+                </div>
+                <form class="chat-form" id="chat-form">
+                    <input type="text" id="chat-input" placeholder="Skriv din besked her..." autocomplete="off">
+                    <button type="submit">Send</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+</body>
+</html>
