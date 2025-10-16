@@ -3,13 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Cleaning Schedule - Admin</title>
+    <title>✨ Data Cleaners - Manual Mode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1> Cleaning Schedule - Admin</h1>
-        <p>Frontend to create, update, and delete customers.</p>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Data Cleaners - Manual Mode</h1>
+            <nav>
+                <span id="user-info" class="user-info">Loading...</span>
+                <div class="mode-toggle">
+                    <button id="mode-toggle-btn" class="mode-btn" onclick="toggleMode()">
+                        <span class="mode-text">AI Mode</span>
+                    </button>
+                </div>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </nav>
+        </header>
+
+        <div class="container">
+            <h2>Manual Entry System</h2>
+            <p>Frontend to create, update, and delete customers.</p>
         
         <div id="message-container"></div>
 
@@ -74,7 +88,41 @@
                 </form>
             </div>
         </div>
+        </div>
     </div>
+    
+    <script>
+        // Mode toggle functionality for manual page
+        document.addEventListener("DOMContentLoaded", () => {
+            // Load user information (same as dashboard)
+            loadUserInfo();
+        });
+        
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                if (data.logged_in) {
+                    const userInfo = document.getElementById('user-info');
+                    if (userInfo) {
+                        userInfo.textContent = `Welcome, ${data.user.name}`;
+                    }
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        // Global function for the toggle button onclick
+        function toggleMode() {
+            window.location.href = '/';
+        }
+    </script>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

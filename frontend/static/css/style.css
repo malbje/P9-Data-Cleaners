@@ -178,6 +178,13 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.dashboard-header nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+}
+
 .dashboard-header h1 {
     margin: 0;
     font-size: 1.5em;
@@ -193,10 +200,70 @@ body {
     text-decoration: underline;
 }
 
+.mode-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.mode-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 90px;
+}
+
+.mode-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.mode-btn.active {
+    background-color: #28a745;
+}
+
+.mode-btn.active:hover {
+    background-color: #1e7e34;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.mode-text {
+    position: relative;
+    z-index: 2;
+}
+
 .user-info {
-    margin-left: 1em;
+    margin: 0;
     color: #666;
     font-size: 0.9em;
+    order: 1;
+}
+
+.mode-toggle {
+    display: flex;
+    align-items: center;
+    order: 2;
+}
+
+.logout-btn {
+    margin: 0;
+    text-decoration: none;
+    color: #dc3545;
+    font-weight: 500;
+    font-size: 0.9em;
+    order: 3;
+}
+
+.logout-btn:hover {
+    text-decoration: underline;
 }
 
 .logout-btn {
@@ -226,6 +293,7 @@ body {
     border-radius: 8px;
     padding: 1.5em;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    position: relative; /* Enable positioning for modal */
 }
 
 /* Widget Styles */
@@ -438,4 +506,242 @@ body {
     color: white;
     cursor: pointer;
     width: auto; /* Override the 100% width from previous styles */
+}
+
+/* Widget Modal Styles */
+.widget-modal {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.3s ease;
+    border-radius: 8px;
+}
+
+.widget-modal.active {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 2em;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100% - 4em);
+    overflow: hidden;
+    animation: slideInFromTop 0.4s ease;
+    margin: 0 1em;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5em 2em;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5em;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2em;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: auto;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 2em;
+    overflow-y: auto;
+    max-height: calc(80vh - 100px);
+}
+
+/* Profile widget specific styles */
+.profile-info {
+    display: grid;
+    gap: 1.5em;
+}
+
+.profile-section {
+    background-color: #f8f9fa;
+    padding: 1.5em;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.profile-section h3 {
+    margin: 0 0 1em 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.profile-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.profile-field:last-child {
+    border-bottom: none;
+}
+
+.profile-field .label {
+    font-weight: 600;
+    color: #666;
+}
+
+.profile-field .value {
+    color: #333;
+    text-align: right;
+}
+
+.profile-avatar {
+    text-align: center;
+    margin-bottom: 2em;
+}
+
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1em;
+    color: white;
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1em;
+    margin-top: 1.5em;
+}
+
+.stat-card {
+    background-color: white;
+    padding: 1em;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #007bff;
+    margin: 0;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9em;
+    margin: 0.5em 0 0 0;
+}
+
+/* Weather widget styles */
+.weather-info {
+    display: grid;
+    gap: 1.5em;
+}
+
+.weather-current {
+    text-align: center;
+    padding: 2em;
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    border-radius: 12px;
+}
+
+.weather-temp {
+    font-size: 3em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.weather-desc {
+    font-size: 1.2em;
+    margin: 0.5em 0;
+}
+
+.weather-forecast {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1em;
+}
+
+.forecast-day {
+    background-color: #f8f9fa;
+    padding: 1em;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+    from { 
+        opacity: 0;
+        transform: translateY(-30px) scale(0.98);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .modal-header {
+        padding: 1em 1.5em;
+    }
+    
+    .modal-body {
+        padding: 1.5em;
+    }
+    
+    .profile-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .weather-forecast {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
