@@ -1,7 +1,7 @@
 # app_chat.py
 # Kør LLM + function calling for list_customers_by_name (uden MCP/Cursor)
 
-from sqlite3 import IntegrityError
+from mysql.connector import IntegrityError
 from openai import OpenAI
 import json
 import private_settings  # indeholder OPENAI_API_KEY
@@ -10,33 +10,115 @@ from database.DB_access import get_connection
 # ----------------------------
 # 1) Din "rigtige" Python-funktion (genbrug af din DB-adgang)
 # ----------------------------
-def list_customers_by_name(customer_name: str):
-    """Find kunder via navn (LIKE-søgning)"""
+def list_customers():
+    """
+    Hent alle kunder fra databasen.
+    """
     db = get_connection()
-    try:
+    try: 
         cur = db.cursor(dictionary=True)
-        cur.execute(
-            "SELECT id, name, address, email FROM customers WHERE name LIKE %s ORDER BY id",
-            (f"%{customer_name}%",),
-        )
+        cur.execute("SELECT id, name, surname, address, email, notification_preference FROM customers ORDER BY id")
         return cur.fetchall()
     finally:
         db.close()
 
 
-def add_customer(name: str, address: str, email: str):
-    """Opret en kunde. Fejler hvis email allerede findes."""
+def list_customers_by_name(name: str, surname: str):
+    """
+    Find kunder via navn og efternavn (LIKE-søgning).
+    """
     db = get_connection()
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "INSERT INTO customers (name, address, email) VALUES (%s, %s, %s)",
-            (name, address, email),
+            "SELECT id, name, surname, email, notification_preference FROM customers WHERE name LIKE %s AND surname LIKE %s ORDER BY id", 
+            (f"%{name}%", f"%{surname}%")
+        )
+        return cur.fetchall()
+    finally:
+        db.close()
+
+def get_customer_by_email(email: str):
+    """
+    Hent en kunde via email.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT id, name, surname, address, email, notification_preference FROM customers WHERE email = %s",
+            (email,),
+        )
+        return cur.fetchone()  # Antager email er unik, så vi forventer kun én række
+    finally:
+        db.close()
+
+
+def add_customer(name: str, surname: str, email: str, notification_preference: str):
+    """
+    Opret en kunde. Fejler hvis email allerede findes.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO customers (name, surname, email, notification_preference) VALUES (%s, %s, %s, %s)",
+            (name, surname, email, notification_preference),
         )
         db.commit()
-        return {"id": cur.lastrowid, "name": name, "address": address, "email": email}
+        return {"id": cur.lastrowid, "name": name, "surname": surname, "email": email, "notification_preference": notification_preference}
     except IntegrityError as e:
         return {"error": "Email already exists", "details": str(e)}
+
+def add_address(customer_id: int, address: str):
+    """
+    Tilføjer en adresse til en kunde baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO Address (customer_id, address) VALUES (%s, %s)",
+            (customer_id, address),
+        )
+        db.commit()
+        return {"updated_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def update_customer_address(customer_id: int, address: str):
+    """
+    Opdaterer en kundes adresse baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "UPDATE customers SET address = %s WHERE id = %s",
+            (address, customer_id),
+        )
+        db.commit()
+        return {"updated_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def delete_customer(customer_id: int):
+    """
+    Slet en kunde baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "DELETE FROM customers WHERE id = %s",
+            (customer_id,),
+        )
+        db.commit()
+        return {"deleted_rows": cur.rowcount}
+    finally:
+        db.close()
+
+
 
 # ----------------------------
 # 2) Definér tool-schema (JSON Schema) til modellen
@@ -45,20 +127,71 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "list_customers_by_name",
-            "description": "Find kunder via navn (LIKE-søgning). Returnerer en liste af kunder.",
+            "name": "list_customers",
+            "description": "Get all customers from the database. Returns a list of customers.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "customer_name": {
-                        "type": "string",
-                        "description": "Navnet (helt eller delvist) på kunden."
+                    "customers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "name": {"type": "string"},
+                                "surname": {"type": "string"},
+                                "address": {"type": "string"},
+                                "email": {"type": "string"},
+                                "notification_preference": {"type": "string"}
+                            },
+                            "required": ["id", "name", "surname", "address", "email", "notification_preference"]
+                        }
                     }
-                },
-                "required": ["customer_name"]
+                }
             }
         }
     },
+    
+    {
+        "type": "function",
+        "function": {
+            "name": "list_customers_by_name",
+            "description": "Find customers by their name and surname (partial match).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The first name (partial or full) of the customer."
+                    },
+                    "surname": {
+                        "type": "string",
+                        "description": "The surname (partial or full) of the customer."
+                    }
+                },
+                "required": ["name", "surname"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customer_by_email",
+            "description": "Retrieve a customer by their unique email address.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "The unique email address of the customer."
+                    }
+                },
+                "required": ["email"]
+            }
+        }
+    },
+
     {
         "type": "function",
         "function": {
@@ -68,13 +201,70 @@ TOOLS = [
                 "type": "object",
                 "properties": {
                     "name": {"type": "string"},
-                    "address": {"type": "string"},
-                    "email": {"type": "string"}
+                    "surname": {"type": "string"},
+                    "email": {"type": "string"},
+                    "notification_preference": {"type": "string"}
                 },
-                "required": ["name", "email"]
+                "required": ["name", "surname", "email", "notification_preference"]
             }
         }
-    }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "add_address",
+            "description": "Adds an address to a customer based on their ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer"
+                    },
+                    "address": {
+                        "type": "string"
+                    }
+                },
+                "required": ["customer_id", "address"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "update_customer_address",
+            "description": "Updates a customer's address based on their ID and previous address.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer"
+                    },
+                    "address": {
+                        "type": "string"
+                    }
+                },
+                "required": ["customer_id", "address"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_customer",
+            "description": "Deletes a customer based on their ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["customer_id"]
+            }
+        }
+    },
 ]
 
 # ----------------------------
@@ -105,10 +295,20 @@ def ask_llm(user_prompt: str):
         name = call.function.name
         args = json.loads(call.function.arguments or "{}")
 
-        if name == "list_customers_by_name":
+        if name == "list_customers":
+            result = list_customers(**args)
+        elif name == "list_customers_by_name":
             result = list_customers_by_name(**args)
         elif name == "add_customer":
             result = add_customer(**args)
+        elif name == "get_customer_by_email":
+            result = get_customer_by_email(**args)
+        elif name == "add_address":
+            result = add_address(**args)
+        elif name == "update_customer_address":
+            result = update_customer_address(**args)
+        elif name == "delete_customer":
+            result = delete_customer(**args)
         else:
             result = {"error": f"Ukendt funktion: {name}"}
 
@@ -126,6 +326,7 @@ def ask_llm(user_prompt: str):
         messages=messages
     )
     return final.choices[0].message.content
+
 
 # ----------------------------
 # 4) Kør eksempel
