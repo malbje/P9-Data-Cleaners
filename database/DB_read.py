@@ -15,6 +15,10 @@ sys.path.insert(0, os.getcwd())
 
 # Imports
 import mysql.connector, private_settings
+from database.DB_access import get_connection
+from mysql.connector import IntegrityError
+
+
 
 class DB_read:
 
@@ -194,3 +198,113 @@ class DB_read:
         finally:
             if database is not None:
                 self.__close_DB_connection(database)
+
+#### Functions from Main.py ####
+
+def list_customers():
+    """
+    Hent alle kunder fra databasen.
+    """
+    db = get_connection()
+    try: 
+        cur = db.cursor(dictionary=True)
+        cur.execute("SELECT id, name, surname, address, email, notification_preference FROM customers ORDER BY id")
+        return cur.fetchall()
+    finally:
+        db.close()
+
+
+def list_customers_by_name(name: str, surname: str):
+    """
+    Find kunder via navn og efternavn (LIKE-søgning).
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT id, name, surname, email, notification_preference FROM customers WHERE name LIKE %s AND surname LIKE %s ORDER BY id", 
+            (f"%{name}%", f"%{surname}%")
+        )
+        return cur.fetchall()
+    finally:
+        db.close()
+
+def get_customer_by_email(email: str):
+    """
+    Hent en kunde via email.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT id, name, surname, address, email, notification_preference FROM customers WHERE email = %s",
+            (email,),
+        )
+        return cur.fetchone()  # Antager email er unik, så vi forventer kun én række
+    finally:
+        db.close()
+
+
+def add_customer(name: str, surname: str, email: str, notification_preference: str):
+    """
+    Opret en kunde. Fejler hvis email allerede findes.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO customers (name, surname, email, notification_preference) VALUES (%s, %s, %s, %s)",
+            (name, surname, email, notification_preference),
+        )
+        db.commit()
+        return {"id": cur.lastrowid, "name": name, "surname": surname, "email": email, "notification_preference": notification_preference}
+    except IntegrityError as e:
+        return {"error": "Email already exists", "details": str(e)}
+
+def add_address(customer_id: int, address: str):
+    """
+    Tilføjer en adresse til en kunde baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO Address (customer_id, address) VALUES (%s, %s)",
+            (customer_id, address),
+        )
+        db.commit()
+        return {"updated_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def update_customer_address(customer_id: int, address: str):
+    """
+    Opdaterer en kundes adresse baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "UPDATE customers SET address = %s WHERE id = %s",
+            (address, customer_id),
+        )
+        db.commit()
+        return {"updated_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def delete_customer(customer_id: int):
+    """
+    Slet en kunde baseret på deres ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "DELETE FROM customers WHERE id = %s",
+            (customer_id,),
+        )
+        db.commit()
+        return {"deleted_rows": cur.rowcount}
+    finally:
+        db.close()
