@@ -1,21 +1,27 @@
-// static/js/manual_insert.js
-// this file handles the manual insertion, update, and deletion of customers before database is implemented
-
 document.addEventListener("DOMContentLoaded", () => {
-    // Set default date for inputs to today
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("create_date").value = today;
-    document.getElementById("update_date").value = today;
+    // A shared cache to store appointment data fetched by address
+    let appointmentCache = {};
 
-    // --- Main function to fetch and display customers ---
-    const fetchCustomers = async () => {
+    // --- Set default date and time for inputs ---
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+    
+    document.getElementById("create_date").value = today;
+    document.getElementById("create_time").value = currentTime;
+    document.getElementById("update_date").value = today;
+    document.getElementById("update_time").value = currentTime;
+
+    // --- Main function to fetch and display all appointments ---
+    const fetchAllAppointments = async () => {
         const container = document.getElementById("customer-table-container");
         try {
             const response = await fetch("/api/customers");
             const customers = await response.json();
+            customers.sort((a, b) => new Date(a.cleaning_date) - new Date(b.cleaning_date));
 
             if (customers.length === 0) {
-                container.innerHTML = "<p>No customers yet.</p>";
+                container.innerHTML = "<p>No appointments yet.</p>";
                 return;
             }
 
@@ -23,31 +29,34 @@ document.addEventListener("DOMContentLoaded", () => {
             table.innerHTML = `
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
+                        <th>Date & Time</th>
+                        <th>Customer</th>
                         <th>Address</th>
-                        <th>Cleaning Date</th>
+                        <th>Service / Notes</th>
+                        <th>Notification</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${customers
-                        .map(
-                            (c) => `
+                    ${customers.map(c => `
                         <tr>
-                            <td>${c.name}</td>
-                            <td>${c.email}</td>
+                            <td>${c.cleaning_date} at ${c.cleaning_time}</td>
+                            <td>
+                                <strong>${c.name}</strong><br>
+                                <small>${c.email || 'No email provided'}</small>
+                            </td>
                             <td>${c.address}</td>
-                            <td>${c.cleaning_date}</td>
-                        </tr>
-                    `
-                        )
-                        .join("")}
-                </tbody>
-            `;
-            container.innerHTML = ""; // Clear previous content
+                            <td>${c.service || 'N/A'}</td>
+                            <td>${c.notification_preference}</td>
+                            <td>
+                                <button class="danger delete-btn" data-id="${c.id}" title="Delete this appointment">Delete</button>
+                            </td>
+                        </tr>`).join("")}
+                </tbody>`;
+            container.innerHTML = "";
             container.appendChild(table);
         } catch (error) {
-            container.innerHTML = "<p>Error loading customers.</p>";
+            container.innerHTML = "<p>Error loading appointments.</p>";
             console.error("Fetch error:", error);
         }
     };
@@ -58,89 +67,145 @@ document.addEventListener("DOMContentLoaded", () => {
         const messageDiv = document.createElement("div");
         messageDiv.className = `message ${type}`;
         messageDiv.textContent = text;
-        container.innerHTML = ""; // Clear old messages
+        container.innerHTML = "";
         container.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.remove();
-        }, 4000); // Message disappears after 4 seconds
+        setTimeout(() => messageDiv.remove(), 4000);
     };
 
-    // --- Event Listener for Create Form ---
+    // --- Form submission handlers ---
     document.getElementById("form_create").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const customerData = {
+        const appointmentData = {
             name: document.getElementById("create_name").value,
             email: document.getElementById("create_email").value,
             address: document.getElementById("create_address").value,
             cleaning_date: document.getElementById("create_date").value,
+            cleaning_time: document.getElementById("create_time").value,
+            service: document.getElementById("create_service").value,
+            notification_preference: document.getElementById("create_notification").value,
         };
 
         const response = await fetch("/api/customers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(customerData),
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(appointmentData),
         });
 
         if (response.ok) {
-            showMessage("Customer created successfully.");
-            e.target.reset(); // Clear the form
+            showMessage("Appointment created successfully.");
+            e.target.reset();
             document.getElementById("create_date").value = today;
-            fetchCustomers(); // Refresh the list
+            document.getElementById("create_time").value = currentTime;
+            fetchAllAppointments();
         } else {
             const errorData = await response.json();
             showMessage(`Error: ${errorData.error}`, "error");
         }
     });
-    
-    // --- Event Listener for Update Form ---
+
     document.getElementById("form_update").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const email = document.getElementById("update_email").value;
-        const new_date = document.getElementById("update_date").value;
+        const appointmentId = document.getElementById("update_appointment_select").value;
+        const rescheduleData = {
+            new_date: document.getElementById("update_date").value,
+            new_time: document.getElementById("update_time").value,
+            service: document.getElementById("update_service").value,
+            notification_preference: document.getElementById("update_notification").value,
+        };
 
-        const response = await fetch(`/api/customers/${email}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ new_date: new_date }),
+        const response = await fetch(`/api/customers/${appointmentId}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rescheduleData),
         });
 
         if (response.ok) {
-            showMessage("Date updated successfully.");
+            showMessage("Appointment rescheduled successfully.");
             e.target.reset();
             document.getElementById("update_date").value = today;
-            fetchCustomers();
+            document.getElementById("update_time").value = currentTime;
+            document.getElementById("update_appointment_select").innerHTML = '<option value="">-- Enter address first --</option>';
+            document.getElementById("update_appointment_select").disabled = true;
+            fetchAllAppointments();
         } else {
             const errorData = await response.json();
             showMessage(`Error: ${errorData.error}`, "error");
         }
     });
 
-    // --- Event Listener for Delete Form ---
-    document.getElementById("form_delete").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("delete_email").value;
-        
-        // Simple browser confirmation
-        if (!confirm(`Are you sure you want to delete the customer with email: ${email}?`)) {
-            return;
-        }
+    // --- Event Listener for Delete Buttons in the table ---
+    document.getElementById("customer-table-container").addEventListener("click", async (e) => {
+        if (e.target && e.target.classList.contains("delete-btn")) {
+            const appointmentId = e.target.getAttribute("data-id");
+            if (!confirm(`Are you sure you want to permanently delete this appointment?`)) return;
 
-        const response = await fetch(`/api/customers/${email}`, {
-            method: "DELETE",
+            const response = await fetch(`/api/customers/${appointmentId}`, { method: "DELETE" });
+
+            if (response.ok) {
+                showMessage("Appointment deleted successfully.");
+                fetchAllAppointments();
+            } else {
+                const errorData = await response.json();
+                showMessage(`Error: ${errorData.error}`, "error");
+            }
+        }
+    });
+
+    // --- Dynamic Dropdown & Form Pre-filling Logic ---
+    const setupAddressInput = (addressInputId, selectId, isRescheduleForm = false) => {
+        const addressInput = document.getElementById(addressInputId);
+        const selectElement = document.getElementById(selectId);
+
+        addressInput.addEventListener("input", async (e) => {
+            const address = e.target.value.trim();
+            selectElement.innerHTML = '<option value="">-- Loading... --</option>';
+            if (address.length < 3) {
+                selectElement.innerHTML = '<option value="">-- Enter address first --</option>';
+                selectElement.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/customers/by-address/${encodeURIComponent(address)}`);
+                const appointments = await response.json();
+                appointmentCache[address] = appointments;
+
+                selectElement.innerHTML = "";
+                if (appointments.length > 0) {
+                    selectElement.disabled = false;
+                    selectElement.innerHTML = '<option value="">-- Select an appointment --</option>';
+                    appointments.forEach(app => {
+                        const option = document.createElement("option");
+                        option.value = app.id;
+                        option.textContent = `${app.name} - ${app.cleaning_date} at ${app.cleaning_time}`;
+                        selectElement.appendChild(option);
+                    });
+                } else {
+                    selectElement.innerHTML = '<option value="">-- No appointments found --</option>';
+                    selectElement.disabled = true;
+                }
+            } catch (error) {
+                console.error("Failed to fetch appointments by address:", error);
+            }
         });
 
-        if (response.ok) {
-            showMessage("Customer deleted successfully.");
-            e.target.reset();
-            fetchCustomers();
-        } else {
-            const errorData = await response.json();
-            showMessage(`Error: ${errorData.error}`, "error");
+        if (isRescheduleForm) {
+            selectElement.addEventListener("change", (e) => {
+                const selectedId = e.target.value;
+                const address = addressInput.value.trim();
+                const selectedAppointment = (appointmentCache[address] || []).find(app => app.id === selectedId);
+
+                if (selectedAppointment) {
+                    document.getElementById("update_date").value = selectedAppointment.cleaning_date;
+                    document.getElementById("update_time").value = selectedAppointment.cleaning_time;
+                    document.getElementById("update_service").value = selectedAppointment.service;
+                    document.getElementById("update_notification").value = selectedAppointment.notification_preference;
+                }
+            });
         }
-    });
+    };
 
+    setupAddressInput("update_address", "update_appointment_select", true);
 
-    // Initial load of customers when the page starts
-    fetchCustomers();
+    // --- Initial Load ---
+    fetchAllAppointments();
 });
+

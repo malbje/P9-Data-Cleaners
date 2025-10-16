@@ -28,74 +28,99 @@
         <hr>
 
         <div class="forms-grid">
-            <!-- Create Customer Form -->
+            <!-- Book Appointment Form -->
             <div class="card">
-                <h2>Create Appointment</h2>
+                <h2>Book Appointment</h2>
                 <form id="form_create">
+                    <div class="form-group">
+                        <label for="create_address">Address</label>
+                        <input type="text" id="create_address" required placeholder="e.g., 123 Main St, Aalborg">
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="create_name">Name</label>
+                             <label for="create_name">Customer Name</label>
                             <input type="text" id="create_name" required>
                         </div>
                         <div class="form-group">
-                            <label for="create_email">Email</label>
+                            <label for="create_email">Customer Email</label>
                             <input type="email" id="create_email">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="create_address">Address</label>
-                        <input type="text" id="create_address" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="create_date">Date</label>
+                            <input type="date" id="create_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="create_time">Time</label>
+                            <input type="time" id="create_time" required>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="create_date">Cleaning Date</label>
-                        <input type="date" id="create_date" required>
+                        <label for="create_notification">Notification Preference</label>
+                        <select id="create_notification">
+                            <option value="No notification">No notification</option>
+                            <option value="1 hour before">1 hour before</option>
+                            <option value="3 hours before">3 hours before</option>
+                            <option value="24 hours before">24 hours before</option>
+                            <option value="3 days before">3 days before</option>
+                            <option value="1 week before">1 week before</option>
+                        </select>
                     </div>
-                    <button type="submit">Create Appointment</button>
+                    <div class="form-group">
+                        <label for="create_service">Service / Notes</label>
+                        <textarea id="create_service" rows="3" placeholder="e.g., Standard weekly cleaning"></textarea>
+                    </div>
+                    <button type="submit">Book Appointment</button>
                 </form>
             </div>
 
-            <!-- Update Date Form -->
+            <!-- Reschedule Appointment Form -->
             <div class="card">
-                <h2> Update Appointment Date</h2>
+                <h2> Reschedule Appointment</h2>
                 <form id="form_update">
                     <div class="form-group">
                         <label for="update_address">Customer Address</label>
                         <input type="text" id="update_address" placeholder="Type address to find appointments" required>
                     </div>
                     <div class="form-group">
-                        <label for="update_appointment_select">Select Appointment</label>
+                        <label for="update_appointment_select">Select Appointment to Reschedule</label>
                         <select id="update_appointment_select" required disabled>
                             <option value="">-- Enter address first --</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="update_date">New Date</label>
-                        <input type="date" id="update_date" required>
+                    <hr class="form-divider">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_date">New Date</label>
+                            <input type="date" id="update_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="update_time">New Time</label>
+                            <input type="time" id="update_time" required>
+                        </div>
                     </div>
-                    <button type="submit">Update Date</button>
-                </form>
-            </div>
-
-            <!-- Delete Customer Form -->
-            <div class="card">
-                <h2> Delete Appointment</h2>
-                <form id="form_delete">
-                    <div class="form-group">
-                        <label for="delete_address">Customer Address</label>
-                        <input type="text" id="delete_address" placeholder="Type address to find appointments" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="delete_appointment_select">Select Appointment</label>
-                        <select id="delete_appointment_select" required disabled>
-                            <option value="">-- Enter address first --</option>
+                     <div class="form-group">
+                        <label for="update_notification">Notification Preference</label>
+                        <select id="update_notification">
+                            <option value="No notification">No notification</option>
+                            <option value="1 hour before">1 hour before</option>
+                            <option value="3 hours before">3 hours before</option>
+                            <option value="24 hours before">24 hours before</option>
+                            <option value="3 days before">3 days before</option>
+                            <option value="1 week before">1 week before</option>
                         </select>
                     </div>
-                    <button type="submit" class="danger">Delete Appointment</button>
+                    <div class="form-group">
+                        <label for="update_service">Service / Notes</label>
+                        <textarea id="update_service" rows="3"></textarea>
+                    </div>
+                    <button type="submit">Reschedule</button>
                 </form>
             </div>
         </div>
     </div>
-    <!-- Link to a new, dedicated JS file for this page -->
     <script src="{{ url_for('static', filename='js/manual_insert.js') }}"></script>
 </body>
 </html>
+
