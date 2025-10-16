@@ -1,4 +1,5 @@
-// static/js/main.js
+// static/js/manual_insert.js
+// this file handles the manual insertion, update, and deletion of customers before database is implemented
 
 document.addEventListener("DOMContentLoaded", () => {
     // Set default date for inputs to today

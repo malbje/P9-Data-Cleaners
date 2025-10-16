@@ -8,23 +8,29 @@
 </head>
 <body>
     <div class="container">
-        <h1> Cleaning Schedule - Admin</h1>
-        <p>Frontend to create, update, and delete customers.</p>
+        <header class="page-header">
+            <h1> Manual Data Entry</h1>
+            <nav>
+                <a href="/">Main Page</a>
+                <a href="/manual" class="active">Manual Entry</a>
+            </nav>
+        </header>
         
         <div id="message-container"></div>
 
         <div class="card">
-            <h2> Current Customers</h2>
+            <h2> Current Appointments</h2>
             <div id="customer-table-container">
-                <p>Loading customers...</p>
+                <p>Loading appointments...</p>
             </div>
         </div>
 
         <hr>
 
         <div class="forms-grid">
+            <!-- Create Customer Form -->
             <div class="card">
-                <h2>Create Customer</h2>
+                <h2>Create Appointment</h2>
                 <form id="form_create">
                     <div class="form-row">
                         <div class="form-group">
@@ -33,7 +39,7 @@
                         </div>
                         <div class="form-group">
                             <label for="create_email">Email</label>
-                            <input type="email" id="create_email" required>
+                            <input type="email" id="create_email">
                         </div>
                     </div>
                     <div class="form-group">
@@ -44,16 +50,23 @@
                         <label for="create_date">Cleaning Date</label>
                         <input type="date" id="create_date" required>
                     </div>
-                    <button type="submit">Create Customer</button>
+                    <button type="submit">Create Appointment</button>
                 </form>
             </div>
 
+            <!-- Update Date Form -->
             <div class="card">
-                <h2> Update Cleaning Date</h2>
+                <h2> Update Appointment Date</h2>
                 <form id="form_update">
                     <div class="form-group">
-                        <label for="update_email">Customer Email</label>
-                        <input type="email" id="update_email" required>
+                        <label for="update_address">Customer Address</label>
+                        <input type="text" id="update_address" placeholder="Type address to find appointments" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update_appointment_select">Select Appointment</label>
+                        <select id="update_appointment_select" required disabled>
+                            <option value="">-- Enter address first --</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="update_date">New Date</label>
@@ -63,18 +76,26 @@
                 </form>
             </div>
 
+            <!-- Delete Customer Form -->
             <div class="card">
-                <h2> Delete Customer</h2>
+                <h2> Delete Appointment</h2>
                 <form id="form_delete">
                     <div class="form-group">
-                        <label for="delete_email">Customer Email</label>
-                        <input type="email" id="delete_email" required>
+                        <label for="delete_address">Customer Address</label>
+                        <input type="text" id="delete_address" placeholder="Type address to find appointments" required>
                     </div>
-                    <button type="submit" class="danger">Delete Customer</button>
+                    <div class="form-group">
+                        <label for="delete_appointment_select">Select Appointment</label>
+                        <select id="delete_appointment_select" required disabled>
+                            <option value="">-- Enter address first --</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="danger">Delete Appointment</button>
                 </form>
             </div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Link to a new, dedicated JS file for this page -->
+    <script src="{{ url_for('static', filename='js/manual_insert.js') }}"></script>
 </body>
 </html>
