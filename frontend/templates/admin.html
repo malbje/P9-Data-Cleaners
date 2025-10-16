@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👥 Admin - Customer List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1>👥 Customer Administration</h1>
+            <nav>
+                <a href="/">Main Page</a>
+                <a href="/manual">Manual Entry</a>
+                <a href="/admin" class="active">Admin</a>
+            </nav>
+        </header>
+        
+        <div class="card">
+            <h2>👤 Unique Customer List</h2>
+            <div id="customer-list-container">
+                <!-- Jinja2 templating is used here to render the list from the server -->
+                {% if customers %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Primary Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loop through each customer passed from the Flask route -->
+                            {% for customer in customers %}
+                            <tr>
+                                <td>{{ customer.name }}</td>
+                                <td>{{ customer.email }}</td>
+                                <td>{{ customer.address }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No customers found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+### 3. Update Navigation in Other Pages
+
+To make your new admin page accessible, you need to add a link to it in the headers of your other pages.
+
+**In `frontend/templates/main_page.html`, update the `<nav>` section:**
+```html
+<!-- ... inside main_page.html ... -->
+<header class="dashboard-header">
+    <h1>Data Cleaners Dashboard</h1>
+    <nav>
+        <a href="/" class="active">Main Page</a>
+        <a href="/manual">Manual Entry</a>
+        <a href="/admin">Admin</a>
+    </nav>
+</header>
+<!-- ... -->
+```
+
+**In `frontend/templates/manual_insert.html`, update the `<nav>` section:**
+```html
+<!-- ... inside manual_insert.html ... -->
+<header class="page-header">
+    <h1>🧹 Manual Data Entry</h1>
+    <nav>
+        <a href="/">Main Page</a>
+        <a href="/manual" class="active">Manual Entry</a>
+        <a href="/admin">Admin</a>
+    </nav>
+</header>
+<!-- ... -->

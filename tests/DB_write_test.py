@@ -7,13 +7,13 @@ sys.path.insert(0, os.getcwd())
 # ------------------------------
 
 import mysql.connector
-import backend.service.database.DB_read as DB_reader
-import backend.service.database.DB_write as DB_writer
+import database.DB_read as DB_reader
+import database.DB_write as DB_writer
 import private_settings
 
 class Test_DB_write(unittest.TestCase):
 
-    import backend.service.database.DB_write as DB_writer
+    import database.DB_write as DB_writer
     db_writer = DB_writer.DB_write()
     db_reader= DB_reader.DB_read()
 

@@ -1,9 +1,14 @@
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import sys
+import os
+
+# Add the project root to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, project_root)
+
+from database import DB_read as DB_reader #Reference to the database read class
 
 # imports
 from datetime import datetime, timedelta
-import backend.service.database.DB_read as DB_reader #Reference to the database read class
 
 def get_appointments_to_notify():
     """
@@ -17,7 +22,7 @@ def get_appointments_to_notify():
                     - name (str): Customer's name
             - date (str): Appointment date (YYYY-MM-DD)
             - time (str): Appointment time (HH:MM:SS)
-            - email (str): Customer's email address
+            - email (str): Customer's email addresses
     """
     DB = DB_reader.DB_read() # Creates an object for reading the database
     raw_data = DB.get_joint_customers_appointments_data() # Get customer-appointment joined data
@@ -29,7 +34,7 @@ def get_appointments_to_notify():
 
     for row in raw_data:
         # Extract values from DB row (must match coloumn order from SQL query)
-        name, address, email, appt_addr, appt_date, appt_time = row
+        name, addresses, email, appt_addr, appt_date, appt_time = row
 
         # combine date and time from database into a single datetime object
         try:

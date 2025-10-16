@@ -11,11 +11,11 @@ import sys, os
 sys.path.insert(0, os.getcwd())
 # ------------------------------
 
-import backend.service.database.DB_read as DB_reader
+import database.DB_read as DB_reader
 
 class Test_DB_read(unittest.TestCase):
 
-    import backend.service.database.DB_write as DB_writer
+    import database.DB_write as DB_writer
     db_writer = DB_writer.DB_write()
     db_reader= DB_reader.DB_read()
 

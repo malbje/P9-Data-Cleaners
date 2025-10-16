@@ -15,12 +15,6 @@
         </div>
 
         <div class="auth-card">
-            <!-- Toggle buttons -->
-            <div class="auth-toggle">
-                <button class="toggle-btn active" id="login-toggle">Log In</button>
-                <button class="toggle-btn" id="signup-toggle">Sign Up</button>
-            </div>
-
             <!-- Login Form -->
             <form class="auth-form active" id="login-form">
                 <h2>Welcome Back</h2>
@@ -33,7 +27,7 @@
                 
                 <div class="form-group">
                     <label for="login-password">Password</label>
-                    <input type="password" id="login-password" name="password" required placeholder="Enter your password">
+                    <input type="password" id="login-password" name="password" required placeholder="Enter anything here">
                 </div>
                 
                 <div class="form-options">
@@ -46,53 +40,6 @@
                 </div>
                 
                 <button type="submit" class="auth-btn">Sign In</button>
-            </form>
-
-            <!-- Sign Up Form -->
-            <form class="auth-form" id="signup-form">
-                <h2>Create Account</h2>
-                <p class="auth-subtitle">Join Data Cleaners today</p>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="signup-firstname">First Name</label>
-                        <input type="text" id="signup-firstname" name="firstname" required placeholder="First name">
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-lastname">Last Name</label>
-                        <input type="text" id="signup-lastname" name="lastname" required placeholder="Last name">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-email">Email Address</label>
-                    <input type="email" id="signup-email" name="email" required placeholder="Enter your email">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-phone">Phone Number</label>
-                    <input type="tel" id="signup-phone" name="phone" required placeholder="Enter your phone number">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" name="password" required placeholder="Create a password">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-confirm-password">Confirm Password</label>
-                    <input type="password" id="signup-confirm-password" name="confirm_password" required placeholder="Confirm your password">
-                </div>
-                
-                <div class="form-options">
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="terms-agreement" required>
-                        <span class="checkmark"></span>
-                        I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
-                    </label>
-                </div>
-                
-                <button type="submit" class="auth-btn">Create Account</button>
             </form>
         </div>
 

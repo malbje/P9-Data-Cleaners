@@ -1,55 +1,95 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // A shared cache to store appointment data fetched by address
-    let appointmentCache = {};
-
-    // --- Set default date and time for inputs ---
+    // --- Set default date and time for the create form ---
     const now = new Date();
     const today = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().slice(0, 5);
     
     document.getElementById("create_date").value = today;
     document.getElementById("create_time").value = currentTime;
-    document.getElementById("update_date").value = today;
-    document.getElementById("update_time").value = currentTime;
+
+    // --- New function to load user-specific data ---
+    const loadUserData = async () => {
+        try {
+            // Fetch user status to get name/email
+            const statusResponse = await fetch('/api/auth/status');
+            // Add a check to ensure the response is valid before parsing JSON
+            if (!statusResponse.ok) {
+                throw new Error(`Authentication status check failed: ${statusResponse.statusText}`);
+            }
+            const statusData = await statusResponse.json();
+            if (statusData.logged_in) {
+                document.getElementById('create_name').value = statusData.user.name;
+                document.getElementById('create_email').value = statusData.user.email;
+            } else {
+                // If not logged in, we can't load addresses.
+                document.getElementById('select_address').innerHTML = '<option value="">Please log in to see addresses</option>';
+                return; // Stop execution here
+            }
+
+            // Fetch user addresses
+            const addressResponse = await fetch('/api/user/addresses');
+            // Add a check here as well
+            if (!addressResponse.ok) {
+                throw new Error(`Failed to fetch addresses: ${addressResponse.statusText}`);
+            }
+            const addresses = await addressResponse.json();
+            const addressSelect = document.getElementById('select_address');
+            
+            addressSelect.innerHTML = ''; // Clear loading message
+            if (addresses.length > 0) {
+                addresses.forEach(addr => {
+                    const option = document.createElement('option');
+                    option.value = addr.id;
+                    option.textContent = `${addr.street_and_number}, ${addr.postal_code} ${addr.city_name}`;
+                    addressSelect.appendChild(option);
+                });
+            } else {
+                addressSelect.innerHTML = '<option value="">No addresses found for this user</option>';
+            }
+        } catch (error) {
+            console.error("Error loading user data:", error);
+            // This will now correctly display an error message in the dropdown
+            document.getElementById('select_address').innerHTML = '<option value="">Error loading addresses</option>';
+        }
+    };
 
     // --- Main function to fetch and display all appointments ---
     const fetchAllAppointments = async () => {
         const container = document.getElementById("customer-table-container");
         try {
-            const response = await fetch("/api/customers");
-            const customers = await response.json();
-            customers.sort((a, b) => new Date(a.cleaning_date) - new Date(b.cleaning_date));
+            // This API endpoint correctly fetches appointments for the logged-in user.
+            const response = await fetch("/api/appointments");
+            const appointments = await response.json();
+            
+            // Sort by date and time
+            appointments.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
 
-            if (customers.length === 0) {
-                container.innerHTML = "<p>No appointments yet.</p>";
+            if (appointments.length === 0) {
+                container.innerHTML = "<p>You have no upcoming appointments.</p>";
                 return;
             }
 
+            // The table is now simplified to remove the redundant "Customer" column.
             const table = document.createElement("table");
             table.innerHTML = `
                 <thead>
                     <tr>
                         <th>Date & Time</th>
-                        <th>Customer</th>
                         <th>Address</th>
-                        <th>Service / Notes</th>
-                        <th>Notification</th>
+                        <th>Services</th>
+                        <th>Notes</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${customers.map(c => `
+                    ${appointments.map(appt => `
                         <tr>
-                            <td>${c.cleaning_date} at ${c.cleaning_time}</td>
+                            <td>${appt.date} at ${appt.time.slice(0, 5)}</td>
+                            <td>${appt.address}</td>
+                            <td>${appt.service_names || 'N/A'}</td>
+                            <td>${appt.notes || ''}</td>
                             <td>
-                                <strong>${c.name}</strong><br>
-                                <small>${c.email || 'No email provided'}</small>
-                            </td>
-                            <td>${c.address}</td>
-                            <td>${c.service || 'N/A'}</td>
-                            <td>${c.notification_preference}</td>
-                            <td>
-                                <button class="danger delete-btn" data-id="${c.id}" title="Delete this appointment">Delete</button>
+                                <button class="danger delete-btn" data-id="${appt.id}" title="Delete this appointment">Delete</button>
                             </td>
                         </tr>`).join("")}
                 </tbody>`;
@@ -65,65 +105,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const showMessage = (text, type = "success") => {
         const container = document.getElementById("message-container");
         const messageDiv = document.createElement("div");
-        messageDiv.className = `message ${type}`;
+        messageDiv.className = `alert ${type}`; // Using alert classes for consistency
         messageDiv.textContent = text;
         container.innerHTML = "";
         container.appendChild(messageDiv);
         setTimeout(() => messageDiv.remove(), 4000);
     };
 
-    // --- Form submission handlers ---
+    // --- Form submission handler for creating appointments ---
     document.getElementById("form_create").addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        // The backend now only needs the address_id, not the full address details
         const appointmentData = {
-            name: document.getElementById("create_name").value,
-            email: document.getElementById("create_email").value,
-            address: document.getElementById("create_address").value,
-            cleaning_date: document.getElementById("create_date").value,
-            cleaning_time: document.getElementById("create_time").value,
-            service: document.getElementById("create_service").value,
-            notification_preference: document.getElementById("create_notification").value,
+            // name, surname, and email are now handled by the backend based on the logged-in user
+            address_id: document.getElementById("select_address").value,
+            date: document.getElementById("create_date").value,
+            time: document.getElementById("create_time").value,
+            notes: document.getElementById("create_service").value,
+            // This is still a placeholder for a real service selection UI
+            service_ids: document.getElementById("create_service").value ? [1] : [],
         };
 
-        const response = await fetch("/api/customers", {
-            method: "POST", headers: { "Content-Type": "application/json" },
+        const response = await fetch("/api/manual_insert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(appointmentData),
         });
 
         if (response.ok) {
             showMessage("Appointment created successfully.");
-            e.target.reset();
+            // Don't reset name/email as they are pre-filled
+            document.getElementById("form_create").reset();
             document.getElementById("create_date").value = today;
             document.getElementById("create_time").value = currentTime;
-            fetchAllAppointments();
-        } else {
-            const errorData = await response.json();
-            showMessage(`Error: ${errorData.error}`, "error");
-        }
-    });
-
-    document.getElementById("form_update").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const appointmentId = document.getElementById("update_appointment_select").value;
-        const rescheduleData = {
-            new_date: document.getElementById("update_date").value,
-            new_time: document.getElementById("update_time").value,
-            service: document.getElementById("update_service").value,
-            notification_preference: document.getElementById("update_notification").value,
-        };
-
-        const response = await fetch(`/api/customers/${appointmentId}`, {
-            method: "PUT", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(rescheduleData),
-        });
-
-        if (response.ok) {
-            showMessage("Appointment rescheduled successfully.");
-            e.target.reset();
-            document.getElementById("update_date").value = today;
-            document.getElementById("update_time").value = currentTime;
-            document.getElementById("update_appointment_select").innerHTML = '<option value="">-- Enter address first --</option>';
-            document.getElementById("update_appointment_select").disabled = true;
+            loadUserData(); // Re-fill user info after reset
             fetchAllAppointments();
         } else {
             const errorData = await response.json();
@@ -135,9 +151,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("customer-table-container").addEventListener("click", async (e) => {
         if (e.target && e.target.classList.contains("delete-btn")) {
             const appointmentId = e.target.getAttribute("data-id");
-            if (!confirm(`Are you sure you want to permanently delete this appointment?`)) return;
+            if (!confirm(`Are you sure you want to permanently delete appointment #${appointmentId}?`)) return;
 
-            const response = await fetch(`/api/customers/${appointmentId}`, { method: "DELETE" });
+            // 5. Use a new API endpoint for deletion (you'll need to create this in app.py)
+            const response = await fetch(`/api/appointments/${appointmentId}`, { method: "DELETE" });
 
             if (response.ok) {
                 showMessage("Appointment deleted successfully.");
@@ -149,63 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Dynamic Dropdown & Form Pre-filling Logic ---
-    const setupAddressInput = (addressInputId, selectId, isRescheduleForm = false) => {
-        const addressInput = document.getElementById(addressInputId);
-        const selectElement = document.getElementById(selectId);
-
-        addressInput.addEventListener("input", async (e) => {
-            const address = e.target.value.trim();
-            selectElement.innerHTML = '<option value="">-- Loading... --</option>';
-            if (address.length < 3) {
-                selectElement.innerHTML = '<option value="">-- Enter address first --</option>';
-                selectElement.disabled = true;
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/customers/by-address/${encodeURIComponent(address)}`);
-                const appointments = await response.json();
-                appointmentCache[address] = appointments;
-
-                selectElement.innerHTML = "";
-                if (appointments.length > 0) {
-                    selectElement.disabled = false;
-                    selectElement.innerHTML = '<option value="">-- Select an appointment --</option>';
-                    appointments.forEach(app => {
-                        const option = document.createElement("option");
-                        option.value = app.id;
-                        option.textContent = `${app.name} - ${app.cleaning_date} at ${app.cleaning_time}`;
-                        selectElement.appendChild(option);
-                    });
-                } else {
-                    selectElement.innerHTML = '<option value="">-- No appointments found --</option>';
-                    selectElement.disabled = true;
-                }
-            } catch (error) {
-                console.error("Failed to fetch appointments by address:", error);
-            }
-        });
-
-        if (isRescheduleForm) {
-            selectElement.addEventListener("change", (e) => {
-                const selectedId = e.target.value;
-                const address = addressInput.value.trim();
-                const selectedAppointment = (appointmentCache[address] || []).find(app => app.id === selectedId);
-
-                if (selectedAppointment) {
-                    document.getElementById("update_date").value = selectedAppointment.cleaning_date;
-                    document.getElementById("update_time").value = selectedAppointment.cleaning_time;
-                    document.getElementById("update_service").value = selectedAppointment.service;
-                    document.getElementById("update_notification").value = selectedAppointment.notification_preference;
-                }
-            });
-        }
-    };
-
-    setupAddressInput("update_address", "update_appointment_select", true);
-
     // --- Initial Load ---
+    loadUserData(); // Load user-specific data first
     fetchAllAppointments();
 });
 
