@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Cleaning Schedule - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1> Cleaning Schedule - Admin</h1>
+        <p>Frontend to create, update, and delete customers.</p>
+        
+        <div id="message-container"></div>
+
+        <div class="card">
+            <h2> Current Customers</h2>
+            <div id="customer-table-container">
+                <p>Loading customers...</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="forms-grid">
+            <div class="card">
+                <h2>Create Customer</h2>
+                <form id="form_create">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="create_name">Name</label>
+                            <input type="text" id="create_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="create_email">Email</label>
+                            <input type="email" id="create_email" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="create_address">Address</label>
+                        <input type="text" id="create_address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="create_date">Cleaning Date</label>
+                        <input type="date" id="create_date" required>
+                    </div>
+                    <button type="submit">Create Customer</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2> Update Cleaning Date</h2>
+                <form id="form_update">
+                    <div class="form-group">
+                        <label for="update_email">Customer Email</label>
+                        <input type="email" id="update_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update_date">New Date</label>
+                        <input type="date" id="update_date" required>
+                    </div>
+                    <button type="submit">Update Date</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2> Delete Customer</h2>
+                <form id="form_delete">
+                    <div class="form-group">
+                        <label for="delete_email">Customer Email</label>
+                        <input type="email" id="delete_email" required>
+                    </div>
+                    <button type="submit" class="danger">Delete Customer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
