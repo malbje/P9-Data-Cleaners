@@ -113,6 +113,48 @@ def get_addresses_and_preferences_for_customer(customer_id):
         cursor.close()
         conn.close()
 
+def get_appointments_by_address_id(address_id):
+    """
+    Gets all appointments for a specific address, including service details.
+    """
+    conn = get_connection()
+    if not conn: return []
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = """
+            SELECT 
+                apt.id, 
+                apt.date, 
+                apt.time, 
+                apt.notes,
+                apt.address_id,
+                GROUP_CONCAT(s.name SEPARATOR ', ') AS service_names
+            FROM appointments apt
+            LEFT JOIN has_ordered ho ON apt.id = ho.appointment_id
+            LEFT JOIN services s ON ho.service_id = s.id
+            WHERE apt.address_id = %s
+            GROUP BY apt.id
+            ORDER BY apt.date, apt.time;
+        """
+        cursor.execute(query, (address_id,))
+        appointments = cursor.fetchall()
+        # Convert date/time objects to strings for JSON serialization
+        for appt in appointments:
+            if appt.get('date'):
+                appt['date'] = appt['date'].isoformat()
+            if appt.get('time'):
+                total_seconds = appt['time'].total_seconds()
+                hours = int(total_seconds // 3600)
+                minutes = int((total_seconds % 3600) // 60)
+                appt['time'] = f"{hours:02}:{minutes:02}"
+        return appointments
+    except Exception as e:
+        print(f"Error in get_appointments_by_address_id: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
 # --- DATABASE LOGIC: APPOINTMENTS ---
 
 def get_appointments_for_customer(customer_id):
@@ -235,4 +277,64 @@ def create_full_appointment(data):
         print(f"An error occurred during appointment creation: {e}")
         # Re-raise the exception so the API layer can handle it
         raise e
+
+def get_all_services():
+    """Fetches all available services from the database."""
+    conn = get_connection()
+    if not conn: return []
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT id, name, length FROM services ORDER BY name")
+        services = cursor.fetchall()
+        return services
+    except Exception as e:
+        print(f"Error fetching services: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def create_appointment(customer_id, data):
+    """
+    Creates a new appointment in the database.
+    """
+    conn = get_connection()
+    if not conn:
+        raise Exception("Database connection failed")
+    
+    cursor = conn.cursor()
+    try:
+        # Step 1: Insert the main appointment record, now including notification_preference
+        appt_query = """
+            INSERT INTO appointments (address_id, date, time, notes, notification_preference)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(appt_query, (
+            data['address_id'],
+            data['date'],
+            data['time'],
+            data['notes'],
+            data['notification_preference']
+        ))
+        
+        # Get the ID of the appointment we just created
+        appointment_id = cursor.lastrowid
+
+        # Step 2: Link any selected services to the new appointment
+        service_ids = data.get('service_ids', [])
+        for service_id in service_ids:
+            cursor.execute(
+                "INSERT INTO has_ordered (appointment_id, service_id) VALUES (%s, %s)",
+                (appointment_id, service_id)
+            )
+
+        conn.commit()
+        return appointment_id
+    except Exception as e:
+        conn.rollback()
+        print(f"Error creating appointment: {e}")
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
 

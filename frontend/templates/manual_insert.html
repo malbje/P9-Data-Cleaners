@@ -67,71 +67,77 @@
                             <input type="time" id="create_time" required>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="create_notification">Notification Preference</label>
-                        <select id="create_notification">
-                            <option value="No notification">No notification</option>
-                            <option value="1 hour before">1 hour before</option>
-                            <option value="3 hours before">3 hours before</option>
-                            <option value="24 hours before">24 hours before</option>
-                            <option value="3 days before">3 days before</option>
-                            <option value="1 week before">1 week before</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="create_service">Service / Notes</label>
-                        <textarea id="create_service" rows="3" placeholder="e.g., Standard weekly cleaning"></textarea>
-                    </div>
-                    <button type="submit">Book Appointment</button>
-                </form>
-            </div>
-
-            <!-- Reschedule Appointment Form -->
-            <div class="card">
-                <h2> Reschedule Appointment</h2>
-                <form id="form_update">
-                    <div class="form-group">
-                        <label for="update_address">Customer Address</label>
-                        <input type="text" id="update_address" placeholder="Type address to find appointments" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="update_appointment_select">Select Appointment to Reschedule</label>
-                        <select id="update_appointment_select" required disabled>
-                            <option value="">-- Enter address first --</option>
-                        </select>
-                    </div>
-                    <hr class="form-divider">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="update_date">New Date</label>
-                            <input type="date" id="update_date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="update_time">New Time</label>
-                            <input type="time" id="update_time" required>
-                        </div>
-                    </div>
-                     <div class="form-group">
-                        <label for="update_notification">Notification Preference</label>
-                        <select id="update_notification">
-                            <option value="No notification">No notification</option>
-                            <option value="1 hour before">1 hour before</option>
-                            <option value="3 hours before">3 hours before</option>
-                            <option value="24 hours before">24 hours before</option>
-                            <option value="3 days before">3 days before</option>
-                            <option value="1 week before">1 week before</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="update_service">Service / Notes</label>
-                        <textarea id="update_service" rows="3"></textarea>
-                    </div>
-                    <button type="submit">Reschedule</button>
-                </form>
-            </div>
+                <div class="form-group">
+                    <label for="create_services">Services</label>
+                    <textarea id="create_services" rows="2" placeholder="e.g., Standard Cleaning, Window Cleaning"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="create_notes">Notes</label>
+                    <textarea id="create_notes" rows="2" placeholder="e.g., Please focus on the kitchen"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="create_notification">Notification Preference</label>
+                    <select id="create_notification">
+                        <option value="none">No notification</option>
+                        <option value="1 hour before">1 hour before</option>
+                        <option value="3 hours before">3 hours before</option>
+                        <option value="24 hours before">24 hours before</option>
+                        <option value="3 days before">3 days before</option>
+                        <option value="1 week before">1 week before</option>
+                    </select>
+                </div>
+                <button type="submit">Book Appointment</button>
+            </form>
         </div>
+
+        <!-- Reschedule Appointment Form -->
+        <div class="card">
+            <h2> Reschedule Appointment</h2>
+            <form id="form_update">
+                <div class="form-group">
+                    <label for="reschedule_address_select">Customer Address</label>
+                    <select id="reschedule_address_select" required>
+                        <option value="">-- Select an address --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="update_appointment_select">Select Appointment to Reschedule</label>
+                    <select id="update_appointment_select" required disabled>
+                        <option value="">-- Enter address first --</option>
+                    </select>
+                </div>
+                <hr class="form-divider">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="update_date">New Date</label>
+                        <input type="date" id="update_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update_time">New Time</label>
+                        <input type="time" id="update_time" required>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label for="update_notification">Notification Preference</label>
+                    <select id="update_notification">
+                        <option value="No notification">No notification</option>
+                        <option value="1 hour before">1 hour before</option>
+                        <option value="3 hours before">3 hours before</option>
+                        <option value="24 hours before">24 hours before</option>
+                        <option value="3 days before">3 days before</option>
+                        <option value="1 week before">1 week before</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="update_service">Service / Notes</label>
+                    <textarea id="update_service" rows="3"></textarea>
+                </div>
+                <button type="submit">Reschedule</button>
+            </form>
         </div>
     </div>
+    </div>
+</div>
     
     <script>
         // Mode toggle functionality for manual page
@@ -165,7 +171,7 @@
         }
     </script>
     
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Manual_insert.js') }}"></script>
 </body>
 </html>
 

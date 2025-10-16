@@ -152,6 +152,44 @@ def api_delete_appointment(appointment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/appointments/<int:appointment_id>', methods=['PUT'])
+def api_update_appointment(appointment_id):
+    if not ensure_logged_in():
+        return jsonify({"error": "Authentication required"}), 401
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid input"}), 400
+
+    try:
+        # Extract the user_id from the session
+        user_id = session.get('user_id')
+
+        # Call the update function from the database_logic file
+        db.update_appointment(appointment_id, data, user_id)
+        return jsonify({"success": True, "message": "Appointment updated"}), 200
+    except db.ValidationError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to update appointment: {str(e)}"}), 500
+
+@app.route('/api/appointments/by-address/<int:address_id>')
+def api_get_appointments_by_address(address_id):
+    """Gets all appointments for a specific address ID."""
+    if not ensure_logged_in():
+        return jsonify({"error": "Authentication required"}), 401
+    
+    # This is the correct way to use your DB_read class
+    from database.DB_read import DB_read
+    reader = DB_read()
+    
+    try:
+        # Call the method from the reader object
+        appointments = reader.get_appointments_by_address_id(address_id)
+        return jsonify(appointments)
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch appointments: {str(e)}"}), 500
+
 @app.route('/api/user/addresses-with-preferences')
 def api_get_user_addresses_with_preferences():
     """Provides a list of user addresses along with their preferences."""
@@ -162,6 +200,12 @@ def api_get_user_addresses_with_preferences():
     # This calls the existing function from database_logic.py
     addresses = db.get_addresses_and_preferences_for_customer(user_id)
     return jsonify(addresses)
+
+@app.route('/api/services', methods=['GET'])
+def api_get_services():
+    """Provides a list of all available cleaning services."""
+    services = db.get_all_services()
+    return jsonify(services)
 
 # --- MAIN ENTRY ---
 if __name__ == '__main__':

@@ -99,6 +99,42 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
+    def get_appointments_by_address_id(self, address_id):
+        """
+        Gets all appointments for a specific address, including service details.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            query = """
+                SELECT 
+                    apt.id, 
+                    apt.date, 
+                    apt.time, 
+                    apt.notes,
+                    apt.address_id,
+                    GROUP_CONCAT(s.name SEPARATOR ', ') AS service_names
+                FROM appointments apt
+                LEFT JOIN has_ordered ho ON apt.id = ho.appointment_id
+                LEFT JOIN services s ON ho.service_id = s.id
+                WHERE apt.address_id = %s
+                GROUP BY apt.id
+                ORDER BY apt.date, apt.time;
+            """
+            cursorObject.execute(query, (address_id,))
+            appointments = cursorObject.fetchall()
+            # Convert date/time objects to strings for JSON serialization
+            for appt in appointments:
+                if appt.get('date'):
+                    appt['date'] = appt['date'].isoformat()
+                if appt.get('time'):
+                    total_seconds = appt['time'].total_seconds()
+                    hours = int(total_seconds // 3600)
+                    minutes = int((total_seconds % 3600) // 60)
+                    appt['time'] = f"{hours:02}:{minutes:02}"
+            return appointments
+        finally:
+            self.__close_DB_connection(database)
+
     def get_customer_by_id(self, customer_id):
         """
         A method for getting the customer with given ID number
