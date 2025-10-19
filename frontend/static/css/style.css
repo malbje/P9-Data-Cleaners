@@ -1,5 +1,18 @@
-/* static/css/style.css */
+/**
+ * @fileoverview Main stylesheet for the Data Cleaners application
+ * Contains styles for dashboard, widgets, modals, chatbot, and responsive design
+ * @author Data Cleaners Team
+ * @version 1.0.0
+ */
 
+/* ========================================================================
+   BASE STYLES
+   ======================================================================== */
+
+/**
+ * Global body styles with modern system font stack
+ * Sets up the foundation for the entire application
+ */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #f0f2f6;
@@ -8,6 +21,15 @@ body {
     padding: 2em;
 }
 
+/* ========================================================================
+   LEGACY FORM STYLES
+   Used by manual insert pages and other form-based interfaces
+   ======================================================================== */
+
+/**
+ * Main container for legacy pages with centered card layout
+ * Max-width ensures readability on large screens
+ */
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -17,26 +39,43 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/**
+ * Typography styles for headings
+ * Consistent color scheme across the application
+ */
 h1, h2 {
     color: #1a1a1a;
 }
 
+/**
+ * Main heading styles with centered alignment
+ */
 h1 {
     text-align: center;
     margin-bottom: 0;
 }
 
+/**
+ * Paragraph styles with improved readability
+ */
 p {
     line-height: 1.6;
 }
 
-p:has(+ .card) { /* The caption paragraph */
+/**
+ * Special styling for caption paragraphs that precede card elements
+ * Uses modern CSS :has() selector for context-aware styling
+ */
+p:has(+ .card) {
     text-align: center;
     color: #666;
     margin-bottom: 2em;
 }
 
-
+/**
+ * Subtle horizontal rule styling
+ * Used as section dividers in forms
+ */
 hr {
     border: none;
     height: 1px;
@@ -44,20 +83,35 @@ hr {
     margin: 2em 0;
 }
 
+/* ========================================================================
+   FORM LAYOUT SYSTEM
+   Responsive grid system for organizing form elements
+   ======================================================================== */
+
+/**
+ * Base grid layout for form containers
+ * Starts as single column, expands to multiple columns on larger screens
+ */
 .forms-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5em;
 }
 
-/* On wider screens, display forms side-by-side */
+/**
+ * Responsive breakpoint for wider screens
+ * Automatically fits forms side-by-side when space allows
+ */
 @media (min-width: 768px) {
     .forms-grid {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
 }
 
-
+/**
+ * Card component styling
+ * Used for form sections and content grouping
+ */
 .card {
     background-color: #fafafa;
     padding: 1.5em;
@@ -65,24 +119,42 @@ hr {
     border-radius: 6px;
 }
 
+/**
+ * Horizontal form layout for related fields
+ * Groups form elements side-by-side (e.g., first/last name)
+ */
 .form-row {
     display: flex;
     gap: 1em;
 }
+
+/**
+ * Equal width distribution for form groups within rows
+ */
 .form-row .form-group {
     flex: 1;
 }
 
+/**
+ * Standard form group spacing
+ */
 .form-group {
     margin-bottom: 1em;
 }
 
+/**
+ * Form label styling for accessibility and consistency
+ */
 label {
     display: block;
     margin-bottom: 0.5em;
     font-weight: 500;
 }
 
+/**
+ * Unified styling for common input types
+ * Ensures consistent appearance across all form fields
+ */
 input[type="text"],
 input[type="email"],
 input[type="date"] {
@@ -90,9 +162,13 @@ input[type="date"] {
     padding: 0.75em;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box; /* Important for padding */
+    box-sizing: border-box;
 }
 
+/**
+ * Primary button styling with hover effects
+ * Full-width by default for mobile-first design
+ */
 button {
     width: 100%;
     padding: 0.8em;
@@ -116,7 +192,10 @@ button.danger:hover {
     background-color: #c82333;
 }
 
-/* Table styling */
+/* ========================================================================
+   TABLE COMPONENTS
+   Styling for data tables used in customer management
+   ======================================================================== */
 #customer-table-container {
     overflow-x: auto;
 }
@@ -155,18 +234,32 @@ th {
     border: 1px solid #f5c6cb;
 }
 
-
-/* --- Dashboard Specific Styles --- */
+/* ========================================================================
+   DASHBOARD LAYOUT SYSTEM
+   Main application dashboard with widget grid and chatbot panel
+   ======================================================================== */
+/**
+ * Dashboard-specific body styling
+ * Overrides base body background for the main application
+ */
 body {
-    background-color: #f0f2f6; /* A slightly different background for the app */
+    background-color: #f0f2f6;
 }
 
+/**
+ * Main dashboard container with responsive max-width
+ * Centers content and provides consistent padding
+ */
 .dashboard-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 1em 2em;
 }
 
+/**
+ * Dashboard header with navigation and user controls
+ * Contains logo, user info, mode toggle, and logout button
+ */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -288,38 +381,58 @@ body {
     min-height: 75vh;
 }
 
+/**
+ * Shared styling for main dashboard panels
+ * Both widget panel and chatbot panel use these base styles
+ */
 .widget-panel, .chatbot-panel {
     background-color: #fff;
     border-radius: 8px;
     padding: 1.5em;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    position: relative; /* Enable positioning for modal */
+    position: relative;
 }
 
-/* Widget Styles */
+/* ========================================================================
+   WIDGET SYSTEM
+   Interactive dashboard widgets with hover effects and modal integration
+   ======================================================================== */
+
+/**
+ * Widget grid layout - responsive 2x2 grid on desktop, single column on mobile
+ */
 .widget-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5em;
+    gap: 1.2em;
     margin-top: 1em;
 }
 
+/**
+ * Individual widget card styling
+ * Interactive cards with hover animations and click functionality
+ * Each widget has an icon, title, and colored border
+ */
 .widget-card {
     background-color: #ffffff;
     border: 2px solid #e9ecef;
     border-radius: 16px;
-    padding: 1.5em;
+    padding: 1.2em;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 120px;
+    min-height: calc(130px + 2cm);
     position: relative;
     overflow: hidden;
 }
 
+/**
+ * Widget hover effects
+ * Provides visual feedback with lift animation and color changes
+ */
 .widget-card:hover {
     transform: translateY(-4px);
     border-color: #007bff;
@@ -355,38 +468,7 @@ body {
     line-height: 1.2;
 }
 
-/* Individual widget color schemes */
-.widget-card[data-widget="vejr"] {
-    border-color: #17a2b8;
-}
 
-.widget-card[data-widget="vejr"]:hover {
-    border-color: #138496;
-}
-
-.widget-card[data-widget="vejr"] .widget-icon {
-    color: #17a2b8;
-}
-
-.widget-card[data-widget="vejr"]:hover .widget-icon {
-    color: #138496;
-}
-
-.widget-card[data-widget="ugeplan"] {
-    border-color: #28a745;
-}
-
-.widget-card[data-widget="ugeplan"]:hover {
-    border-color: #1e7e34;
-}
-
-.widget-card[data-widget="ugeplan"] .widget-icon {
-    color: #28a745;
-}
-
-.widget-card[data-widget="ugeplan"]:hover .widget-icon {
-    color: #1e7e34;
-}
 
 .widget-card[data-widget="appointments"] {
     border-color: #fd7e14;
@@ -420,6 +502,38 @@ body {
     color: #59359a;
 }
 
+.widget-card[data-widget="weather"] {
+    border-color: #17a2b8;
+}
+
+.widget-card[data-widget="weather"]:hover {
+    border-color: #138496;
+}
+
+.widget-card[data-widget="weather"] .widget-icon {
+    color: #17a2b8;
+}
+
+.widget-card[data-widget="weather"]:hover .widget-icon {
+    color: #138496;
+}
+
+.widget-card[data-widget="addresses"] {
+    border-color: #28a745;
+}
+
+.widget-card[data-widget="addresses"]:hover {
+    border-color: #1e7e34;
+}
+
+.widget-card[data-widget="addresses"] .widget-icon {
+    color: #28a745;
+}
+
+.widget-card[data-widget="addresses"]:hover .widget-icon {
+    color: #1e7e34;
+}
+
 /* Responsive adjustments for widgets */
 @media (max-width: 768px) {
     .widget-grid {
@@ -432,24 +546,61 @@ body {
     }
 }
 
-.widget {
-    background-color: #fafafa;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    padding: 1em;
-    margin-top: 1em;
-}
 
-.widget h3 {
-    margin-top: 0;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 0.5em;
-}
 
-/* Chatbot Styles */
+/* ========================================================================
+   CHATBOT INTERFACE
+   AI assistant panel with message history and input form
+   ======================================================================== */
+
+/**
+ * Main chatbot panel layout
+ * Uses flexbox to stack messages above input form
+ */
 .chatbot-panel {
     display: flex;
-    flex-direction: column; /* Stacks messages on top of the input form */
+    flex-direction: column;
+}
+
+/**
+ * Chatbot header with avatar and title
+ * Contains the AI assistant branding and visual identity
+ */
+.chatbot-header {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.chatbot-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.chatbot-avatar .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.chatbot-avatar .avatar-placeholder {
+    font-size: 24px;
+    color: white;
+}
+
+.chatbot-header h2 {
+    margin: 0;
+    color: #333;
 }
 
 .chat-messages {
@@ -508,7 +659,15 @@ body {
     width: auto; /* Override the 100% width from previous styles */
 }
 
-/* Widget Modal Styles */
+/* ========================================================================
+   MODAL SYSTEM
+   Full-screen modal overlay for widget content display
+   ======================================================================== */
+/**
+ * Base modal overlay
+ * Covers the entire widget panel when active
+ * Uses backdrop-filter for modern blur effect
+ */
 .widget-modal {
     display: none;
     position: absolute;
@@ -576,7 +735,7 @@ body {
 .modal-body {
     padding: 2em;
     overflow-y: auto;
-    max-height: calc(80vh - 100px);
+    max-height: calc(85vh - 120px);
 }
 
 /* Profile widget specific styles */
@@ -639,71 +798,9 @@ body {
     font-weight: bold;
 }
 
-.profile-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1em;
-    margin-top: 1.5em;
-}
 
-.stat-card {
-    background-color: white;
-    padding: 1em;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-    text-align: center;
-}
 
-.stat-number {
-    font-size: 2em;
-    font-weight: bold;
-    color: #007bff;
-    margin: 0;
-}
 
-.stat-label {
-    color: #666;
-    font-size: 0.9em;
-    margin: 0.5em 0 0 0;
-}
-
-/* Weather widget styles */
-.weather-info {
-    display: grid;
-    gap: 1.5em;
-}
-
-.weather-current {
-    text-align: center;
-    padding: 2em;
-    background: linear-gradient(135deg, #17a2b8, #138496);
-    color: white;
-    border-radius: 12px;
-}
-
-.weather-temp {
-    font-size: 3em;
-    font-weight: bold;
-    margin: 0;
-}
-
-.weather-desc {
-    font-size: 1.2em;
-    margin: 0.5em 0;
-}
-
-.weather-forecast {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1em;
-}
-
-.forecast-day {
-    background-color: #f8f9fa;
-    padding: 1em;
-    border-radius: 8px;
-    text-align: center;
-}
 
 /* Animations */
 @keyframes fadeIn {
@@ -737,11 +834,7 @@ body {
         padding: 1.5em;
     }
     
-    .profile-stats {
-        grid-template-columns: 1fr 1fr;
-    }
+
     
-    .weather-forecast {
-        grid-template-columns: repeat(2, 1fr);
-    }
+
 }
