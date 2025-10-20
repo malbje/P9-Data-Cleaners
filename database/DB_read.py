@@ -146,7 +146,7 @@ def add_address(city_name: str, postal_code: str, street_and_number: str):
     finally:
         db.close()
 
-def add_appointment(address_id: int, date: str, time: str, notes: str, notification_preference: str):
+def add_appointment(address_id: int, date: str, time: str, notes: str = "", notification_preference: str = "email"):
     """
     Tilføjer en appointment til en given adresse.
     """
@@ -159,6 +159,9 @@ def add_appointment(address_id: int, date: str, time: str, notes: str, notificat
         )
         db.commit()
         return {"id": cur.lastrowid, "address_id": address_id, "date": date, "time": time, "notes": notes, "notification_preference": notification_preference}
+    except Exception as e:
+        db.rollback()  # Rollback hvis der opstår en fejl
+        return {"error": f"Failed to create appointment: {str(e)}"}
     finally:
         db.close()
 
@@ -224,8 +227,13 @@ def get_customers_by_appointment_id(appointment_id: int):
     try:
         cur = db.cursor(dictionary=True)
         cur.execute(
-            "SELECT customers.* FROM customers JOIN appointments ON customers.id = appointments.customer_id WHERE appointments.id = %s",
-            (appointment_id,),
+            (
+                "SELECT customers.* "
+                "FROM customers "
+                "JOIN lives_in ON lives_in.customer_id = customers.id "
+                "JOIN appointments ON appointments.address_id = lives_in.address_id "
+                "WHERE appointments.id = %s"
+            ),            (appointment_id,),
         )
         return cur.fetchall()  # Returnerer alle kunder med den pågældende aftale
     finally:
@@ -259,5 +267,42 @@ def delete_customer(customer_id: int):
         )
         db.commit()
         return {"deleted_rows": cur.rowcount}
+    finally:
+        db.close()
+
+def find_address_by_text(search_text: str):
+    """
+    Find adresser baseret på søgetekst (søger i street_and_number, postal_code, city_name).
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        # Søg i alle adresse-felter
+        cur.execute(
+            """SELECT id, street_and_number, postal_code, city_name 
+               FROM addresses 
+               WHERE street_and_number LIKE %s 
+               OR postal_code LIKE %s 
+               OR city_name LIKE %s 
+               OR CONCAT(street_and_number, ' ', postal_code, ' ', city_name) LIKE %s
+               ORDER BY id""",
+            (f"%{search_text}%", f"%{search_text}%", f"%{search_text}%", f"%{search_text}%")
+        )
+        return cur.fetchall()
+    finally:
+        db.close()
+
+def get_address_by_id(address_id: int):
+    """
+    Hent en specifik adresse via dens ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT * FROM addresses WHERE id = %s",
+            (address_id,),
+        )
+        return cur.fetchone()
     finally:
         db.close()

@@ -136,19 +136,24 @@ TOOLS = [
                         "type": "integer"
                     },
                     "date": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Date in YYYY-MM-DD format"
                     },
                     "time": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Time in HH:MM format"
                     },
                     "notes": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Any notes for the appointment. Use empty string if no notes."
                     },
                     "notification_preference": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "How to notify customer: 'email', 'sms', 'phone', or 'none'. Default is 'email'.",
+                        "default": "email"
                     }
                 },
-                "required": ["address_id", "date", "time", "notes", "notification_preference"]
+                "required": ["address_id", "date", "time"]
             }
         }
     },
@@ -273,7 +278,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "get_customers_by_appointment_id",
-            "description": "Retrieve all customers by their appointment ID.",
+            "description": "Retrieve all customers linked to an appointment by traversing the appointment's address via the lives_in table.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -282,6 +287,42 @@ TOOLS = [
                     }
                 },
                 "required": ["appointment_id"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "find_address_by_text",
+            "description": "Find addresses by searching in street address, postal code, or city name. Use this to find address_id when you have text like 'Danmarksgade 7 9000 Aalborg'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "search_text": {
+                        "type": "string",
+                        "description": "Text to search for in addresses (street, postal code, city)"
+                    }
+                },
+                "required": ["search_text"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_address_by_id",
+            "description": "Get specific address details by address ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {
+                        "type": "integer",
+                        "description": "The ID of the address to retrieve"
+                    }
+                },
+                "required": ["address_id"]
             }
         }
     },
