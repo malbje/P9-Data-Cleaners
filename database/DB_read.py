@@ -146,6 +146,22 @@ def add_address(city_name: str, postal_code: str, street_and_number: str):
     finally:
         db.close()
 
+def add_appointment(address_id: int, date: str, time: str, notes: str, notification_preference: str):
+    """
+    Tilføjer en appointment til en given adresse.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "INSERT INTO appointments (address_id, date, time, notes, notification_preference) VALUES (%s, %s, %s, %s, %s)",
+            (address_id, date, time, notes, notification_preference),
+        )
+        db.commit()
+        return {"id": cur.lastrowid, "address_id": address_id, "date": date, "time": time, "notes": notes, "notification_preference": notification_preference}
+    finally:
+        db.close()
+
 def update_customer_address(customer_id: int, address_id: int , city_name: str, postal_code: str, street_and_number: str):
     """
     Opdaterer en kundes adresse baseret på deres ID.
@@ -182,6 +198,36 @@ def get_appointment_by_id(appointment_id: int):
             (appointment_id,),
         )
         return cur.fetchone()  # Antager ID er unik, så vi forventer kun én række
+    finally:
+        db.close()
+
+def get_customers_by_address_id(address_id: int):
+    """
+    Hent alle kunder via adresse ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT customers.* FROM customers JOIN lives_in ON customers.id = lives_in.customer_id WHERE lives_in.address_id = %s",
+            (address_id,),
+        )
+        return cur.fetchall()  # Returnerer alle kunder på adressen
+    finally:
+        db.close()
+
+def get_customers_by_appointment_id(appointment_id: int):
+    """
+    Hent alle kunder via aftale ID.
+    """
+    db = get_connection()
+    try:
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            "SELECT customers.* FROM customers JOIN appointments ON customers.id = appointments.customer_id WHERE appointments.id = %s",
+            (appointment_id,),
+        )
+        return cur.fetchall()  # Returnerer alle kunder med den pågældende aftale
     finally:
         db.close()
 

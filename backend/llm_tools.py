@@ -127,6 +127,35 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "add_appointment",
+            "description": "Tilføjer en appointment til en given adresse.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {
+                        "type": "integer"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "time": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "notification_preference": {
+                        "type": "string"
+                    }
+                },
+                "required": ["address_id", "date", "time", "notes", "notification_preference"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
             "name": "update_customer_address",
             "description": "Updates a customer's address based on their ID.",
             "parameters": {
@@ -203,5 +232,57 @@ TOOLS = [
                 "required": ["id"]
             }
         }
-    }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customers_by_address_id",
+            "description": "Retrieve all customers by their address ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_appointments_by_id",
+            "description": "Retrieve specific appointment by its ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "The unique ID of the appointment."
+                    }
+                },
+                "required": ["id"]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customers_by_appointment_id",
+            "description": "Retrieve all customers by their appointment ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
 ]

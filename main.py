@@ -5,7 +5,7 @@ from openai import OpenAI
 import json
 import private_settings  # indeholder OPENAI_API_KEY
 from backend.llm_tools import TOOLS
-from database.DB_read import get_appointment_by_id, get_appointments_by_address_id, get_customer_by_id, list_customers, list_customers_by_name, get_customer_by_email, add_address, update_customer_address, delete_customer, add_customer
+from database.DB_read import add_appointment, get_appointment_by_id, get_appointments_by_address_id, get_customer_by_id, get_customers_by_address_id, list_customers, list_customers_by_name, get_customer_by_email, add_address, update_customer_address, delete_customer, add_customer, get_customers_by_appointment_id
 
 
 def ask_llm(user_prompt: str):
@@ -39,6 +39,8 @@ def ask_llm(user_prompt: str):
             result = list_customers_by_name(**args)
         elif name == "add_customer":
             result = add_customer(**args)
+        elif name == "add_appointment":
+            result = add_appointment(**args)
         elif name == "get_customer_by_email":
             result = get_customer_by_email(**args)
         elif name == "get_customer_by_id":
@@ -53,6 +55,10 @@ def ask_llm(user_prompt: str):
             result = get_appointment_by_id(**args)
         elif name == "delete_customer":
             result = delete_customer(**args)
+        elif name == "get_customers_by_appointment_id":
+            result = get_customers_by_appointment_id(**args)
+        elif name == "get_customers_by_address_id":
+            result = get_customers_by_address_id(**args)
         else:
             result = {"error": f"Ukendt funktion: {name}"}
 
@@ -77,6 +83,6 @@ def ask_llm(user_prompt: str):
 # ----------------------------
 if __name__ == "__main__":
     # Eksempel: spørg efter kunder hvor navnet indeholder "Jensen"
-    prompt = "giv mig en oversigt over Fiona Clars aftaler og generelle info. "
+    prompt = "Når jeg får dig til at oprette en appointment giver du positivt feedback på at det virker - dog kan jeg ikke se nogen ændring i databasen. Lav et overblik over hvilke funktioner du ville kalde og hvad du eventuelt mangler. Eksemplet er at du har fået adresse id, dato og tid. derudover har du også fået en kundes ID. "
     answer = ask_llm(prompt)
     print(answer)
