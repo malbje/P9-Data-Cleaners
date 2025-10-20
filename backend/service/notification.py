@@ -1,21 +1,43 @@
-# -----------------------------
-# This page works with creating and sending notifications
-#
-# Currently it is printing 3 reminders in the terminal based on the mock data
-# -----------------------------
+"""
+================================================================================
+DATA CLEANERS - NOTIFICATION SYSTEM
+================================================================================
+Email notification service for appointment reminders and customer communications
 
-# This defines the current working directory as the root directory, so we can import from backend
-# Otherwise notification.py and its methods won't be found
+Features:
+- SMTP email sending with authentication
+- Dry-run mode for testing without sending emails
+- Appointment reminder message generation
+- Integration with database appointment queries
+- Error handling for failed email deliveries
+
+Dependencies:
+- private_settings: SMTP configuration (host, port, credentials)
+- backend.service.get_upcoming_appt: Database appointment queries
+- smtplib: Python standard library for email sending
+
+Author: Data Cleaners Team
+Last Modified: [Current Date]
+================================================================================
+"""
+
+# System path configuration for backend imports
 import sys, os
 sys.path.insert(0, os.getcwd())
-# ------------------------------
+
+# ============================================================================
+# IMPORTS AND DEPENDENCIES
+# ============================================================================
 
 import smtplib
 from email.message import EmailMessage
 import private_settings
 
-# Notification system
-# ----- SMTP CONFIGURATION (change these two lines) -----
+# ============================================================================
+# SMTP CONFIGURATION
+# ============================================================================
+
+# Email server settings from private configuration
 SMTP_HOST = private_settings.SMTP_HOST
 SMTP_PORT = private_settings.SMTP_PORT
 SMTP_USER = private_settings.SMTP_USER
@@ -23,56 +45,71 @@ SMTP_PASS = private_settings.SMTP_PASS
 
 FROM = SMTP_USER
 
-# Turn on/off for testing (True = print to terminal, False = send mails)
+# Development mode switch (True = print to terminal, False = send emails)
 DRY_RUN = True
 
 
-# Notification message
+# ============================================================================
+# NOTIFICATION MESSAGE GENERATION
+# ============================================================================
+
 def create_notification(name, date, time):
     """
-    Create a notification message for a cleaning appointment.
-
+    Generate a personalized appointment reminder message
+    
     Args:
-        name (str): The name of the person.
-        date (str): The date of the cleaning appointment.
-        time (str): The time of the cleaning appointment.
-
+        name (str): Customer's full name
+        date (str): Appointment date (YYYY-MM-DD format)
+        time (str): Appointment time (HH:MM format)
+        
     Returns:
-        str: A notification message.
+        str: Formatted reminder message for email/SMS delivery
     """
-   
     return f"Hello {name}, this is a reminder that your cleaning is scheduled for {date} at {time}."
 
-# Reference:
-# Using get_appointments_to_notify() from get_function.py to fetch real data from DB
+# ============================================================================
+# DATABASE INTEGRATION AND APPOINTMENT RETRIEVAL  
+# ============================================================================
+
+# Import appointment query functions from database service
 from backend.service.get_upcoming_appt import get_appointments_to_notify
 
+# Fetch appointments requiring notifications
 appointments = get_appointments_to_notify()
 
+# Debug information about notification queue
 print(f"Found {len(appointments)} appointments to notify.")
 for appt in appointments:
     print("Appointment data:", appt)
 
 
-# Function to send notification
+# ============================================================================
+# EMAIL SENDING FUNCTIONALITY
+# ============================================================================
+
 def send_notification(notification, email):
     """
-    Send a notification to a given email address.
+    Send appointment reminder email to customer
     
-    Currently, this function only prints the message to the terminal.
-    Later, it can be updated to send real emails or SMS.
-
-    If dryrun=true: prints to terminal
-    If dryrun=false: sends email
-
+    Supports both dry-run mode (terminal output) and live email delivery
+    Uses SMTP with TLS encryption for secure email transmission
+    
     Args:
-        notification (str): The notification message to send.
-        email (str): The recipient's email address.
+        notification (str): Pre-formatted reminder message text
+        email (str): Customer's email address for delivery
+        
+    Returns:
+        None: Prints success/failure status to console
+        
+    Raises:
+        Exception: Email delivery failures are caught and logged
     """
+    # Development mode - print to terminal instead of sending email
     if DRY_RUN:
         print(f"[DRY_RUN] Would send to {email}: {notification}")
         return
 
+    # Create email message with proper headers
     msg = EmailMessage()
     msg["From"] = FROM
     msg["To"] = email
@@ -80,19 +117,26 @@ def send_notification(notification, email):
     msg.set_content(notification)
 
     try:
+        # Send email via SMTP with TLS encryption
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as s:
-            s.starttls()
-            s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
+            s.starttls()  # Enable TLS encryption
+            s.login(SMTP_USER, SMTP_PASS)  # Authenticate with server
+            s.send_message(msg)  # Send the email
         print(f"Sent to {email}")
     except Exception as e:
         print(f"FAILED to send to {email}: {e}")
 
-# Loop through all appointments and create + send message
+# ============================================================================
+# NOTIFICATION PROCESSING LOOP
+# ============================================================================
+
+# Process each appointment and send reminder notifications
 for appointment in appointments:
+    # Generate personalized reminder message
     notification = create_notification(
         appointment["name"],
-        appointment["date"],
+        appointment["date"], 
         appointment["time"]
     )
+    # Send notification via email (or print in dry-run mode)
     send_notification(notification, appointment["email"])

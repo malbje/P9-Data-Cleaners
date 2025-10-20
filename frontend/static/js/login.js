@@ -1,19 +1,63 @@
-// auth.js — Login + optional Signup (safe-merge, defensive)
+/**
+ * @fileoverview Authentication system for Data Cleaners application
+ * Handles both login and signup functionality with form validation and API integration
+ * Supports both single-form and dual-form layouts with defensive programming
+ * @author Data Cleaners Team
+ * @version 1.0.0
+ */
 
+// ============================================================================
+// AUTHENTICATION SYSTEM INITIALIZATION
+// ============================================================================
+
+/**
+ * Main authentication system entry point
+ * Initializes login and signup forms when DOM is ready
+ * Uses defensive programming to handle missing elements gracefully
+ */
 document.addEventListener("DOMContentLoaded", () => {
-  // ---- DOM lookups (some may be absent; we guard below) ----
+  // ========================================================================
+  // DOM ELEMENT REFERENCES
+  // Safe element lookups with null-checking for defensive programming
+  // ========================================================================
+  
+  /** @type {HTMLElement|null} Toggle button for login form */
   const loginToggle = document.getElementById("login-toggle");
+  
+  /** @type {HTMLElement|null} Toggle button for signup form */
   const signupToggle = document.getElementById("signup-toggle");
+  
+  /** @type {HTMLFormElement|null} Login form element */
   const loginForm = document.getElementById("login-form");
+  
+  /** @type {HTMLFormElement|null} Signup form element */
   const signupForm = document.getElementById("signup-form");
+  
+  /** @type {HTMLElement|null} Container for displaying messages to user */
   const messageContainer = document.getElementById("message-container");
 
-  // ---- Utilities (shared) ----
+  // ========================================================================
+  // VALIDATION UTILITIES
+  // Shared validation functions for form inputs
+  // ========================================================================
+  
+  /**
+   * Validates email address format using regex
+   * @param {string} email - Email address to validate
+   * @returns {boolean} True if email format is valid
+   */
   function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
+  /**
+   * Validates phone number format
+   * Supports international format with optional leading +
+   * Strips common formatting characters for validation
+   * @param {string} phone - Phone number to validate
+   * @returns {boolean} True if phone format is valid
+   */
   function isValidPhone(phone) {
     // basic international-ish check, allows leading +
     if (!phone) return false;
@@ -21,6 +65,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ""));
   }
 
+  // ========================================================================
+  // USER FEEDBACK SYSTEM
+  // Functions for displaying messages and notifications to users
+  // ========================================================================
+
+  /**
+   * Display a message to the user with automatic dismissal
+   * Falls back to alert() if message container is not available
+   * @param {string} text - Message text to display
+   * @param {string} [type="success"] - Message type: "success", "error", "info"
+   */
   function showMessage(text, type = "success") {
     const div = document.createElement("div");
     div.className = `message ${type}`;
@@ -35,11 +90,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Clear all existing messages from the message container
+   * Safe to call even if message container doesn't exist
+   */
   function clearMessages() {
     if (messageContainer) messageContainer.innerHTML = "";
   }
 
-  // ---- Toggle helpers (only if both forms exist) ----
+  // ========================================================================
+  // FORM TOGGLE SYSTEM
+  // Functions for switching between login and signup forms
+  // ========================================================================
+
+  /**
+   * Switch interface to show login form
+   * Updates toggle button states and form visibility
+   * Only works when both login and signup forms are present
+   */
   function switchToLogin() {
     if (!loginForm || !signupForm) return;
     loginToggle && loginToggle.classList.add("active");
@@ -49,6 +117,11 @@ document.addEventListener("DOMContentLoaded", () => {
     clearMessages();
   }
 
+  /**
+   * Switch interface to show signup form
+   * Updates toggle button states and form visibility
+   * Only works when both login and signup forms are present
+   */
   function switchToSignup() {
     if (!loginForm || !signupForm) return;
     signupToggle && signupToggle.classList.add("active");
@@ -58,11 +131,25 @@ document.addEventListener("DOMContentLoaded", () => {
     clearMessages();
   }
 
-  // Wire up toggles (if they exist)
+  /**
+   * Initialize toggle button event listeners
+   * Uses safe chaining to avoid errors if elements don't exist
+   */
   loginToggle && loginToggle.addEventListener("click", switchToLogin);
   signupToggle && signupToggle.addEventListener("click", switchToSignup);
 
-  // ---- API wrappers (handle both response styles) ----
+  // ========================================================================
+  // API COMMUNICATION
+  // Wrapper functions for backend API calls with error handling
+  // ========================================================================
+
+  /**
+   * Send JSON POST request to API endpoint
+   * Handles various response formats and provides normalized return values
+   * @param {string} url - API endpoint URL
+   * @param {Object} body - Request body data to send as JSON
+   * @returns {Promise<{success: boolean, data: any, message: string, status: number}>} Normalized response
+   */
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
@@ -83,7 +170,16 @@ document.addEventListener("DOMContentLoaded", () => {
     return { success, data, message, status: res.status };
   }
 
-  // ---- LOGIN (works even if password is ignored by backend) ----
+  // ========================================================================
+  // LOGIN FORM HANDLING
+  // Processes login form submission with validation and API integration
+  // ========================================================================
+
+  /**
+   * Initialize login form submission handler
+   * Handles form validation, API communication, and user feedback
+   * Works even if backend ignores password field
+   */
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -93,8 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const password = document.getElementById("login-password")?.value || "";
       const rememberMe = !!document.getElementById("remember-me")?.checked;
 
-      // Basic validation — original file only required email, but we’ll allow
-      // empty password if your backend ignores it.
+      // Perform client-side validation before API call
       if (!email) {
         showMessage("Please enter an email address.", "error");
         return;
@@ -107,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const { success, data, message } = await postJSON("/api/auth/login", {
           email,
-          password, // backend may ignore this; safe to send
+          password,     // Backend may ignore this field for certain auth methods
           rememberMe,
         });
 
@@ -127,7 +222,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- SIGNUP (only wired if the form exists) ----
+  // ========================================================================
+  // SIGNUP FORM HANDLING
+  // Processes signup form submission with comprehensive validation
+  // ========================================================================
+
+  /**
+   * Initialize signup form submission handler
+   * Includes extensive validation for all required fields
+   * Only initializes if signup form exists in the DOM
+   */
   if (signupForm) {
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -142,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("signup-confirm-password")?.value || "";
       const termsAgreed = !!document.getElementById("terms-agreement")?.checked;
 
-      // Validations (from your signup file)
+      // Comprehensive client-side validation
       if (!firstname || !lastname || !email || !phone || !password || !confirmPassword) {
         showMessage("Please fill in all fields.", "error");
         return;
@@ -183,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (success) {
           showMessage("Account created successfully! Please log in.", "success");
           signupForm.reset();
-          // If you have toggles/forms for both, switch back to login
+          // Automatically switch to login form after successful signup
           setTimeout(() => switchToLogin(), 1200);
         } else {
           showMessage(
@@ -201,9 +305,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Optional: password visibility toggles (call if you want) ----
-  // addPasswordToggle();
+  // ========================================================================
+  // PASSWORD VISIBILITY TOGGLE (OPTIONAL FEATURE)
+  // Adds show/hide functionality to password fields
+  // ========================================================================
 
+  /**
+   * Add password visibility toggle buttons to all password fields
+   * Creates eye icons that allow users to show/hide password text
+   * Call this function to enable password visibility toggles
+   * Currently commented out - uncomment the call above to enable
+   */
   function addPasswordToggle() {
     const passwordFields = document.querySelectorAll('input[type="password"]');
     passwordFields.forEach((field) => {

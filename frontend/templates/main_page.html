@@ -1,3 +1,27 @@
+<!--
+================================================================================
+DATA CLEANERS - MAIN DASHBOARD PAGE
+================================================================================
+Main dashboard interface for authenticated users after login
+Provides overview widgets and AI-powered booking chatbot functionality
+
+Features:
+- User dashboard with weather, appointments, addresses, and profile widgets
+- Interactive modal system for widget details
+- AI chatbot for booking assistance (Danish/English support)  
+- Manual/Auto mode toggle for cleaning booking preferences
+- Responsive grid layout for various screen sizes
+
+Dependencies:
+- style.css: Main styling and layout
+- mainpage.js: Interactive functionality and API communication
+- Flask backend: User session management and data APIs
+- Chatbot service: AI-powered booking assistance
+
+Author: Data Cleaners Team
+Last Modified: [Current Date]
+================================================================================
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,26 +31,37 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!-- Main dashboard container -->
     <div class="dashboard-container">
+        <!-- Dashboard header with navigation and user controls -->
         <header class="dashboard-header">
             <h1>Data Cleaners</h1>
             <nav>
+                <!-- User information display (populated by JavaScript) -->
                 <span id="user-info" class="user-info">Loading...</span>
+                
+                <!-- Mode toggle between Manual and Auto booking modes -->
                 <div class="mode-toggle">
                     <button id="mode-toggle-btn" class="mode-btn active" onclick="toggleMode()">
                         <span class="mode-text">Manual Mode</span>
                     </button>
                 </div>
+                
+                <!-- Logout link -->
                 <a href="/logout" class="logout-btn">Logout</a>
             </nav>
         </header>
 
+        <!-- Main dashboard content area -->
         <main class="dashboard-grid">
+            <!-- Left panel: User overview widgets -->
             <section class="widget-panel">
                 <h2>My Overview</h2>
                 <div class="widget-grid" id="widget-grid">
+                    <!-- Weather widget - displays current weather information -->
                     <div class="widget-card" id="weather-widget" data-widget="weather">
                         <div class="widget-icon">
+                            <!-- Weather cloud icon SVG -->
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M18 10H16.74C16.38 8.83 15.64 7.77 14.62 7.03C13.6 6.29 12.32 5.9 11 5.9C9.68 5.9 8.4 6.29 7.38 7.03C6.36 7.77 5.62 8.83 5.26 10H4C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14H18C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10Z" fill="currentColor"/>
                             </svg>
@@ -34,8 +69,10 @@
                         <div class="widget-title">Weather</div>
                     </div>
                     
+                    <!-- Appointments widget - shows upcoming cleaning appointments -->
                     <div class="widget-card" id="appointments-widget" data-widget="appointments">
                         <div class="widget-icon">
+                            <!-- Calendar icon SVG -->
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M19 3H18V1H16V3H8V1H6V3H5C3.89 3 3.01 3.9 3.01 5L3 19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V8H19V19ZM7 10H12V15H7V10Z" fill="currentColor"/>
                             </svg>
@@ -43,8 +80,10 @@
                         <div class="widget-title">Upcoming Appointments</div>
                     </div>
                     
+                    <!-- Addresses widget - displays user's saved addresses -->
                     <div class="widget-card" id="addresses-widget" data-widget="addresses">
                         <div class="widget-icon">
+                            <!-- House icon SVG -->
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" fill="currentColor"/>
                             </svg>
@@ -52,8 +91,10 @@
                         <div class="widget-title">My Addresses</div>
                     </div>
                     
+                    <!-- Profile widget - user account and preferences management -->
                     <div class="widget-card" id="profile-widget" data-widget="profile">
                         <div class="widget-icon">
+                            <!-- User profile icon SVG -->
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
                             </svg>
@@ -62,40 +103,53 @@
                     </div>
                 </div>
 
-                <!-- Widget Modal positioned within widget panel -->
+                <!-- Widget Modal - displays detailed content for selected widgets -->
                 <div id="widget-modal" class="widget-modal">
                     <div class="modal-content">
                         <div class="modal-header">
+                            <!-- Modal title (updated dynamically based on selected widget) -->
                             <h2 id="modal-title">Widget</h2>
+                            <!-- Close modal button -->
                             <button class="modal-close" id="modal-close">&times;</button>
                         </div>
                         <div class="modal-body" id="modal-body">
-                            <!-- Widget content will be loaded here -->
+                            <!-- Widget detailed content loaded dynamically via JavaScript -->
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- Right panel: AI chatbot for booking assistance -->
             <section class="chatbot-panel">
                 <div class="chatbot-header">
+                    <!-- Chatbot avatar/branding -->
                     <div class="chatbot-avatar">
                         <img src="{{ url_for('static', filename='images/chatbot-avatar.png') }}" alt="AI Assistant" class="avatar-img">
                     </div>
+                    <!-- Chatbot title (Danish: AI Assistant for Booking) -->
                     <h2>AI Assistent til Booking</h2>
                 </div>
+                
+                <!-- Chat messages container - displays conversation history -->
                 <div class="chat-messages" id="chat-messages">
+                    <!-- Initial bot greeting message (Danish/English mix) -->
                     <div class="message bot">
                         Hej! How can I help you book a cleaning today? You can say "Book a cleaning for a new customer."
                     </div>
                 </div>
+                
+                <!-- Chat input form -->
                 <form class="chat-form" id="chat-form">
+                    <!-- User message input (Placeholder in Danish: "Write your message here...") -->
                     <input type="text" id="chat-input" placeholder="Skriv din besked her..." autocomplete="off">
+                    <!-- Send message button -->
                     <button type="submit">Send</button>
                 </form>
             </section>
         </main>
     </div>
 
+    <!-- Main page JavaScript - handles dashboard interactions and chatbot -->
     <script src="{{ url_for('static', filename='js/mainpage.js') }}" defer></script>
 </body>
 </html>

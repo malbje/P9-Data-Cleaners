@@ -1,88 +1,130 @@
+/**
+ * @fileoverview Manual appointment booking and management interface
+ * Handles form interactions, data loading, and API communication for staff booking system
+ * @author Data Cleaners Team
+ * @version 1.0.0
+ */
+
+// ============================================================================
+// MAIN APPLICATION INITIALIZATION
+// ============================================================================
+
+/**
+ * Initialize manual booking interface when DOM is ready
+ * Sets up forms, loads user data, and configures default values
+ */
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Set default date and time for the create form ---
-    const now = new Date();
-    const today = now.toISOString().split("T")[0];
-    const currentTime = now.toTimeString().slice(0, 5);
+    // ========================================================================
+    // FORM DEFAULT VALUES SETUP
+    // ========================================================================
     
+    /**
+     * Set default date and time values for appointment booking form
+     * Uses current date and time as sensible defaults
+     */
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];  // Format: YYYY-MM-DD
+    const currentTime = now.toTimeString().slice(0, 5);  // Format: HH:MM
+    
+    // Pre-populate booking form with current date/time
     document.getElementById("create_date").value = today;
     document.getElementById("create_time").value = currentTime;
 
-    // --- New function to load user-specific data ---
+    // ========================================================================
+    // USER DATA LOADING AND AUTHENTICATION
+    // ========================================================================
+    
+    /**
+     * Load user-specific data and populate form defaults
+     * Fetches user authentication status, addresses, and appointment data
+     * @async
+     */
     const loadUserData = async () => {
         try {
-            // Fetch user status to get name/email
+            // Check user authentication status and get user details
             const statusResponse = await fetch('/api/auth/status');
             if (!statusResponse.ok) {
                 throw new Error(`Authentication status check failed: ${statusResponse.statusText}`);
             }
             const statusData = await statusResponse.json();
+            
             if (statusData.logged_in) {
+                // Pre-populate form fields with user data
                 document.getElementById('create_name').value = statusData.user.name;
                 document.getElementById('create_email').value = statusData.user.email;
                 
-                // --- NEW: Set the default notification preference ---
+                // Set user's default notification preference in dropdown
                 const userPreference = statusData.user.notification_preference;
                 const notificationSelect = document.getElementById('create_notification');
-                // Check if the user has a preference and the dropdown exists
                 if (userPreference && notificationSelect) {
-                    // Set the dropdown's value to match the user's preference
                     notificationSelect.value = userPreference;
                 }
-                // --- END NEW ---
 
-                // Fetch appointments only AFTER confirming login
+                // Load appointment data after confirming authentication
                 fetchAllAppointments(); 
 
             } else {
-                // If not logged in, we can't load addresses.
+                // Handle unauthenticated state
                 document.getElementById('select_address').innerHTML = '<option value="">Please log in to see addresses</option>';
-                // Also clear the appointments table
                 document.getElementById("customer-table-container").innerHTML = "<p>Please log in to see your appointments.</p>";
-                return; // Stop execution here
+                return; // Exit early for unauthenticated users
             }
 
-            // Fetch user addresses
+            // Fetch user's saved addresses from API
             const addressResponse = await fetch('/api/user/addresses');
             if (!addressResponse.ok) throw new Error('Failed to fetch addresses');
             const addresses = await addressResponse.json();
             
-            // Populate both the 'create' and 'reschedule' address dropdowns
+            // Populate address dropdowns for both booking forms
             const createAddressSelect = document.getElementById('select_address');
             const rescheduleAddressSelect = document.getElementById('reschedule_address_select');
             
+            // Generate HTML options for address dropdowns
             const addressOptions = addresses.map(addr => 
                 `<option value="${addr.id}">${addr.street_and_number}, ${addr.postal_code} ${addr.city_name}</option>`
             ).join('');
 
+            // Populate create appointment address dropdown
             createAddressSelect.innerHTML = addressOptions;
-            // Add a placeholder to the reschedule dropdown
+            
+            // Populate reschedule appointment dropdown with placeholder
             rescheduleAddressSelect.innerHTML = '<option value="">-- Select an address --</option>' + addressOptions;
 
         } catch (error) {
             console.error("Error loading user data:", error);
-            // This will now correctly display an error message in the dropdown
+            // Display error message in address dropdown
             document.getElementById('select_address').innerHTML = '<option value="">Error loading addresses</option>';
         }
     };
 
-    // --- Main function to fetch and display all appointments ---
+    // ========================================================================
+    // APPOINTMENT DATA LOADING AND DISPLAY
+    // ========================================================================
+    
+    /**
+     * Fetch and display all user appointments in a table format
+     * Updates the customer-table-container with current appointment data
+     * @async
+     */
     const fetchAllAppointments = async () => {
         const container = document.getElementById("customer-table-container");
         try {
-            // This API endpoint correctly fetches appointments for the logged-in user.
+            // Fetch appointments for the authenticated user
             const response = await fetch("/api/appointments");
             const appointments = await response.json();
             
-            // Sort by date and time
+            // Sort appointments by date and time (earliest first)
             appointments.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
 
+            // Handle empty appointments state
             if (appointments.length === 0) {
                 container.innerHTML = "<p>You have no upcoming appointments.</p>";
                 return;
             }
 
-            // Use the card-based layout from mainpage.js, with an added delete button.
+            // Generate card-based appointment display with delete functionality
             let content = '<div class="appointments-list">';
+            // Map each appointment to a card HTML structure
             content += appointments.map(appt => `
                 <div class="appointment-card">
                     <div class="appointment-date">
@@ -101,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `).join('');
             content += '</div>';
 
-            // Add the necessary styles for the card layout
+            // Inject CSS styles for appointment card layout
             const style = document.createElement('style');
             style.innerHTML = `
                 .appointments-list { display: grid; gap: 1em; }
@@ -116,7 +158,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 .appointment-actions .delete-btn { padding: 0.5em 1em; }
             `;
             
-            container.innerHTML = ""; // Clear previous content
+            // Clear previous content and inject new appointment cards
+            container.innerHTML = ""; 
             container.appendChild(style);
             container.innerHTML += content;
 
@@ -126,32 +169,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // --- Message display helper ---
+    // ========================================================================
+    // USER FEEDBACK AND MESSAGING
+    // ========================================================================
+    
+    /**
+     * Display temporary success or error messages to the user
+     * @param {string} text - Message text to display
+     * @param {string} type - Message type ('success', 'error', etc.)
+     */
     const showMessage = (text, type = "success") => {
         const container = document.getElementById("message-container");
         const messageDiv = document.createElement("div");
-        messageDiv.className = `alert ${type}`; // Using alert classes for consistency
+        messageDiv.className = `alert ${type}`;
         messageDiv.textContent = text;
         container.innerHTML = "";
         container.appendChild(messageDiv);
+        // Auto-remove message after 4 seconds
         setTimeout(() => messageDiv.remove(), 4000);
     };
 
-    // --- Form submission handler for creating appointments ---
+    // ========================================================================
+    // APPOINTMENT BOOKING FORM HANDLING
+    // ========================================================================
+    
+    /**
+     * Handle new appointment creation form submission
+     * Collects form data and sends POST request to create appointment
+     */
     document.getElementById("form_create").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // The backend now only needs the address_id, not the full address details
+        // Prepare appointment data from form inputs
         const appointmentData = {
-            // name, surname, and email are now handled by the backend based on the logged-in user
             address_id: document.getElementById("select_address").value,
             date: document.getElementById("create_date").value,
             time: document.getElementById("create_time").value,
             notes: document.getElementById("create_service").value,
-            // This is still a placeholder for a real service selection UI
+            // Placeholder service selection (TODO: implement proper service UI)
             service_ids: document.getElementById("create_service").value ? [1] : [],
         };
 
+        // Submit appointment to backend API
         const response = await fetch("/api/manual_insert", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -160,30 +219,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
             showMessage("Appointment created successfully.");
-            // Don't reset name/email as they are pre-filled
+            // Reset form while preserving date/time defaults and user info
             document.getElementById("form_create").reset();
             document.getElementById("create_date").value = today;
             document.getElementById("create_time").value = currentTime;
-            loadUserData(); // Re-fill user info after reset
-            fetchAllAppointments();
+            loadUserData(); // Re-populate user information after reset
+            fetchAllAppointments(); // Refresh appointment display
         } else {
             const errorData = await response.json();
             showMessage(`Error: ${errorData.error}`, "error");
         }
     });
 
-    // --- Event Listener for Delete Buttons in the table ---
+    // ========================================================================
+    // APPOINTMENT DELETION HANDLING
+    // ========================================================================
+    
+    /**
+     * Handle appointment deletion via delete buttons in appointment cards
+     * Uses event delegation to handle dynamically created buttons
+     */
     document.getElementById("customer-table-container").addEventListener("click", async (e) => {
         if (e.target && e.target.classList.contains("delete-btn")) {
             const appointmentId = e.target.getAttribute("data-id");
+            
+            // Confirm deletion with user
             if (!confirm(`Are you sure you want to permanently delete appointment #${appointmentId}?`)) return;
 
-            // 5. Use a new API endpoint for deletion (you'll need to create this in app.py)
+            // Send DELETE request to API
             const response = await fetch(`/api/appointments/${appointmentId}`, { method: "DELETE" });
 
             if (response.ok) {
                 showMessage("Appointment deleted successfully.");
-                fetchAllAppointments();
+                fetchAllAppointments(); // Refresh appointment list
             } else {
                 const errorData = await response.json();
                 showMessage(`Error: ${errorData.error}`, "error");
@@ -191,12 +259,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- NEW: Event listener for the reschedule address dropdown ---
+    // ========================================================================
+    // APPOINTMENT RESCHEDULING FUNCTIONALITY
+    // ========================================================================
+    
+    /**
+     * Handle address selection in reschedule form
+     * Populates appointment dropdown with appointments for selected address
+     */
     document.getElementById('reschedule_address_select').addEventListener('change', async (e) => {
         const addressId = e.target.value;
         const appointmentSelect = document.getElementById('update_appointment_select');
 
-        // If no address is selected, disable and reset the appointment dropdown
+        // Reset appointment dropdown if no address selected
         if (!addressId) {
             appointmentSelect.innerHTML = '<option value="">-- Select address first --</option>';
             appointmentSelect.disabled = true;
@@ -204,21 +279,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            // Fetch all appointments for the logged-in user
+            // Fetch all user appointments
             const response = await fetch('/api/appointments');
             if (!response.ok) throw new Error('Failed to fetch appointments');
             const allAppointments = await response.json();
             
-            // Filter the appointments to find ones matching the selected address ID
+            // Filter appointments by selected address
             const filteredAppointments = allAppointments.filter(appt => appt.address_id == addressId);
 
             if (filteredAppointments.length > 0) {
+                // Populate dropdown with matching appointments
                 appointmentSelect.innerHTML = '<option value="">-- Select an appointment --</option>';
                 appointmentSelect.innerHTML += filteredAppointments.map(appt => 
                     `<option value="${appt.id}">${appt.date} at ${appt.time.slice(0, 5)}</option>`
                 ).join('');
-                appointmentSelect.disabled = false; // Enable the dropdown
+                appointmentSelect.disabled = false;
             } else {
+                // No appointments found for this address
                 appointmentSelect.innerHTML = '<option value="">-- No appointments at this address --</option>';
                 appointmentSelect.disabled = true;
             }
@@ -229,8 +306,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Initial Load ---
-    loadUserData(); // This now handles loading everything in the correct order.
-    // fetchAllAppointments(); // DELETED from here to prevent the race condition.
+    // ========================================================================
+    // APPLICATION STARTUP
+    // ========================================================================
+    
+    /**
+     * Initialize application data loading
+     * loadUserData() handles authentication, addresses, and appointments in sequence
+     */
+    loadUserData();
 });
 
