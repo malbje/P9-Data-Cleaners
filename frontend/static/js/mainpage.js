@@ -90,9 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
      * Addresses widget click handler
      * Displays saved customer addresses with property details
      */
-    function handleAddressesClick() {
+    async function handleAddressesClick() {
         console.log('My Addresses widget clicked');
-        openWidget('addresses', 'My Addresses', generateAddressesContent());
+        const homeContent = await generateHomeContent();
+        openWidget('addresses', 'My Addresses', homeContent);
     }
 
     /**
@@ -493,26 +494,30 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${appt.notes ? `<p class="notes">Notes: ${appt.notes}</p>` : ''}
                         </div>
                     </div>
-                </div>
-            </div>
-            <style>
-                .home-info { padding: 1em; }
-                .addresses-list { margin-top: 1em; }
-                .address-card { margin-bottom: 2em; padding: 1.5em; background-color: #f8f9fa; border-radius: 12px; border-left: 5px solid #28a745; }
-                .address-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; }
-                .address-header h4 { margin: 0; color: #333; font-size: 1.3em; }
-                .address-type { background-color: #28a745; color: white; padding: 0.25em 0.75em; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
-                .address-text { font-size: 1.1em; margin-bottom: 1.5em; color: #555; }
-                .specifications, .preferences { margin-bottom: 1.5em; }
-                .specifications h5, .preferences h5 { margin: 0 0 1em 0; color: #333; font-size: 1.1em; border-bottom: 2px solid #28a745; padding-bottom: 0.5em; }
-                .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75em; }
-                .spec-item { display: flex; justify-content: space-between; padding: 0.5em; background-color: white; border-radius: 6px; }
-                .spec-label { font-weight: bold; color: #666; }
-                .spec-value { color: #333; }
-                .pref-list { display: flex; flex-direction: column; gap: 0.5em; }
-                .pref-item { padding: 0.75em; background-color: white; border-radius: 6px; color: #333; }
-            </style>
-        `;
+                `).join('');
+                content += '</div>';
+            } else {
+                content += '<p>You have no upcoming appointments.</p>';
+            }
+            
+            // Open the widget with styled content
+            openWidget('appointments', 'Upcoming Appointments', content + `
+                <style>
+                    .appointments-list { display: grid; gap: 1em; }
+                    .appointment-card { display: flex; align-items: center; background-color: #f8f9fa; padding: 1em; border-radius: 12px; border: 1px solid #e9ecef; }
+                    .appointment-date { text-align: center; margin-right: 1.5em; padding-right: 1.5em; border-right: 1px solid #e9ecef; }
+                    .appointment-date span { font-size: 1em; color: #666; }
+                    .appointment-date strong { font-size: 2em; color: #007bff; display: block; }
+                    .appointment-details { flex-grow: 1; }
+                    .appointment-details p { margin: 0.25em 0; }
+                    .appointment-details .address { font-size: 0.9em; color: #555; }
+                    .appointment-details .notes { font-size: 0.9em; color: #777; font-style: italic; }
+                </style>
+            `);
+        } catch (error) {
+            console.error("Error loading appointments:", error);
+            openWidget('appointments', 'Upcoming Appointments', '<p>Error loading appointments.</p>');
+        }
     }
 
     /**
