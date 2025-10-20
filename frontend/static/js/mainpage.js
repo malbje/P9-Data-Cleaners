@@ -1,16 +1,32 @@
-// static/js/mainpage.js
+/**
+ * @fileoverview Main dashboard JavaScript functionality
+ * Handles widget interactions, modal system, chatbot, and user authentication
+ * @author Data Cleaners Team
+ * @version 1.0.0
+ */
 
+// ============================================================================
+// MAIN APPLICATION INITIALIZATION
+// ============================================================================
+
+/**
+ * Main application entry point
+ * Initializes all dashboard functionality when DOM is ready
+ */
 document.addEventListener("DOMContentLoaded", () => {
-    // Load user information
-    loadUserInfo();
+    // Initialize core application components
+    loadUserInfo();           // Load and display user authentication status
+    initializeModal();        // Set up modal system for widget content
+    initializeModeToggle();   // Configure AI/Manual mode switcher
+
+    // ========================================================================
+    // WIDGET SYSTEM INITIALIZATION
+    // ========================================================================
     
-    // Initialize modal functionality
-    initializeModal();
-    
-    // Initialize mode toggle
-    initializeModeToggle();
-    
-    // Widget click handlers
+    /**
+     * Set up click handlers for all dashboard widgets
+     * Each widget card triggers specific functionality when clicked
+     */
     const widgets = document.querySelectorAll('.widget-card');
     
     widgets.forEach(widget => {
@@ -19,8 +35,16 @@ document.addEventListener("DOMContentLoaded", () => {
             handleWidgetClick(widgetType);
         });
     });
-    
-    // Function to handle widget clicks
+
+    // ========================================================================
+    // WIDGET CLICK HANDLING
+    // ========================================================================
+
+    /**
+     * Central widget click handler
+     * Routes clicks to appropriate widget-specific functions
+     * @param {string} widgetType - The type of widget clicked (weather, appointments, etc.)
+     */
     function handleWidgetClick(widgetType) {
         switch(widgetType) {
             case 'weather':
@@ -29,8 +53,8 @@ document.addEventListener("DOMContentLoaded", () => {
             case 'appointments':
                 handleAppointmentsClick();
                 break;
-            case 'home':
-                handleHomeClick();
+            case 'addresses':
+                handleAddressesClick();
                 break;
             case 'profile':
                 handleProfileClick();
@@ -39,32 +63,64 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log('Unknown widget type:', widgetType);
         }
     }
-    
-    // Individual widget handlers
+
+    // ========================================================================
+    // INDIVIDUAL WIDGET HANDLERS
+    // Each widget has its own handler that opens specific content in the modal
+    // ========================================================================
+
+    /**
+     * Weather widget click handler
+     * Displays 7-day cleaning impact forecast
+     */
     function handleWeatherClick() {
         console.log('Weather widget clicked');
         openWidget('weather', 'Weather Information', generateWeatherContent());
     }
-    
+
+    /**
+     * Appointments widget click handler
+     * Shows upcoming cleaning appointments and calendar overview
+     */
     function handleAppointmentsClick() {
         loadAppointmentsContent();
     }
-    
-    async function handleHomeClick() {
-        const homeContent = await generateHomeContent();
-        openWidget('home', 'Home Dashboard', homeContent);
+
+    /**
+     * Addresses widget click handler
+     * Displays saved customer addresses with property details
+     */
+    function handleAddressesClick() {
+        console.log('My Addresses widget clicked');
+        openWidget('addresses', 'My Addresses', generateAddressesContent());
     }
-    
+
+    /**
+     * Profile widget click handler
+     * Opens user profile management interface
+     */
     function handleProfileClick() {
         console.log('Profile widget clicked');
         loadUserProfileContent();
     }
-    
-    // Chatbot functionality
+
+    // ========================================================================
+    // CHATBOT SYSTEM
+    // AI assistant for booking and customer service
+    // ========================================================================
+
+    /**
+     * Get chatbot interface elements
+     * These elements handle user input and message display
+     */
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
-    
+
+    /**
+     * Initialize chatbot form submission handling
+     * Processes user messages and generates AI responses
+     */
     if (chatForm) {
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -85,7 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
+
+    /**
+     * Add a message to the chat interface
+     * @param {string} message - The message content to display
+     * @param {string} sender - Either 'user' or 'bot' for styling
+     */
     function addMessageToChat(message, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
@@ -95,7 +156,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-    
+
+    /**
+     * Generate automated bot responses based on user input
+     * Simple keyword matching for common queries
+     * @param {string} userMessage - The user's input message
+     * @returns {string} Appropriate bot response
+     */
     function generateBotResponse(userMessage) {
         // Simple bot responses - you can enhance this with actual AI/NLP
         const lowerMessage = userMessage.toLowerCase();
@@ -112,8 +179,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return 'I\'m here to help with booking and scheduling. What would you like to do?';
         }
     }
-    
-    // Load user information
+
+    // ========================================================================
+    // USER AUTHENTICATION SYSTEM
+    // ========================================================================
+
+    /**
+     * Load and display user authentication information
+     * Fetches user data from the server and updates the UI
+     * Redirects to login if user is not authenticated
+     */
     async function loadUserInfo() {
         try {
             const response = await fetch('/api/auth/status');
@@ -134,8 +209,16 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = '/login';
         }
     }
-    
-    // Modal functionality
+
+    // ========================================================================
+    // MODAL SYSTEM
+    // Handles widget content display in overlay modal
+    // ========================================================================
+
+    /**
+     * Initialize modal functionality
+     * Sets up close button and keyboard shortcuts
+     */
     function initializeModal() {
         const closeBtn = document.getElementById('modal-close');
         
@@ -150,7 +233,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
+
+    /**
+     * Open a widget's content in the modal overlay
+     * @param {string} widgetType - Type of widget being opened
+     * @param {string} title - Modal title to display
+     * @param {string} content - HTML content to show in modal
+     */
     function openWidget(widgetType, title, content) {
         const modal = document.getElementById('widget-modal');
         const modalTitle = document.getElementById('modal-title');
@@ -164,7 +253,10 @@ document.addEventListener("DOMContentLoaded", () => {
         widgetGrid.style.display = 'none';
         modal.classList.add('active');
     }
-    
+
+    /**
+     * Close the modal and return to widget grid view
+     */
     function closeModal() {
         const modal = document.getElementById('widget-modal');
         const widgetGrid = document.getElementById('widget-grid');
@@ -174,69 +266,150 @@ document.addEventListener("DOMContentLoaded", () => {
         // Show widget grid again
         widgetGrid.style.display = 'grid';
     }
-    
-    // Widget content generators
+
+    // ========================================================================
+    // WIDGET CONTENT GENERATORS
+    // Functions that create HTML content for each widget type
+    // ========================================================================
+
+    /**
+     * Generate weather widget content
+     * Creates a 7-day forecast focused on cleaning impact
+     * Shows how weather conditions affect dirt tracking and cleaning needs
+     * @returns {string} HTML content for weather widget modal
+     */
     function generateWeatherContent() {
         return `
             <div class="weather-info">
-                <div class="weather-current">
-                    <div class="weather-temp">22°C</div>
-                    <div class="weather-desc">Partly Cloudy</div>
-                    <div>Copenhagen, Denmark</div>
-                </div>
-                <div class="weather-details">
-                    <div class="detail-row">
-                        <span>Humidity:</span>
-                        <span>65%</span>
-                    </div>
-                    <div class="detail-row">
-                        <span>Wind:</span>
-                        <span>12 km/h</span>
-                    </div>
-                    <div class="detail-row">
-                        <span>Pressure:</span>
-                        <span>1013 hPa</span>
-                    </div>
-                </div>
                 <div class="weather-forecast">
-                    <h4>5-Day Forecast</h4>
-                    <div class="forecast-day">
-                        <div><strong>Today</strong></div>
-                        <div>☁️</div>
-                        <div>22°/16°</div>
+                    <h4>7-Day Forecast - Cleaning Impact</h4>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 19th</div>
+                            <div class="day-name">Today</div>
+                            <div class="weather-icon">☁️</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Dry conditions - minimal dirt tracking</div>
+                        </div>
                     </div>
-                    <div class="forecast-day">
-                        <div><strong>Tomorrow</strong></div>
-                        <div>🌧️</div>
-                        <div>18°/12°</div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 20th</div>
+                            <div class="day-name">Tomorrow</div>
+                            <div class="weather-icon">🌧️</div>
+                            <div class="impact-level high">High Mess</div>
+                            <div class="impact-desc">Rain - muddy shoes, wet coats</div>
+                        </div>
                     </div>
-                    <div class="forecast-day">
-                        <div><strong>Friday</strong></div>
-                        <div>🌞</div>
-                        <div>25°/18°</div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 21st</div>
+                            <div class="day-name">Friday</div>
+                            <div class="weather-icon">🌞</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Sunny & dry - clean conditions</div>
+                        </div>
                     </div>
-                    <div class="forecast-day">
-                        <div><strong>Saturday</strong></div>
-                        <div>⛅</div>
-                        <div>23°/16°</div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 22nd</div>
+                            <div class="day-name">Saturday</div>
+                            <div class="weather-icon">⛅</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Partly cloudy - good conditions</div>
+                        </div>
                     </div>
-                    <div class="forecast-day">
-                        <div><strong>Sunday</strong></div>
-                        <div>🌞</div>
-                        <div>24°/17°</div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 23rd</div>
+                            <div class="day-name">Sunday</div>
+                            <div class="weather-icon">🌧️</div>
+                            <div class="impact-level high">High Mess</div>
+                            <div class="impact-desc">Heavy rain - very muddy conditions</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 24th</div>
+                            <div class="day-name">Monday</div>
+                            <div class="weather-icon">❄️</div>
+                            <div class="impact-level medium">Medium Mess</div>
+                            <div class="impact-desc">Snow - wet boots, salt residue</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 25th</div>
+                            <div class="day-name">Tuesday</div>
+                            <div class="weather-icon">🌞</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Clear & cold - dry conditions</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <style>
-                .weather-current { text-align: center; margin-bottom: 2em; }
-                .weather-temp { font-size: 3em; font-weight: bold; color: #007bff; }
-                .weather-desc { font-size: 1.2em; margin: 0.5em 0; color: #666; }
-                .weather-details { margin: 2em 0; }
-                .detail-row { display: flex; justify-content: space-between; padding: 0.5em 0; border-bottom: 1px solid #eee; }
-                .detail-row:last-child { border-bottom: none; }
-                .weather-forecast h4 { margin-bottom: 1em; color: #333; }
-                .forecast-day { display: flex; justify-content: space-between; align-items: center; padding: 0.75em; margin: 0.5em 0; background-color: #f8f9fa; border-radius: 8px; }
-                .forecast-day div { flex: 1; text-align: center; }
+                .weather-forecast h4 { margin-bottom: 0.8em; color: #333; font-size: 1em; }
+                .forecast-day { 
+                    margin: 0.25em 0; 
+                }
+                .day-card {
+                    display: flex; 
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    padding: 0.6em; 
+                    background-color: #f8f9fa; 
+                    border-radius: 8px; 
+                    border-left: 3px solid #28a745;
+                    gap: 0.3em;
+                }
+                .forecast-day.messy .day-card { 
+                    border-left-color: #dc3545;
+                }
+                .forecast-day.clean .day-card { 
+                    border-left-color: #28a745;
+                }
+                .date { 
+                    font-size: 0.75em; 
+                    color: #666; 
+                    font-weight: bold;
+                }
+                .day-name { 
+                    font-size: 0.85em; 
+                    color: #333; 
+                    font-weight: bold;
+                }
+                .weather-icon { 
+                    font-size: 1.5em; 
+                    margin: 0.2em 0;
+                }
+                .impact-level { 
+                    font-weight: bold; 
+                    font-size: 0.65em;
+                    padding: 0.1em 0.3em;
+                    border-radius: 6px;
+                    display: inline-block;
+                    width: fit-content;
+                }
+                .impact-level.low { 
+                    background-color: #d4edda; 
+                    color: #155724; 
+                }
+                .impact-level.medium { 
+                    background-color: #fff3cd; 
+                    color: #856404; 
+                }
+                .impact-level.high { 
+                    background-color: #f8d7da; 
+                    color: #721c24; 
+                }
+                .impact-desc { 
+                    font-size: 0.6em; 
+                    color: #666; 
+                    font-style: italic;
+                }
+
             </style>
         `;
     }
@@ -320,18 +493,33 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${appt.notes ? `<p class="notes">Notes: ${appt.notes}</p>` : ''}
                         </div>
                     </div>
-                `).join('');
-                content += '</div>';
-            } else {
-                content += '<p>You have no upcoming appointments.</p>';
-            }
-            openWidget('appointments', 'Upcoming Appointments', content);
-        } catch (error) {
-            console.error("Error loading appointments:", error);
-            openWidget('appointments', 'Upcoming Appointments', '<p>Error loading appointments.</p>');
-        }
+                </div>
+            </div>
+            <style>
+                .home-info { padding: 1em; }
+                .addresses-list { margin-top: 1em; }
+                .address-card { margin-bottom: 2em; padding: 1.5em; background-color: #f8f9fa; border-radius: 12px; border-left: 5px solid #28a745; }
+                .address-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; }
+                .address-header h4 { margin: 0; color: #333; font-size: 1.3em; }
+                .address-type { background-color: #28a745; color: white; padding: 0.25em 0.75em; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+                .address-text { font-size: 1.1em; margin-bottom: 1.5em; color: #555; }
+                .specifications, .preferences { margin-bottom: 1.5em; }
+                .specifications h5, .preferences h5 { margin: 0 0 1em 0; color: #333; font-size: 1.1em; border-bottom: 2px solid #28a745; padding-bottom: 0.5em; }
+                .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75em; }
+                .spec-item { display: flex; justify-content: space-between; padding: 0.5em; background-color: white; border-radius: 6px; }
+                .spec-label { font-weight: bold; color: #666; }
+                .spec-value { color: #333; }
+                .pref-list { display: flex; flex-direction: column; gap: 0.5em; }
+                .pref-item { padding: 0.75em; background-color: white; border-radius: 6px; color: #333; }
+            </style>
+        `;
     }
-    
+
+    /**
+     * Load user profile content asynchronously
+     * Fetches current user data and generates profile widget content
+     * Handles authentication errors gracefully
+     */
     async function loadUserProfileContent() {
         try {
             const response = await fetch('/api/auth/status');
@@ -357,11 +545,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 openWidget('profile', 'My Profile', '<p>Please log in to view your profile.</p>');
             }
         } catch (error) {
-            console.error("Error loading user profile:", error);
-            openWidget('profile', 'My Profile', '<p>Error loading profile.</p>');
+            console.error('Error loading profile:', error);
+            openWidget('profile', 'My Profile', '<p>Error loading profile information.</p>');
         }
     }
-    
+
+    /**
+     * Generate user profile widget content
+     * Creates a comprehensive profile interface with personal info and settings
+     * @param {Object} user - User data object from authentication API
+     * @returns {string} HTML content for profile widget modal
+     */
     function generateProfileContent(user) {
         // Split the full name from the user object into first and last names
         const nameParts = user.name ? user.name.split(' ') : ['User'];
@@ -454,13 +648,25 @@ document.addEventListener("DOMContentLoaded", () => {
             </style>
         `;
     }
-    
-    // Mode toggle functionality
+
+    // ========================================================================
+    // MODE TOGGLE SYSTEM
+    // Switches between AI Assistant mode and Manual booking mode
+    // ========================================================================
+
+    /**
+     * Initialize the mode toggle button
+     * Sets the initial state to AI mode (dashboard)
+     */
     function initializeModeToggle() {
         // Set initial state to AI Mode (dashboard)
         updateModeButton('ai');
     }
-    
+
+    /**
+     * Update the mode toggle button appearance and text
+     * @param {string} mode - Either 'ai' or 'manual' mode
+     */
     function updateModeButton(mode) {
         const button = document.getElementById('mode-toggle-btn');
         const modeText = button.querySelector('.mode-text');
@@ -475,7 +681,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Global function for the toggle button onclick
+// ============================================================================
+// GLOBAL FUNCTIONS
+// Functions that need to be accessible from HTML onclick attributes
+// ============================================================================
+
+/**
+ * Global function for mode toggle button
+ * Switches between AI Assistant dashboard and Manual booking interface
+ * Called directly from HTML onclick attribute
+ */
 function toggleMode() {
     const button = document.getElementById('mode-toggle-btn');
     const modeText = button.querySelector('.mode-text');
