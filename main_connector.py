@@ -4,7 +4,7 @@
 
 from mcp.server.fastmcp import FastMCP
 from mysql.connector import IntegrityError
-from backend.service.database.DB_access import get_connection
+from database.DB_access import get_connection
 
 # Opret MCP-server
 mcp = FastMCP("DataCleaners")

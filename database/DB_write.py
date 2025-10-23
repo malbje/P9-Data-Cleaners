@@ -1,10 +1,9 @@
-# This defines the current working directory as the root directory, so we can import from backend
-# Otherwise notification.py and its methods won't be found
-import sys, os
-sys.path.insert(0, os.getcwd())
-# ------------------------------
+# database/DB_write.py
+# This file contains ALL functions that write to the database (Data Access Layer).
+# ONLY THIS FILE (and DB_read) MAY IMPORT DB_access.
 
-# Imports
+import sys, os
+sys.path.insert(0, os.getcwd()) # This should be removed when using a proper package structure
 from database.DB_access import get_connection
 
 class DB_write:
@@ -24,7 +23,7 @@ class DB_write:
             cursor.execute(query, params)
             if commit:
                 conn.commit()
-            # For INSERT queries, we might want the new ID
+            # For INSERT queries, we want to return the new ID
             if cursor.lastrowid:
                 return cursor.lastrowid
         finally:
@@ -69,6 +68,7 @@ class DB_write:
         """
         Creates a new appointment in the database.
         Note: You must provide a valid address_id.
+        Returns the ID of the newly created appointment.
         """
         query = "INSERT INTO appointments (address_id, date, time, notes) VALUES (%s, %s, %s, %s)"
         new_appointment = (address_id, date, time, notes)

@@ -12,7 +12,7 @@ Handles both web pages and RESTful API endpoints with session-based authenticati
 
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
-import database_logic as db  # Import the database logic layer
+import backend.service.database_logic as db  # Import the database logic layer
 
 # ============================================================================
 # FLASK APPLICATION INITIALIZATION
