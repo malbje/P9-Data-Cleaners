@@ -1,12 +1,11 @@
-# ------------------------------
-# main.py – OpenAI integration for DataCleaners customer management
-# ------------------------------
+# main.py - Entry point for DataCleaners system with OpenAI GPT-5 integration.
+# Enables natural language database interaction through function calling.
 
 from openai import OpenAI
 import json
-import private_settings  # indeholder OPENAI_API_KEY
-from backend.llm_tools import TOOLS
-from database.DB_read import (
+import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
+from backend.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
+from database.DB_read import (  # All database access functions - referenced from database/DB_read.py
     add_appointment, get_appointment_by_id, get_appointments_by_address_id, 
     get_customer_by_id, get_customers_by_address_id, list_customers, 
     list_customers_by_name, get_customer_by_email, add_address, 
@@ -17,20 +16,20 @@ from database.DB_read import (
 
 def ask_llm(user_prompt: str, conversation_context: list = None):
     """
-    Process user prompt using OpenAI with function calling for database operations.
+    Process natural language prompts through OpenAI with database function calling.
     
     Args:
-        user_prompt (str): The user's request in natural language
+        user_prompt (str): Natural language request
         conversation_context (list): Previous messages for context
         
     Returns:
-        str: OpenAI's response after processing tools and data
+        str: Natural language response with database results
     """
     client = OpenAI(api_key=private_settings.OPENAI_API_KEY)
 
     # Start med system message og tilføj samtale kontekst hvis den findes
     messages = [
-        {"role": "system", "content": """Du er en assistent for et kundekartotek. 
+        {"role": "system", "content": """Du er en assistent for et rengøringsfirma med fokus på deres kundekartotek. 
 
 ABSOLUT KRITISK REGEL: Du SKAL ALTID bruge de tilgængelige tools til at udføre opgaver. Du må ALDRIG, UNDER NOGEN OMSTÆNDIGHEDER, simulere, gætte eller opfinde resultater.
 
@@ -123,10 +122,12 @@ Hvis du mangler information for at udføre en opgave, stil spørgsmål til bruge
     return final.choices[0].message.content
 
 
-# Interactive chat function
 def interactive_chat():
     """
-    Start an interactive chat session with the assistant.
+    Terminal-based chat interface with conversation memory.
+    
+    Returns:
+        None
     """
     print("=== DataCleaners Interactive Assistant ===")
     print("Skriv 'exit' for at afslutte\n")
@@ -169,50 +170,6 @@ def interactive_chat():
             print(f"Fejl: {e}\n")
 
 
-# Demo function for testing
-def run_demo():
-    """
-    Run the original appointment creation test.
-    """
-    print("=== DataCleaners Appointment Creation Demo ===\n")
-    
-    # Den originale test du kørte
-    prompt = "lav en appointment den 28 november 2025 kl 14:00 for kunden med ID 1 som bor på adressen Danmarksgade 7 9000 aalborg. Der er ingen noter eller preferencer."
-    
-    print(f"Test prompt: {prompt}\n")
-    print("Opretter appointment...\n")
-    
-    try:
-        answer = ask_llm(prompt)
-        print("=== Resultat ===")
-        print(answer)
-        
-        # Check if it's asking a question - if so, allow interaction
-        if "?" in answer and any(word in answer.lower() for word in ["vil du", "skal", "godkend", "angiv"]):
-            print("\n--- Interaktiv del ---")
-            response = input("Dit svar: ").strip()
-            if response:
-                follow_up = ask_llm(response, [
-                    {"role": "user", "content": prompt},
-                    {"role": "assistant", "content": answer}
-                ])
-                print(f"\nAssistent: {follow_up}")
-                
-    except Exception as e:
-        print(f"Fejl: {e}")
-
-
 if __name__ == "__main__":
-    print("Vælg mode:")
-    print("1. Demo (original test)")
-    print("2. Interaktiv chat")
-    
-    choice = input("Vælg (1 eller 2): ").strip()
-    
-    if choice == "1":
-        run_demo()
-    elif choice == "2":
-        interactive_chat()
-    else:
-        print("Kører demo som standard...")
-        run_demo()
+    # Start the interactive chat session
+    interactive_chat()

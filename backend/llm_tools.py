@@ -1,10 +1,15 @@
+# llm_tools.py - JSON Schema tool definitions for OpenAI function calling.
+# Each tool maps to a database function in DB_read.py.
 
 TOOLS = [
+    # Customer Management Tools
+    # These tools allow OpenAI to query and manipulate customer data
+    
     {
         "type": "function",
         "function": {
             "name": "list_customers",
-            "description": "Get all customers from the database. Returns a list of customers.",
+            "description": "Get all customers from the database. Returns a list of customers. Use this when user asks to see all customers, get customer overview, or list everyone.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -32,7 +37,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_customers_by_name",
-            "description": "Find customers by their name and surname (partial match).",
+            "description": "Find customers by their name and surname using partial matching (LIKE search). Use this when user searches for specific customers by name. Both name and surname support partial matches.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -124,11 +129,14 @@ TOOLS = [
         }
     },
 
+    # Appointment Management Tools
+    # These tools handle scheduling and managing appointments
+    
     {
         "type": "function",
         "function": {
             "name": "add_appointment",
-            "description": "Tilføjer en appointment til en given adresse.",
+            "description": "Creates a new appointment in the database. Use this when user wants to schedule, create, or book an appointment. Requires address_id (use find_address_by_text first if user provides text address), date in YYYY-MM-DD format, and time in HH:MM format.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -291,11 +299,14 @@ TOOLS = [
         }
     },
 
+    # Address Management Tools
+    # These tools handle address searching and retrieval
+    
     {
         "type": "function",
         "function": {
             "name": "find_address_by_text",
-            "description": "Find addresses by searching in street address, postal code, or city name. Use this to find address_id when you have text like 'Danmarksgade 7 9000 Aalborg'.",
+            "description": "Search for addresses using text. Searches across street name, postal code, and city name. CRITICAL: Use this FIRST when user provides an address as text (e.g., 'Danmarksgade 7 9000 Aalborg') to get the address_id needed for other operations like creating appointments. Returns list of matching addresses with their IDs.",
             "parameters": {
                 "type": "object",
                 "properties": {
