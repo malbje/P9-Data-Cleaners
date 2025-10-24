@@ -471,6 +471,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     async function loadAppointmentsContent() {
+        // Fetch appointments and render an interactive month calendar highlighting
+        // days that have appointments. Clicking a highlighted day shows that
+        // day's appointments below the calendar.
         try {
             const response = await fetch('/api/appointments');
             if (!response.ok) {
@@ -478,44 +481,223 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             const appointments = await response.json();
-            
-            let content = '<h3>Your Upcoming Appointments</h3>';
-            if (appointments.length > 0) {
-                content += '<div class="appointments-list">';
-                content += appointments.map(appt => `
-                    <div class="appointment-card">
-                        <div class="appointment-date">
-                            <span>${new Date(appt.date).toLocaleString('en-US', { month: 'short' })}</span>
-                            <strong>${new Date(appt.date).getDate()}</strong>
-                        </div>
-                        <div class="appointment-details">
-                            <p><strong>${appt.service_names || 'General Cleaning'}</strong> at ${appt.time.slice(0, 5)}</p>
-                            <p class="address">📍 ${appt.address}</p>
-                            ${appt.notes ? `<p class="notes">Notes: ${appt.notes}</p>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-                content += '</div>';
-            } else {
-                content += '<p>You have no upcoming appointments.</p>';
+
+            // Organize appointments by ISO date string (YYYY-MM-DD)
+            const apptsByDate = {};
+            appointments.forEach(appt => {
+                const d = appt.date; // expected format YYYY-MM-DD
+                if (!apptsByDate[d]) apptsByDate[d] = [];
+                apptsByDate[d].push(appt);
+            });
+
+            // Fetch user's addresses with preferences so we can show preference info
+            // alongside each appointment in the day-details pane.
+            let prefsByAddressString = {};
+            try {
+                const addrResp = await fetch('/api/user/addresses-with-preferences');
+                if (addrResp.ok) {
+                    const addrs = await addrResp.json();
+                    // Build lookup key matching how appointments format addresses
+                    // DB uses CONCAT(street_and_number, ', ', postal_code, ' ', city_name)
+                    addrs.forEach(a => {
+                        const key = `${a.street_and_number}, ${a.postal_code} ${a.city_name}`;
+                        prefsByAddressString[key] = a;
+                    });
+                }
+            } catch (err) {
+                console.warn('Could not load address preferences:', err);
             }
-            
-            // Open the widget with styled content
-            openWidget('appointments', 'Upcoming Appointments', content + `
-                <style>
-                    .appointments-list { display: grid; gap: 1em; }
-                    .appointment-card { display: flex; align-items: center; background-color: #f8f9fa; padding: 1em; border-radius: 12px; border: 1px solid #e9ecef; }
-                    .appointment-date { text-align: center; margin-right: 1.5em; padding-right: 1.5em; border-right: 1px solid #e9ecef; }
-                    .appointment-date span { font-size: 1em; color: #666; }
-                    .appointment-date strong { font-size: 2em; color: #007bff; display: block; }
-                    .appointment-details { flex-grow: 1; }
-                    .appointment-details p { margin: 0.25em 0; }
-                    .appointment-details .address { font-size: 0.9em; color: #555; }
-                    .appointment-details .notes { font-size: 0.9em; color: #777; font-style: italic; }
-                </style>
-            `);
+
+            // Calendar view state
+            const today = new Date();
+            let viewYear = today.getFullYear();
+            let viewMonth = today.getMonth(); // 0-11
+
+            // Calendar HTML structure (month navigation, grid, and details)
+            const content = `
+                <div class="calendar-widget">
+                    <div class="cal-header">
+                        <button id="cal-prev" class="cal-nav" aria-label="Previous month">‹</button>
+                        <div id="cal-month-year" class="cal-title"></div>
+                        <button id="cal-next" class="cal-nav" aria-label="Next month">›</button>
+                    </div>
+                    <div id="cal-grid" class="cal-grid"></div>
+                    <div id="cal-day-appointments" class="cal-day-appointments"><em>Select a day to see appointments</em></div>
+                </div>
+                <!-- Calendar styles moved to frontend/static/css/style.css for maintainability -->
+            `;
+
+            // Open modal with calendar skeleton
+            openWidget('appointments', 'Upcoming Appointments', content);
+
+            // Helper utilities
+            const pad = (n) => n.toString().padStart(2, '0');
+
+            // Render calendar month into DOM
+            function renderCalendar(year, month) {
+                const monthStart = new Date(year, month, 1);
+                const monthName = monthStart.toLocaleString(undefined, { month: 'long' });
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const startWeekday = monthStart.getDay(); // 0 = Sunday
+
+                const grid = document.getElementById('cal-grid');
+                const title = document.getElementById('cal-month-year');
+                title.textContent = `${monthName} ${year}`;
+
+                // Weekday headers
+                const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                let html = '';
+                weekdays.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+
+                // Empty cells for previous month
+                for (let i = 0; i < startWeekday; i++) {
+                    html += `<div class="cal-day disabled"></div>`;
+                }
+
+                // Days
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+                    const has = Array.isArray(apptsByDate[dateStr]) && apptsByDate[dateStr].length > 0;
+                    const isToday = (new Date().toISOString().slice(0,10) === dateStr);
+                    html += `
+                        <div class="cal-day ${has? 'has-appt':''} ${isToday? 'today':''}" data-date="${dateStr}">
+                            <div class="date-num">${day}</div>
+                            ${has? '<div class="dot" aria-hidden="true"></div>' : ''}
+                        </div>
+                    `;
+                }
+
+                grid.innerHTML = html;
+
+                // Attach click listeners to days; only days with appointments are selectable
+                grid.querySelectorAll('.cal-day').forEach(el => {
+                    if (el.classList.contains('disabled')) return;
+                    if (!el.classList.contains('has-appt')) {
+                        // mark visually as not having appointments (lighter interaction)
+                        el.classList.add('no-appt');
+                        return;
+                    }
+                    el.addEventListener('click', () => {
+                        // clear previous selection
+                        grid.querySelectorAll('.cal-day.selected').forEach(s => s.classList.remove('selected'));
+                        // mark this day selected and show details
+                        el.classList.add('selected');
+                        const ds = el.getAttribute('data-date');
+                        showAppointmentsForDate(ds);
+
+                        // Auto-scroll the details pane into view so the user sees
+                        // the appointment information without manual scrolling.
+                        // Use smooth behavior for a nicer UX.
+                        const details = document.getElementById('cal-day-appointments');
+                        if (details && typeof details.scrollIntoView === 'function') {
+                            // If the modal body provides its own scrolling, this will
+                            // bring the details into view within the modal.
+                            try {
+                                details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } catch (e) {
+                                // Fallback for older browsers/environments
+                                details.scrollIntoView();
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Show appointments for a specific date in the details pane
+            function showAppointmentsForDate(dateStr) {
+                const container = document.getElementById('cal-day-appointments');
+                const list = apptsByDate[dateStr] || [];
+                if (list.length === 0) {
+                    container.innerHTML = `<em>No appointments on ${dateStr}.</em>`;
+                    return;
+                }
+                let html = `<h4>Appointments on ${dateStr}</h4>`;
+                html += '<div class="appt-list">';
+                list.forEach(a => {
+                    const prefs = prefsByAddressString[a.address] || null;
+                    html += `
+                        <div class="appt-item">
+                            <div><strong>${a.service_names || 'General Cleaning'}</strong> — ${a.time.slice(0,5)}</div>
+                            <div class="small">📍 ${a.address}</div>
+                            ${a.notes? `<div class="small">Notes: ${a.notes}</div>` : ''}
+                            ${prefs ? `
+                                <div class="small" style="margin-top:0.5rem"><strong>Preferences:</strong></div>
+                                <ul class="small" style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">
+                                    <li>Allergies: ${prefs.allergies || 'None specified'}</li>
+                                    <li>Pets: ${prefs.pets || 'None specified'}</li>
+                                    <li>Kids: ${prefs.kids || 'None specified'}</li>
+                                    <li>Size: ${prefs.square_footage ? prefs.square_footage + ' m²' : 'Not specified'}</li>
+                                    <li>Notes: ${prefs.preference_notes || 'None'}</li>
+                                </ul>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            // Month navigation handlers
+            document.getElementById('cal-prev').addEventListener('click', () => {
+                viewMonth -= 1;
+                if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+                renderCalendar(viewYear, viewMonth);
+                document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
+
+                // Ensure the calendar header is visible after changing months.
+                // The modal body is the scrollable container, so scroll it to top.
+                const modalBody = document.getElementById('modal-body');
+                if (modalBody) {
+                    try {
+                        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+                    } catch (e) {
+                        modalBody.scrollTop = 0;
+                    }
+                }
+            });
+            document.getElementById('cal-next').addEventListener('click', () => {
+                viewMonth += 1;
+                if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+                renderCalendar(viewYear, viewMonth);
+                document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
+
+                // Scroll modal body to top so the month navigation remains reachable
+                const modalBody = document.getElementById('modal-body');
+                if (modalBody) {
+                    try {
+                        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+                    } catch (e) {
+                        modalBody.scrollTop = 0;
+                    }
+                }
+            });
+
+            // Initial render
+            renderCalendar(viewYear, viewMonth);
+
+            // Auto-select today's date if it has appointments
+            const todayStr = new Date().toISOString().slice(0,10);
+            if (apptsByDate[todayStr]) {
+                const todayEl = document.querySelector(`.cal-day[data-date="${todayStr}"]`);
+                if (todayEl) {
+                    // ensure selected class and show details
+                    todayEl.classList.add('selected');
+                    showAppointmentsForDate(todayStr);
+
+                    // Scroll the details into view when auto-selecting today
+                    const details = document.getElementById('cal-day-appointments');
+                    if (details && typeof details.scrollIntoView === 'function') {
+                        try {
+                            details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            details.scrollIntoView();
+                        }
+                    }
+                }
+            }
+
         } catch (error) {
-            console.error("Error loading appointments:", error);
+            console.error('Error loading appointments:', error);
             openWidget('appointments', 'Upcoming Appointments', '<p>Error loading appointments.</p>');
         }
     }
