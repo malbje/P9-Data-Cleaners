@@ -46,7 +46,8 @@ def _ensure_requests_available():
 
 BASE_DMI_URL = "https://dmigw.govcloud.dk"
 # Fallback DMI API key (use only if private_settings.DMI_API_KEY is not set)
-FALLBACK_DMI_KEY = "b88d7ee3-ffdc-43ee-8c01-3a81b1ad3c3d"
+from private_settings import DMI_API_KEY
+FALLBACK_DMI_KEY = DMI_API_KEY
 
 
 def get_location_from_ip(ip_api_url: str = "https://ipinfo.io/json") -> Optional[Tuple[float, float]]:
