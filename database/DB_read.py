@@ -6,6 +6,8 @@ import sys, os
 sys.path.insert(0, os.getcwd()) # This should be removed when using a proper package structure
 from database.DB_access import get_connection
 from datetime import timedelta # Required for time conversion
+from typing import List, Dict, Optional, Any
+from mysql.connector import Error # This may be used for error handling
 
 class DB_read:
 
@@ -269,3 +271,90 @@ class DB_read:
             return []
         finally:
             self.__close_DB_connection(database)
+
+    
+            # ----------------------------------------------------------------
+            # New methods for chatbot integration can be added here as needed.
+            # ----------------------------------------------------------------
+
+    def search_customers_by_name(self, query: Optional[str] = None, limit: int = 100):
+        """
+        Searches for customers whose names contain the given substring (name, surname, email).
+        If `query` is None or empty, returns up to `limit` customers ordered by name and surname.
+        """
+        database, cursorObject = self.__open_DB_connection()  # Open DB connection
+        try:
+            if not query:
+                sql = "SELECT id, name, surname, email FROM customers ORDER BY name, surname LIMIT %s"
+                cursorObject.execute(sql, (limit,))
+            else:
+                sql = """
+                    SELECT id, name, surname, email
+                    FROM customers
+                    WHERE CONCAT(name, ' ', surname, ' ', email) LIKE %s
+                    OR name LIKE %s
+                    OR surname LIKE %s
+                    OR email LIKE %s
+                    ORDER BY name, surname
+                    LIMIT %s
+                    """
+                like_query = f"%{query}%"
+                cursorObject.execute(sql, (like_query, like_query, like_query, like_query, limit))
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
+
+    def get_customer_by_name_or_email(self, name_or_email: str) -> Optional[Dict[str, any]]:
+            """
+            Finds first match on name/surname or email.
+            Good for questions like: 'Who is Anne Madsen?' Or 'find customer with anne@...'.
+            """
+            database, cursorObject = self.__open_DB_connection()
+            try:
+                sql = """
+                    SELECT id, name, surname, email
+                    FROM customers
+                    WHERE email = %s
+                    OR CONCAT(name, ' ', surname) LIKE %s
+                    OR name LIKE %s
+                    OR surname LIKE %s
+                    LIMIT 1
+                """
+                like = f"%{name_or_email}%"
+                cursorObject.execute(sql, (name_or_email, like, like, like))
+                return cursorObject.fetchone()
+            finally:
+                self.__close_DB_connection(database)
+
+    def get_addresses_for_customer_name_or_email(self, name_or_email: str) -> List[Dict[str, Any]]:
+            """
+            Returns all adressess for a customer when only name is known (+ possibly surname) or email.
+            Uses for: 'What is the address for Anne Madsen?'.
+            """
+            database, cursorObject = self.__open_DB_connection()
+            try:
+                sql = """
+                    SELECT 
+                        a.id AS address_id,
+                        a.street_and_number,
+                        a.postal_code,
+                        a.city_name,
+                        c.id AS customer_id,
+                        c.name,
+                        c.surname,
+                        c.email
+                    FROM customers c
+                    JOIN lives_in li ON li.customer_id = c.id
+                    JOIN addresses a ON a.id = li.address_id
+                    WHERE c.email = %s
+                    OR CONCAT(c.name, ' ', c.surname) LIKE %s
+                    OR c.name LIKE %s
+                    OR c.surname LIKE %s
+                    ORDER BY a.id
+                """
+                like = f"%{name_or_email}%"
+                cursorObject.execute(sql, (name_or_email, like, like, like))
+                rows = cursorObject.fetchall()
+                return rows
+            finally:
+                self.__close_DB_connection(database)

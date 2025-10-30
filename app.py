@@ -38,6 +38,7 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
+from backend.llm_tools import chat_with_tools # Import chat function with tool integration
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
 # Sørg for at db-importstien er korrekt
@@ -156,6 +157,30 @@ def logout():
 # ============================================================================
 # REGISTRER BLUEPRINTS defined in separate route files
 # ============================================================================
+
+# API route for AI assistant chat interaction
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    if not ensure_logged_in(): # Ensure data privacy
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json() or {}
+    user_message = data.get("message", "").strip() # ensures good UX and avoids empty messages
+    if not user_message:
+        return jsonify({"reply": "Skriv noget, så hjælper jeg dig 😊"})
+
+    # valgfrit: historik for bedre dialogflow
+    history = session.get("chat_history", [])
+
+    reply = chat_with_tools(user_message, chat_history=history)
+
+    history.append({"role": "user", "content": user_message})
+    history.append({"role": "assistant", "content": reply})
+    session["chat_history"] = history[-12:]  # model can follow conversation history for performance
+
+    return jsonify({"reply": reply})
+
+
 
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
