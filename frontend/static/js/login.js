@@ -15,7 +15,7 @@
  * Initializes login and signup forms when DOM is ready
  * Uses defensive programming to handle missing elements gracefully
  */
-document.addEventListener("DOMContentLoaded", () => {
+function initAuth() {
   // ========================================================================
   // DOM ELEMENT REFERENCES
   // Safe element lookups with null-checking for defensive programming
@@ -109,6 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
    * Only works when both login and signup forms are present
    */
   function switchToLogin() {
+    // If signup form is absent (we are on separate pages), fetch login fragment
+    if (!loginForm) {
+      fetchAndSwap('/login', 'login-form');
+      return;
+    }
     if (!loginForm || !signupForm) return;
     loginToggle && loginToggle.classList.add("active");
     signupToggle && signupToggle.classList.remove("active");
@@ -123,6 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
    * Only works when both login and signup forms are present
    */
   function switchToSignup() {
+    // If signup form is absent (we are on separate pages), fetch signup fragment
+    if (!signupForm) {
+      fetchAndSwap('/signup', 'signup-form');
+      return;
+    }
     if (!loginForm || !signupForm) return;
     signupToggle && signupToggle.classList.add("active");
     loginToggle && loginToggle.classList.remove("active");
@@ -135,8 +145,50 @@ document.addEventListener("DOMContentLoaded", () => {
    * Initialize toggle button event listeners
    * Uses safe chaining to avoid errors if elements don't exist
    */
-  loginToggle && loginToggle.addEventListener("click", switchToLogin);
-  signupToggle && signupToggle.addEventListener("click", switchToSignup);
+  // Use SPA-like handlers: prevent default, fetch fragment if needed and update history
+  loginToggle && loginToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    switchToLogin();
+    try { history.replaceState(null, '', '/login'); } catch (err) {}
+  });
+  signupToggle && signupToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    switchToSignup();
+    try { history.replaceState(null, '', '/signup'); } catch (err) {}
+  });
+
+  /**
+   * Fetch another auth page and swap its form into the current `.auth-card`.
+   * If the fetched page has an element with id=formId we replace/add it.
+   */
+  async function fetchAndSwap(url, formId) {
+    try {
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const text = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+      const newForm = doc.getElementById(formId);
+      const currentCard = document.querySelector('.auth-card');
+      if (!currentCard) return;
+      if (newForm) {
+        const existing = currentCard.querySelector(`#${formId}`);
+        if (existing) existing.replaceWith(newForm);
+        else currentCard.appendChild(newForm);
+      }
+      // Re-run message bindings / event setup by reloading script behaviors
+      // The current script remains; re-query elements and bind handlers for new nodes.
+      // Simple approach: reload the page script by calling its init (re-run DOMContentLoaded handlers)
+      // but here we'll manually re-run the submit listeners for forms present.
+      // Bind login handler if new login form present
+  const refreshedLoginForm = document.getElementById('login-form');
+  const refreshedSignupForm = document.getElementById('signup-form');
+  // Re-run init to bind handlers for any newly injected forms
+  try { initAuth(); } catch (err) { console.error('re-init error', err); }
+    } catch (err) {
+      console.error('fetchAndSwap error', err);
+    }
+  }
 
   // ========================================================================
   // API COMMUNICATION
@@ -349,4 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
       wrapper.appendChild(toggle);
     });
   }
-});
+}
+
+// Auto-init on first DOM ready
+document.addEventListener('DOMContentLoaded', initAuth);
