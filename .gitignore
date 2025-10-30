@@ -1,5 +1,22 @@
-__pycache__/
-
+# Virtual environment
 .venv/
+venv/
+env/
 
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment files and private settings
+.env
 private_settings.py
+
+# Logs
+*.log

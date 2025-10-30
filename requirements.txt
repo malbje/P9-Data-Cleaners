@@ -1,1 +1,2 @@
 #this is for mcp and python dependencies
+requests
