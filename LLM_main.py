@@ -5,13 +5,8 @@ from openai import OpenAI
 import json
 import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
-from database.LLM_Quearies import (  # All database access functions - referenced from database/DB_read.py
-    add_appointment, get_appointment_by_id, get_appointments_by_address_id, 
-    get_customer_by_id, get_customers_by_address_id, list_customers, 
-    list_customers_by_name, get_customer_by_email, add_address, 
-    update_customer_address, delete_customer, add_customer, 
-    get_customers_by_appointment_id, find_address_by_text, get_address_by_id
-)
+from database.DB_read import DB_read
+from database.DB_write import DB_write
 
 
 def ask_llm(user_prompt: str, conversation_context: list = None):
@@ -26,6 +21,11 @@ def ask_llm(user_prompt: str, conversation_context: list = None):
         str: Natural language response with database results
     """
     client = OpenAI(api_key=private_settings.OPENAI_API_KEY)
+
+    # Instantiate DB access classes (read/write). These are thin, stateless wrappers
+    # that open connections only when their methods are called.
+    reader = DB_read()
+    writer = DB_write()
 
     # Start med system message og tilføj samtale kontekst hvis den findes
     messages = [
@@ -73,36 +73,65 @@ Hvis du mangler information for at udføre en opgave, stil spørgsmål til bruge
         name = call.function.name
         args = json.loads(call.function.arguments or "{}")
 
+        # Map tool names to DB class methods. Accept multiple common argument
+        # key variants to be resilient to different model argument naming.
+        def _pick(*keys, default=None):
+            for k in keys:
+                if k in args:
+                    return args.get(k)
+            return default
+
         if name == "list_customers":
-            result = list_customers(**args)
+            result = reader.get_all_customers()
         elif name == "list_customers_by_name":
-            result = list_customers_by_name(**args)
+            # model may pass 'query' or 'name'
+            q = _pick('query', 'name')
+            result = reader.search_customers_by_name(q) if q else reader.search_customers_by_name(None)
         elif name == "add_customer":
-            result = add_customer(**args)
+            # map to create_customer(name, surname, email)
+            name_v = _pick('name')
+            surname_v = _pick('surname')
+            email_v = _pick('email')
+            result = writer.create_customer(name_v, surname_v, email_v)
         elif name == "add_appointment":
-            result = add_appointment(**args)
+            # expect address_id, date, time, notes (notes optional)
+            addr = _pick('address_id', 'addressId', 'address')
+            date = _pick('date')
+            time = _pick('time')
+            notes = _pick('notes', '')
+            result = writer.create_appointment(addr, date, time, notes)
         elif name == "get_customer_by_email":
-            result = get_customer_by_email(**args)
+            result = reader.get_customer_by_email(**args)
         elif name == "get_customer_by_id":
-            result = get_customer_by_id(**args)
+            result = reader.get_customer_by_id(**args)
         elif name == "add_address":
-            result = add_address(**args)
+            street = _pick('street_and_number', 'street', 'streetAndNumber')
+            postal = _pick('postal_code', 'postalCode', 'postal')
+            city = _pick('city_name', 'city', 'cityName')
+            result = writer.create_address(street, postal, city)
         elif name == "update_customer_address":
-            result = update_customer_address(**args)
+            # normalize various possible arg names
+            customer_id = _pick('customer_id', 'customerId', 'id')
+            address_id = _pick('address_id', 'addressId', 'id')
+            city = _pick('city_name', 'city', 'cityName')
+            postal = _pick('postal_code', 'postalCode', 'postal')
+            street = _pick('street_and_number', 'street', 'streetAndNumber')
+            result = writer.update_customer_address(customer_id, address_id, city, postal, street)
         elif name == "get_appointments_by_address_id":
-            result = get_appointments_by_address_id(**args)
+            result = reader.get_appointments_by_address_id(**args)
         elif name == "get_appointment_by_id":
-            result = get_appointment_by_id(**args)
+            result = reader.get_appointment_by_id(**args)
         elif name == "delete_customer":
-            result = delete_customer(**args)
+            cid = _pick('customer_id', 'id')
+            result = writer.delete_customer_by_id(cid)
         elif name == "get_customers_by_appointment_id":
-            result = get_customers_by_appointment_id(**args)
+            result = reader.get_customers_by_appointment_id(**args)
         elif name == "get_customers_by_address_id":
-            result = get_customers_by_address_id(**args)
+            result = reader.get_customers_by_address_id(**args)
         elif name == "find_address_by_text":
-            result = find_address_by_text(**args)
+            result = reader.find_address_by_text(**args)
         elif name == "get_address_by_id":
-            result = get_address_by_id(**args)
+            result = reader.get_address_by_id(**args)
         else:
             result = {"error": f"Ukendt funktion: {name}"}
 

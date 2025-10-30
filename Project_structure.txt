@@ -3,11 +3,14 @@ backend/         - contains backend logic and routes
   routes/        - contains route definitions for API endpoints, these are used to keep (accesspoint)
                   app.py clean(these could have been in app.py, but for better    
                   organization we separate it out, to not make the file too big)
+    api_auth.py         - Authentication related API-endpoints
+    api_data.py         - data related API-endpoints
 
    services/     - contains business logic and service layer code(funcktion)
-                  contains the logic that the routes call to interact with the database.
-                  Each file in services/ contains functions that are called by the routes to perform specific tasks
-                  eg. database_logic.py handles all database interactions and notification.py handles notifications
+    database_logic.py   - contains all functions based on queries within DB_Read and DB_Write. This includes the business logic (rules) of queries
+    llm_tools.py        - contains specifications of functions which the AI/LLM needs to call upon in a language it understands.
+    notification.py     - writes a notification, either as a test or through email based on true/false statement. 
+    weather.py          - weather based functions, based on API call to DMI.
 
 
  database/  contains the access to the database

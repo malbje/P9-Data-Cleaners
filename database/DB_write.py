@@ -102,6 +102,19 @@ class DB_write:
         query = "UPDATE customers SET email = %s WHERE id = %s"
         self.__execute_query(query, (email, id), commit=True)
 
+    def update_customer_address(self, customer_id, address_id, city_name, postal_code, street_and_number):
+        """
+        Update the address record for a given customer/address pair.
+        This uses an UPDATE with JOIN to ensure the address belongs to the customer (via lives_in).
+        """
+        query = """
+            UPDATE addresses
+            INNER JOIN lives_in ON lives_in.address_id = addresses.id
+            SET addresses.city_name = %s, addresses.postal_code = %s, addresses.street_and_number = %s
+            WHERE addresses.id = %s AND lives_in.customer_id = %s
+        """
+        self.__execute_query(query, (city_name, postal_code, street_and_number, address_id, customer_id), commit=True)
+
     def update_appointment_date_by_id(self, id, date):
         """Updates an appointment's date by its ID."""
         query = "UPDATE appointments SET date = %s WHERE id = %s"
