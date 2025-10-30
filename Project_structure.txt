@@ -1,10 +1,10 @@
 Overview of the project structure:
 backend/         - contains backend logic and routes
-  routes/        - contains route definitions for API endpoints, these are used to keep
+  routes/        - contains route definitions for API endpoints, these are used to keep (accespoint)
                   app.py clean(these could have been in app.py, but for better    
                   organization we separate it out, to not make the file too big)
 
-   services/     - contains business logic and service layer code
+   services/     - contains business logic and service layer code(funcktionskald)
                   contains the logic that the routes call to interact with the database.
                   Each file in services/ contains functions that are called by the routes to perform specific tasks
                   eg. database_logic.py handles all database interactions and notification.py handles notifications
