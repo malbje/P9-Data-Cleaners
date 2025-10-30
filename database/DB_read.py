@@ -159,7 +159,7 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
-    def find_address_by_text(self, search_text: str):
+    def find_address_by_text(self, search_text: str): #værd opmærksom på denne metode - kan være en der laver fejl i AI logik
         """
         Search addresses across street, postal code and city using partial matching.
         Returns list of matching addresses.
