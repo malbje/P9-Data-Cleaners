@@ -74,14 +74,17 @@
                 <div class="form-group">
                     <label class="form-label">Email Notifications</label>
                     <div class="notification-toggle">
+                        <!-- Place each radio immediately before its label so CSS
+                             selector `input:checked + .toggle-option` works correctly -->
                         <input type="radio" name="notifications" value="yes" id="notifications-yes" required>
-                        <input type="radio" name="notifications" value="no" id="notifications-no" required>
                         <label for="notifications-yes" class="toggle-option">
                             <span class="toggle-text">
                                 <strong>Yes</strong>
                                 <small>Send me updates and notifications</small>
                             </span>
                         </label>
+
+                        <input type="radio" name="notifications" value="no" id="notifications-no" required>
                         <label for="notifications-no" class="toggle-option">
                             <span class="toggle-text">
                                 <strong>No</strong>

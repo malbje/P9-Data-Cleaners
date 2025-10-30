@@ -1,184 +1,440 @@
 /**
  * @fileoverview Main dashboard JavaScript functionality
  * Handles widget interactions, modal system, chatbot, and user authentication
- * © Data Cleaners Team + OpenAI Chat Integration Upgrade
+ * @author Data Cleaners Team
+ * @version 1.0.0
  */
 
 // ============================================================================
 // MAIN APPLICATION INITIALIZATION
 // ============================================================================
+
+/**
+ * Main application entry point
+ * Initializes all dashboard functionality when DOM is ready
+ */
 document.addEventListener("DOMContentLoaded", () => {
-    loadUserInfo();
-    initializeModal();
-    initializeModeToggle();
+    // Initialize core application components
+    loadUserInfo();           // Load and display user authentication status
+    initializeModal();        // Set up modal system for widget content
+    initializeModeToggle();   // Configure AI/Manual mode switcher
 
     // ========================================================================
-    // WIDGETS - CLICK INITIALIZATION
+    // WIDGET SYSTEM INITIALIZATION
     // ========================================================================
+    
+    /**
+     * Set up click handlers for all dashboard widgets
+     * Each widget card triggers specific functionality when clicked
+     */
     const widgets = document.querySelectorAll('.widget-card');
+    
     widgets.forEach(widget => {
         widget.addEventListener('click', () => {
-            handleWidgetClick(widget.dataset.widget);
+            const widgetType = widget.dataset.widget;
+            handleWidgetClick(widgetType);
         });
     });
 
+    // ========================================================================
+    // WIDGET CLICK HANDLING
+    // ========================================================================
+
+    /**
+     * Central widget click handler
+     * Routes clicks to appropriate widget-specific functions
+     * @param {string} widgetType - The type of widget clicked (weather, appointments, etc.)
+     */
     function handleWidgetClick(widgetType) {
         switch(widgetType) {
-            case 'weather': handleWeatherClick(); break;
-            case 'appointments': handleAppointmentsClick(); break;
-            case 'addresses': handleAddressesClick(); break;
-            case 'profile': handleProfileClick(); break;
-            default: console.log('Unknown widget type:', widgetType);
+            case 'weather':
+                handleWeatherClick();
+                break;
+            case 'appointments':
+                handleAppointmentsClick();
+                break;
+            case 'addresses':
+                handleAddressesClick();
+                break;
+            case 'profile':
+                handleProfileClick();
+                break;
+            default:
+                console.log('Unknown widget type:', widgetType);
         }
     }
 
     // ========================================================================
-    // WEATHER WIDGET
-    // ============================================================================
+    // INDIVIDUAL WIDGET HANDLERS
+    // Each widget has its own handler that opens specific content in the modal
+    // ========================================================================
+
+    /**
+     * Weather widget click handler
+     * Displays 7-day cleaning impact forecast
+     */
     function handleWeatherClick() {
+        console.log('Weather widget clicked');
         openWidget('weather', 'Weather Information', generateWeatherContent());
     }
 
-    // ========================================================================
-    // APPOINTMENTS WIDGET
-    // ============================================================================
-    async function handleAppointmentsClick() {
-        await loadAppointmentsContent();
+    /**
+     * Appointments widget click handler
+     * Shows upcoming cleaning appointments and calendar overview
+     */
+    function handleAppointmentsClick() {
+        loadAppointmentsContent();
     }
 
-    // ========================================================================
-    // ADDRESSES WIDGET
-    // ============================================================================
+    /**
+     * Addresses widget click handler
+     * Displays saved customer addresses with property details
+     */
     async function handleAddressesClick() {
-        const content = await generateHomeContent();
-        openWidget('addresses', 'My Addresses', content);
+        console.log('My Addresses widget clicked');
+        const homeContent = await generateHomeContent();
+        openWidget('addresses', 'My Addresses', homeContent);
+    }
+
+    /**
+     * Profile widget click handler
+     * Opens user profile management interface
+     */
+    function handleProfileClick() {
+        console.log('Profile widget clicked');
+        loadUserProfileContent();
     }
 
     // ========================================================================
-    // PROFILE WIDGET
-    // ============================================================================
-    async function handleProfileClick() {
-        await loadUserProfileContent();
-    }
-
+    // CHATBOT SYSTEM
+    // AI assistant for booking and customer service
     // ========================================================================
-    // CHATBOT SYSTEM ✅ OpenAI-Integration ✅
-    // ============================================================================
+
+    /**
+     * Get chatbot interface elements
+     * These elements handle user input and message display
+     */
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
 
+    /**
+     * Initialize chatbot form submission handling
+     * Processes user messages and generates AI responses
+     */
     if (chatForm) {
-        chatForm.addEventListener('submit', async (e) => {
+        chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
-
             const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
-
-            addMessageToChat(userMessage, 'user');
-            chatInput.value = '';
-
-            const typingId = addTypingIndicator();
-
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: userMessage})
-                });
-
-                if (res.status === 401) {
-                    removeTypingIndicator(typingId);
-                    window.location.href = '/login';
-                    return;
-                }
-
-                const data = await res.json();
-                removeTypingIndicator(typingId);
-                addMessageToChat(data.reply || "Jeg kunne ikke finde noget at svare.", "bot");
-
-            } catch (err) {
-                console.error('Chat API Error:', err);
-                removeTypingIndicator(typingId);
-                addMessageToChat("Fejl: kunne ikke kontakte serveren ❌", "bot");
+            
+            if (userMessage) {
+                // Add user message to chat
+                addMessageToChat(userMessage, 'user');
+                
+                // Clear input
+                chatInput.value = '';
+                
+                // Simulate bot response (you can replace this with actual chatbot logic)
+                setTimeout(() => {
+                    const botResponse = generateBotResponse(userMessage);
+                    addMessageToChat(botResponse, 'bot');
+                }, 1000);
             }
         });
     }
 
+    /**
+     * Add a message to the chat interface
+     * @param {string} message - The message content to display
+     * @param {string} sender - Either 'user' or 'bot' for styling
+     */
     function addMessageToChat(message, sender) {
-        const msgEl = document.createElement("div");
-        msgEl.className = `message ${sender}`;
-        msgEl.textContent = message;
-        chatMessages.appendChild(msgEl);
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        messageDiv.textContent = message;
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function addTypingIndicator() {
-        const id = `typing-${Date.now()}`;
-        const el = document.createElement("div");
-        el.className = "message bot";
-        el.id = id;
-        el.textContent = "AI skriver…";
-        chatMessages.appendChild(el);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return id;
-    }
-
-    function removeTypingIndicator(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
+    /**
+     * Generate automated bot responses based on user input
+     * Simple keyword matching for common queries
+     * @param {string} userMessage - The user's input message
+     * @returns {string} Appropriate bot response
+     */
+    function generateBotResponse(userMessage) {
+        // Simple bot responses - you can enhance this with actual AI/NLP
+        const lowerMessage = userMessage.toLowerCase();
+        
+        if (lowerMessage.includes('booking') || lowerMessage.includes('book')) {
+            return 'I can help you book a cleaning! Please provide the customer details and preferred date.';
+        } else if (lowerMessage.includes('vejr') || lowerMessage.includes('weather')) {
+            return 'For weather information, click on the Vejr widget in the dashboard.';
+        } else if (lowerMessage.includes('schedule') || lowerMessage.includes('ugeplan')) {
+            return 'To view the weekly schedule, click on the Ugeplan widget.';
+        } else if (lowerMessage.includes('appointment')) {
+            return 'To see upcoming appointments, click on the Upcoming Appointments widget.';
+        } else {
+            return 'I\'m here to help with booking and scheduling. What would you like to do?';
+        }
     }
 
     // ========================================================================
-    // AUTH + DASHBOARD DATA LOADING
-    // ============================================================================
+    // USER AUTHENTICATION SYSTEM
+    // ========================================================================
+
+    /**
+     * Load and display user authentication information
+     * Fetches user data from the server and updates the UI
+     * Redirects to login if user is not authenticated
+     */
     async function loadUserInfo() {
         try {
-            const res = await fetch('/api/auth/status');
-            const data = await res.json();
-            if (!data.logged_in) window.location.href = '/login';
-            document.getElementById('user-info').textContent = `Welcome, ${data.user.name}`;
-        } catch {
+            const response = await fetch('/api/auth/status');
+            const data = await response.json();
+            
+            if (data.logged_in) {
+                const userInfo = document.getElementById('user-info');
+                if (userInfo) {
+                    userInfo.textContent = `Welcome, ${data.user.name}`;
+                }
+            } else {
+                // Redirect to login if not logged in
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error loading user info:', error);
+            // Redirect to login on error
             window.location.href = '/login';
         }
     }
 
     // ========================================================================
-    // MODAL + SHOW HELPERS
-    // ============================================================================
+    // MODAL SYSTEM
+    // Handles widget content display in overlay modal
+    // ========================================================================
+
+    /**
+     * Initialize modal functionality
+     * Sets up close button and keyboard shortcuts
+     */
     function initializeModal() {
         const closeBtn = document.getElementById('modal-close');
+        
+        // Close modal when clicking the close button
         closeBtn.addEventListener('click', closeModal);
-
+        
+        // Close modal when pressing Escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
-            if (document.getElementById('widget-modal').classList.contains('active'))
+            const modal = document.getElementById('widget-modal');
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
                 closeModal();
+            }
         });
     }
 
+    /**
+     * Open a widget's content in the modal overlay
+     * @param {string} widgetType - Type of widget being opened
+     * @param {string} title - Modal title to display
+     * @param {string} content - HTML content to show in modal
+     */
     function openWidget(widgetType, title, content) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-body').innerHTML = content;
-        document.getElementById('widget-grid').style.display = 'none';
-        document.getElementById('widget-modal').classList.add('active');
+        const modal = document.getElementById('widget-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const widgetGrid = document.getElementById('widget-grid');
+        
+        modalTitle.textContent = title;
+        // Wrap the provided content in a standardized shell so we can
+        // make widget content scrollable/contained in a predictable way.
+        modalBody.innerHTML = `
+            <div class="widget-shell">
+                <div class="widget-body">
+                    ${content}
+                </div>
+            </div>
+        `;
+        
+        // Hide widget grid and show modal
+        widgetGrid.style.display = 'none';
+        modal.classList.add('active');
+
+        // Reset modal scroll to top when opening a new widget so previous
+        // scroll position (from another widget) doesn't carry over.
+        try { modalBody.scrollTop = 0; } catch (e) { /* ignore */ }
+
+        // If this widget includes the calendar, run the header offset adjuster
+        // after a small delay so the DOM has painted and measurements are stable.
+        setTimeout(() => {
+            if (modalBody.querySelector('.calendar-widget')) {
+                try { adjustCalendarHeaderOffset(); } catch (e) { /* ignore */ }
+            }
+        }, 50);
     }
 
+    /**
+     * Close the modal and return to widget grid view
+     */
     function closeModal() {
-        document.getElementById('widget-modal').classList.remove('active');
-        document.getElementById('widget-grid').style.display = 'grid';
+        const modal = document.getElementById('widget-modal');
+        const widgetGrid = document.getElementById('widget-grid');
+        
+        modal.classList.remove('active');
+        
+        // Show widget grid again
+        widgetGrid.style.display = 'grid';
     }
 
     // ========================================================================
-    // WEATHER CONTENT
-    // ============================================================================
+    // WIDGET CONTENT GENERATORS
+    // Functions that create HTML content for each widget type
+    // ========================================================================
+
+    /**
+     * Generate weather widget content
+     * Creates a 7-day forecast focused on cleaning impact
+     * Shows how weather conditions affect dirt tracking and cleaning needs
+     * @returns {string} HTML content for weather widget modal
+     */
     function generateWeatherContent() {
-        return `<p>Weather data coming soon 🌤</p>`;
-    }
+        return `
+            <div class="weather-info">
+                <div class="weather-forecast">
+                    <h4>7-Day Forecast - Cleaning Impact</h4>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 19th</div>
+                            <div class="day-name">Today</div>
+                            <div class="weather-icon">☁️</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Dry conditions - minimal dirt tracking</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 20th</div>
+                            <div class="day-name">Tomorrow</div>
+                            <div class="weather-icon">🌧️</div>
+                            <div class="impact-level high">High Mess</div>
+                            <div class="impact-desc">Rain - muddy shoes, wet coats</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 21st</div>
+                            <div class="day-name">Friday</div>
+                            <div class="weather-icon">🌞</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Sunny & dry - clean conditions</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 22nd</div>
+                            <div class="day-name">Saturday</div>
+                            <div class="weather-icon">⛅</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Partly cloudy - good conditions</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 23rd</div>
+                            <div class="day-name">Sunday</div>
+                            <div class="weather-icon">🌧️</div>
+                            <div class="impact-level high">High Mess</div>
+                            <div class="impact-desc">Heavy rain - very muddy conditions</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day messy">
+                        <div class="day-card">
+                            <div class="date">Oct 24th</div>
+                            <div class="day-name">Monday</div>
+                            <div class="weather-icon">❄️</div>
+                            <div class="impact-level medium">Medium Mess</div>
+                            <div class="impact-desc">Snow - wet boots, salt residue</div>
+                        </div>
+                    </div>
+                    <div class="forecast-day clean">
+                        <div class="day-card">
+                            <div class="date">Oct 25th</div>
+                            <div class="day-name">Tuesday</div>
+                            <div class="weather-icon">🌞</div>
+                            <div class="impact-level low">Low Mess</div>
+                            <div class="impact-desc">Clear & cold - dry conditions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .weather-forecast h4 { margin-bottom: 0.8em; color: #333; font-size: 1em; }
+                .forecast-day { 
+                    margin: 0.25em 0; 
+                }
+                .day-card {
+                    display: flex; 
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    padding: 0.6em; 
+                    background-color: #f8f9fa; 
+                    border-radius: 8px; 
+                    border-left: 3px solid #28a745;
+                    gap: 0.3em;
+                }
+                .forecast-day.messy .day-card { 
+                    border-left-color: #dc3545;
+                }
+                .forecast-day.clean .day-card { 
+                    border-left-color: #28a745;
+                }
+                .date { 
+                    font-size: 0.75em; 
+                    color: #666; 
+                    font-weight: bold;
+                }
+                .day-name { 
+                    font-size: 0.85em; 
+                    color: #333; 
+                    font-weight: bold;
+                }
+                .weather-icon { 
+                    font-size: 1.5em; 
+                    margin: 0.2em 0;
+                }
+                .impact-level { 
+                    font-weight: bold; 
+                    font-size: 0.65em;
+                    padding: 0.1em 0.3em;
+                    border-radius: 6px;
+                    display: inline-block;
+                    width: fit-content;
+                }
+                .impact-level.low { 
+                    background-color: #d4edda; 
+                    color: #155724; 
+                }
+                .impact-level.medium { 
+                    background-color: #fff3cd; 
+                    color: #856404; 
+                }
+                .impact-level.high { 
+                    background-color: #f8d7da; 
+                    color: #721c24; 
+                }
+                .impact-desc { 
+                    font-size: 0.6em; 
+                    color: #666; 
+                    font-style: italic;
+                }
 
-    // ========================================================================
-    // ADDRESSES CONTENT
-    // ============================================================================
+            </style>
+        `;
+    }
+    
     async function generateHomeContent() {
         // This function now fetches and displays user addresses and preferences.
         let content = '<h3>Your Registered Addresses</h3>';
@@ -233,11 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </style>
         `;
     }
-
-    // ========================================================================
-    // APPOINTMENTS CONTENT
-    // ============================================================================
-
+    
     async function loadAppointmentsContent() {
         // Fetch appointments and render an interactive month calendar highlighting
         // days that have appointments. Clicking a highlighted day shows that
@@ -245,10 +497,11 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch('/api/appointments');
             if (!response.ok) {
+                openWidget('appointments', 'Upcoming Appointments', '<p>Could not load appointments.</p>');
                 return;
             }
             const appointments = await response.json();
-            
+
             // Organize appointments by ISO date string (YYYY-MM-DD)
             const apptsByDate = {};
             appointments.forEach(appt => {
@@ -336,6 +589,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 grid.innerHTML = html;
 
+                // After injecting the grid, ensure layout is adjusted so the
+                // sticky header doesn't overlap the first row. This is needed
+                // because header height can vary (font-size, padding, etc.).
+                adjustCalendarHeaderOffset();
+
                 // Attach click listeners to days; only days with appointments are selectable
                 grid.querySelectorAll('.cal-day').forEach(el => {
                     if (el.classList.contains('disabled')) return;
@@ -365,9 +623,44 @@ document.addEventListener("DOMContentLoaded", () => {
                                 // Fallback for older browsers/environments
                                 details.scrollIntoView();
                             }
-                        }
+                            }
+                        // ensure layout still correct after selection
+                        adjustCalendarHeaderOffset();
                     });
                 });
+            }
+
+            /**
+             * Measure the calendar header height and apply equivalent top padding
+             * to the grid so the first row never appears under the sticky header.
+             * Runs after render and when the modal resizes.
+             */
+            function adjustCalendarHeaderOffset() {
+                const cal = document.querySelector('.calendar-widget');
+                if (!cal) return;
+                const header = cal.querySelector('.cal-header');
+                const grid = cal.querySelector('.cal-grid');
+                if (!header || !grid) return;
+
+                // Measure header height. Also account for the modal header
+                // (if present) so we never overlap when the modal has its own
+                // header area above the widget body.
+                const modalHeader = document.querySelector('.modal-header');
+                const headerH = Math.ceil(header.getBoundingClientRect().height);
+                const modalH = modalHeader ? Math.ceil(modalHeader.getBoundingClientRect().height) : 0;
+
+                // Sum of heights plus a small safety gap
+                const total = headerH + modalH + 8;
+                grid.style.paddingTop = total + 'px';
+            }
+
+            // Ensure we re-run the adjustment on window resize, but only add
+            // the listener once. Store a flag on window to avoid duplicate handlers.
+            if (!window.__calResizeHandlerAdded) {
+                window.addEventListener('resize', () => {
+                    try { adjustCalendarHeaderOffset(); } catch (e) { /* ignore */ }
+                });
+                window.__calResizeHandlerAdded = true;
             }
 
             // Show appointments for a specific date in the details pane
@@ -403,7 +696,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 html += '</div>';
                 container.innerHTML = html;
             }
-            
 
             // Month navigation handlers
             document.getElementById('cal-prev').addEventListener('click', () => {
@@ -411,6 +703,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
                 renderCalendar(viewYear, viewMonth);
                 document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
+
+                // Recompute header offset after changing month
+                adjustCalendarHeaderOffset();
 
                 // Ensure the calendar header is visible after changing months.
                 // The modal body is the scrollable container, so scroll it to top.
@@ -428,6 +723,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
                 renderCalendar(viewYear, viewMonth);
                 document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
+
+                // Recompute header offset after changing month
+                adjustCalendarHeaderOffset();
 
                 // Scroll modal body to top so the month navigation remains reachable
                 const modalBody = document.getElementById('modal-body');
@@ -470,10 +768,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    // ========================================================================
-    // PROFILE CONTENT
-    // ============================================================================
     /**
      * Load user profile content asynchronously
      * Fetches current user data and generates profile widget content
@@ -609,29 +903,56 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ========================================================================
-    // MODE TOGGLE
-    // ============================================================================
+    // MODE TOGGLE SYSTEM
+    // Switches between AI Assistant mode and Manual booking mode
+    // ========================================================================
+
+    /**
+     * Initialize the mode toggle button
+     * Sets the initial state to AI mode (dashboard)
+     */
     function initializeModeToggle() {
+        // Set initial state to AI Mode (dashboard)
         updateModeButton('ai');
     }
 
+    /**
+     * Update the mode toggle button appearance and text
+     * @param {string} mode - Either 'ai' or 'manual' mode
+     */
     function updateModeButton(mode) {
-        const btn = document.getElementById('mode-toggle-btn');
-        const txt = btn.querySelector('.mode-text');
+        const button = document.getElementById('mode-toggle-btn');
+        const modeText = button.querySelector('.mode-text');
+        
         if (mode === 'ai') {
-            txt.textContent = 'Manual Mode';
-            btn.classList.add('active');
+            modeText.textContent = 'Manual Mode';
+            button.classList.add('active');
         } else {
-            txt.textContent = 'AI Mode';
-            btn.classList.remove('active');
+            modeText.textContent = 'AI Mode';
+            button.classList.remove('active');
         }
     }
 });
 
 // ============================================================================
-// GLOBAL
+// GLOBAL FUNCTIONS
+// Functions that need to be accessible from HTML onclick attributes
 // ============================================================================
+
+/**
+ * Global function for mode toggle button
+ * Switches between AI Assistant dashboard and Manual booking interface
+ * Called directly from HTML onclick attribute
+ */
 function toggleMode() {
-    const txt = document.querySelector('#mode-toggle-btn .mode-text').textContent;
-    window.location.href = txt === 'Manual Mode' ? '/manual' : '/';
+    const button = document.getElementById('mode-toggle-btn');
+    const modeText = button.querySelector('.mode-text');
+    
+    if (modeText.textContent === 'Manual Mode') {
+        // Switch to Manual Mode
+        window.location.href = '/manual';
+    } else {
+        // Switch to AI Mode (Dashboard)
+        window.location.href = '/';
+    }
 }
