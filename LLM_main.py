@@ -4,8 +4,8 @@
 from openai import OpenAI
 import json
 import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
-from backend.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
-from database.DB_read import (  # All database access functions - referenced from database/DB_read.py
+from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
+from database.LLM_Quearies import (  # All database access functions - referenced from database/DB_read.py
     add_appointment, get_appointment_by_id, get_appointments_by_address_id, 
     get_customer_by_id, get_customers_by_address_id, list_customers, 
     list_customers_by_name, get_customer_by_email, add_address, 

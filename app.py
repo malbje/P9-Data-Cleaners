@@ -1,31 +1,3 @@
-# Overview of the project structure:
-# backend/         - contains backend logic and routes
-#   routes/        - contains route definitions for API endpoints, these are used to keep
-#                   app.py clean(these could have been in app.py, but for better    
-#                   organization we separate it out, to not make the file too big)
-
-
-#   services/     - contains business logic and service layer code
-#                   contains the logic that the routes call to interact with the database.
-#                   Each file in services/ contains functions that are called by the routes to perform specific tasks
-#                   eg. database_logic.py handles all database interactions and notification.py handles notifications
-
-
-# database/  contains the access to the database
-
-# frontend/        - contains HTML, CSS, JS for the web interface
-#                   The .js files handle the frontend logic and interact with the backend API endpoints defined in backend/routes/
-#                   making the app dynamic and responsive, without having to reload pages all the time.
-# app.py           - main Flask application file
-# LLM_main.py      - main LLM integration file
-# tests/           - contains unit and integration tests
-
-
-
-
-
-
-
 #This is the main Flask application file for the Data Cleaners booking system.
 # we define the Flask app, configure it, and register Blueprints for API routes.
 # we use the routes/ folder to organize our API endpoints into separate files,
@@ -38,7 +10,7 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
-from backend.llm_tools import chat_with_tools # Import chat function with tool integration
+from backend.service.llm_tools import chat_with_tools # Import chat function with tool integration
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
 # Sørg for at db-importstien er korrekt
