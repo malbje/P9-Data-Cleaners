@@ -15,6 +15,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from database.DB_access import get_connection
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
+import os
 
 # Import Blueprints for API routes
 from backend.routes.api_auth import api_auth_bp
@@ -31,6 +32,26 @@ app = Flask(
     template_folder="frontend/templates",
     static_folder="frontend/static"
 )
+
+# Configure Flask session secret key.
+# Order of precedence:
+# 1) environment variable SECRET_KEY
+# 2) private_settings.SECRET_KEY if present
+# 3) developer fallback (persistent string) with a warning (NOT for production)
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    try:
+        import private_settings
+        secret_key = getattr(private_settings, 'SECRET_KEY', None)
+    except Exception:
+        secret_key = None
+
+if not secret_key:
+    # Persistent dev fallback avoids session invalidation on interpreter restarts.
+    secret_key = 'dev-secret-change-me-please-set-SECRET_KEY'
+    print("WARNING: Flask SECRET_KEY not set. Set environment variable SECRET_KEY or private_settings.SECRET_KEY for production.")
+
+app.secret_key = secret_key
 
 # ============================================================================
 # CUSTOM EXCEPTIONS
