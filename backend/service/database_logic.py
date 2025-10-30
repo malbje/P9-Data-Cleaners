@@ -153,3 +153,45 @@ def create_appointment(customer_id, data):
         print(f"Error creating appointment: {e}")
         raise e
 
+def delete_appointment(appointment_id):
+    """
+    Business-logic wrapper to delete an appointment by ID.
+    Delegates to DB_write.delete_appointment_by_id.
+    """
+    try:
+        db_writer.delete_appointment_by_id(appointment_id)
+        return {"success": True}
+    except Exception as e:
+        raise e
+
+
+def update_appointment(appointment_id, data, user_id=None):
+    """
+    Update an appointment with basic validation.
+
+    Args:
+        appointment_id: ID of the appointment to update
+        data: dict with keys address_id, date, time, notes (notes optional)
+        user_id: optional, used for authorization checks
+    """
+    # Basic validation
+    address_id = data.get('address_id')
+    date = data.get('date')
+    time = data.get('time')
+    notes = data.get('notes', '')
+
+    if not address_id or not date or not time:
+        raise ValidationError('address_id, date and time are required to update an appointment')
+
+    try:
+        # Optionally: verify that the appointment belongs to the user (if user_id provided).
+        if user_id:
+            appts = db_reader.get_appointments_for_customer(user_id)
+            if not any(a.get('id') == appointment_id for a in appts):
+                raise ValidationError('Not authorized to update this appointment')
+
+        db_writer.update_appointment_by_id(appointment_id, address_id, date, time, notes)
+        return {"success": True}
+    except Exception as e:
+        raise e
+

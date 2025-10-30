@@ -1,3 +1,6 @@
+# backend/service/weather.py
+# If run doesnt work - try "pip install requests" in the active venv
+
 """Weather utilities (DMI + fallback) for the backend.
 
 This module provides functions to:
@@ -20,8 +23,11 @@ except Exception:
 
 from typing import Tuple, Dict, Optional, Any
 import sys, os
-# Ensure project root is on sys.path so "import private_settings" works when running this file directly
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Ensure project root is on sys.path so "import private_settings" works when running this file directly.
+# The file lives in backend/service/, so go two levels up to reach the repository root.
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 import private_settings
 
 

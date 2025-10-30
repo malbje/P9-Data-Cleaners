@@ -34,6 +34,26 @@ class DB_read:
             return cursorObject.fetchall()
         finally:
             self.__close_DB_connection(database)
+
+    def search_customers(self, query: str = "", limit: int = 20):
+        """
+        Flexible search across customers (name, surname, email).
+        Returns up to `limit` rows.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            like = f"%{query}%"
+            sql = """
+                SELECT *
+                FROM customers
+                WHERE name LIKE %s OR surname LIKE %s OR email LIKE %s
+                ORDER BY id
+                LIMIT %s
+            """
+            cursorObject.execute(sql, (like, like, like, limit))
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
     
     def get_all_appointments(self):
         """Fetches all appointments (simple query)."""
@@ -104,6 +124,27 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
+    def get_addresses_by_customer_id(self, customer_id: int):
+        """
+        Return basic addresses (no preferences) for a given customer id.
+        Used by API routes that only need the address list.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            cursorObject.execute(
+                """
+                SELECT a.id, a.street_and_number, a.postal_code, a.city_name
+                FROM addresses a
+                JOIN lives_in li ON li.address_id = a.id
+                WHERE li.customer_id = %s
+                ORDER BY a.id
+                """,
+                (customer_id,)
+            )
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
+
     def get_customer_by_email(self, email):
         """
         Finds a customer by email. 
@@ -118,12 +159,50 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
+    def find_address_by_text(self, search_text: str):
+        """
+        Search addresses across street, postal code and city using partial matching.
+        Returns list of matching addresses.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            like = f"%{search_text}%"
+            cursorObject.execute(
+                """
+                SELECT id, street_and_number, postal_code, city_name
+                FROM addresses
+                WHERE street_and_number LIKE %s
+                OR postal_code LIKE %s
+                OR city_name LIKE %s
+                OR CONCAT(street_and_number, ' ', postal_code, ' ', city_name) LIKE %s
+                ORDER BY id
+                """,
+                (like, like, like, like)
+            )
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
+
     def find_address(self, street_and_number, postal_code):
         """Finds an address by street and postal code to avoid duplicates."""
         database, cursorObject = self.__open_DB_connection()
         try:
             query = "SELECT * FROM addresses WHERE street_and_number = %s AND postal_code = %s"
             cursorObject.execute(query, (street_and_number, postal_code))
+            return cursorObject.fetchone()
+        finally:
+            self.__close_DB_connection(database)
+
+    def get_address_by_id(self, address_id: int):
+        """
+        Get address by ID.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            cursorObject.execute(
+                "SELECT * FROM addresses WHERE id = %s",
+                (address_id,)
+            )
             return cursorObject.fetchone()
         finally:
             self.__close_DB_connection(database)
@@ -135,6 +214,41 @@ class DB_read:
             query = "SELECT * FROM appointments WHERE id = %s"
             cursorObject.execute(query, (appointment_id,))
             return cursorObject.fetchone()
+        finally:
+            self.__close_DB_connection(database)
+
+    def get_customers_by_appointment_id(self, appointment_id: int):
+        """
+        Retrieve all customers linked to an appointment via the appointment's address and lives_in table.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            query = """
+                SELECT customers.*
+                FROM customers
+                INNER JOIN lives_in ON customers.id = lives_in.customer_id
+                INNER JOIN appointments ON appointments.address_id = lives_in.address_id
+                WHERE appointments.id = %s
+            """
+            cursorObject.execute(query, (appointment_id,))
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
+
+    def get_customers_by_address_id(self, address_id: int):
+        """
+        Return all customers for a specific address_id (via lives_in join).
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            query = """
+                SELECT customers.*
+                FROM customers
+                JOIN lives_in ON customers.id = lives_in.customer_id
+                WHERE lives_in.address_id = %s
+            """
+            cursorObject.execute(query, (address_id,))
+            return cursorObject.fetchall()
         finally:
             self.__close_DB_connection(database)
 
