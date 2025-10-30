@@ -140,4 +140,4 @@ Note (English commands to run):
 
 Error messages:
 - Fejl: kunne ikke kontakte serveren ❌: Insufficient funds - der skal tankes op på AI tokens
-- En fejl i login: Tjek adgang til AI nøgle i private_settings (burde være fixet)
+- En fejl i login: Tjek adgang til AI nøgle i private_settings. "pip install requests"
