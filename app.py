@@ -17,10 +17,13 @@ from database.DB_access import get_connection
 import backend.service.database_logic as db 
 import os
 
+
+
 # Import Blueprints for API routes
 from backend.routes.api_auth import api_auth_bp
 from backend.routes.api_data import api_data_bp
-
+# for the weather widget 
+from backend.service.weather_service import get_weather_data
 
 # FLASK APPLICATION INITIALIZATION
 """
@@ -172,6 +175,24 @@ def api_chat():
     session["chat_history"] = history[-12:]  # model can follow conversation history for performance
 
     return jsonify({"reply": reply})
+
+@app.route('/api/weather', methods=['GET'])
+def api_weather():
+    """
+    API endpoint for fetching current weather data.
+
+    Why:
+        Allows the frontend dashboard to dynamically request weather info for
+        the user's approximate location (based on IP).
+
+    How:
+        Calls the weather_service wrapper, then returns JSON to the browser.
+    """
+    if not ensure_logged_in():
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = get_weather_data()
+    return jsonify(data)
 
 
 

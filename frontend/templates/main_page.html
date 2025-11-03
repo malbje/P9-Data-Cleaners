@@ -52,22 +52,20 @@ Last Modified: [Current Date]
             </nav>
         </header>
 
-        <!-- Main dashboard content area -->
-        <main class="dashboard-grid">
-            <!-- Left panel: User overview widgets -->
-            <section class="widget-panel">
-                <h2>My Overview</h2>
-                <div class="widget-grid" id="widget-grid">
                     <!-- Weather widget - displays current weather information -->
                     <div class="widget-card" id="weather-widget" data-widget="weather">
                         <div class="widget-icon">
                             <!-- Weather cloud icon SVG -->
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M18 10H16.74C16.38 8.83 15.64 7.77 14.62 7.03C13.6 6.29 12.32 5.9 11 5.9C9.68 5.9 8.4 6.29 7.38 7.03C6.36 7.77 5.62 8.83 5.26 10H4C2.9 10 2 10.9 2 12C2 13.1 2.9 14 4 14H18C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10Z" fill="currentColor"/>
                             </svg>
                         </div>
-                        <div class="widget-title">Weather</div>
+                         <div class="widget-title">Weather</div>
+
+                        <!-- 👇 This line is new: a container for live weather data -->
+                         <p id="weather-preview" class="widget-preview">Loading weather…</p>
                     </div>
+
                     
                     <!-- Appointments widget - shows upcoming cleaning appointments -->
                     <div class="widget-card" id="appointments-widget" data-widget="appointments">

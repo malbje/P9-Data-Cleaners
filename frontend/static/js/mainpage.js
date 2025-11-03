@@ -32,12 +32,49 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ========================================================================
-    // WEATHER WIDGET
-    // ============================================================================
-    function handleWeatherClick() {
-        openWidget('weather', 'Weather Information', generateWeatherContent());
+   // ============================================================================
+// LIVE WEATHER PREVIEW ON DASHBOARD
+// ============================================================================
+
+/**
+ * Fetch short weather info for the dashboard widget preview.
+ * Why:
+ *   To display live temperature info directly on the main dashboard.
+ * How:
+ *   Calls Flask endpoint /api/weather and updates the <p id="weather-preview"> element.
+ */
+fetch('/api/weather')
+  .then(res => res.json())
+  .then(data => {
+    const el = document.getElementById('weather-preview');
+    if (!el) return;
+
+    if (data.error) {
+      el.textContent = '⚠️ ' + data.error;
+      return;
     }
+
+    const provider = data.provider ?? 'unknown';
+    const lat = data.coords?.lat ?? '?';
+    const lon = data.coords?.lon ?? '?';
+    let summary = `${provider} (${lat}, ${lon})`;
+
+    if (data.provider === 'open-meteo' && data.forecast?.daily) {
+      const tmax = data.forecast.daily.temperature_2m_max?.[0];
+      const tmin = data.forecast.daily.temperature_2m_min?.[0];
+      if (tmax !== undefined && tmin !== undefined) {
+        summary = `🌤 ${tmin}–${tmax}°C`;
+      }
+    }
+
+    el.textContent = summary;
+  })
+  .catch(err => {
+    console.error('Weather preview error:', err);
+    const el = document.getElementById('weather-preview');
+    if (el) el.textContent = '❌ Weather unavailable';
+  });
+
 
     // ========================================================================
     // APPOINTMENTS WIDGET
