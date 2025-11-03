@@ -216,21 +216,11 @@ document.addEventListener("DOMContentLoaded", () => {
             content += '<p>Error loading addresses.</p>';
         }
 
+        // presentation handled via CSS (frontend/static/css/style.css)
         return `
             <div class="address-widget-content">
                 ${content}
             </div>
-            <style>
-                .address-list { display: grid; gap: 1.5em; }
-                .address-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; overflow: hidden; }
-                .address-header { background-color: #007bff; color: white; padding: 0.75em 1.25em; }
-                .address-header h4 { margin: 0; font-size: 1.1em; }
-                .address-preferences { padding: 1.25em; }
-                .address-preferences h5 { margin-top: 0; margin-bottom: 0.75em; color: #333; }
-                .address-preferences ul { list-style: none; padding: 0; margin: 0; }
-                .address-preferences li { padding: 0.4em 0; border-bottom: 1px solid #eee; }
-                .address-preferences li:last-child { border-bottom: none; }
-            </style>
         `;
     }
 
@@ -580,31 +570,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             </div>
-            <style>
-                .profile-info { padding: 1em; }
-                .profile-avatar { text-align: center; margin-bottom: 2em; }
-                .avatar-circle { width: 80px; height: 80px; border-radius: 50%; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: bold; margin: 0 auto 1em; }
-                .profile-section { margin-bottom: 2em; padding: 1.5em; background-color: #f8f9fa; border-radius: 12px; }
-                .profile-section h3 { margin: 0 0 1em 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 0.5em; }
-                .profile-field, .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75em 0; border-bottom: 1px solid #e9ecef; }
-                .profile-field:last-child, .setting-row:last-child { border-bottom: none; }
-                .profile-field .label, .setting-label { font-weight: bold; color: #666; }
-                .profile-field .value, .setting-value { color: #333; text-transform: capitalize; }
-                .toggle-container { display: flex; align-items: center; gap: 0.5em; }
-                .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-                .toggle-switch input { opacity: 0; width: 0; height: 0; }
-                .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-                .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-                input:checked + .slider { background-color: #007bff; }
-                input:checked + .slider:before { transform: translateX(26px); }
-                .setting-status { font-weight: bold; }
-                .action-buttons { display: flex; gap: 1em; flex-wrap: wrap; }
-                .action-btn { padding: 0.75em 1.5em; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
-                .action-btn.primary { background-color: #007bff; color: white; }
-                .action-btn.secondary { background-color: #6c757d; color: white; }
-                .action-btn.success { background-color: #28a745; color: white; }
-                .action-btn:hover { opacity: 0.9; }
-            </style>
         `;
     }
 

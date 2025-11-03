@@ -51,19 +51,7 @@ function initAuth() {
     return emailRegex.test(email);
   }
 
-  /**
-   * Validates phone number format
-   * Supports international format with optional leading +
-   * Strips common formatting characters for validation
-   * @param {string} phone - Phone number to validate
-   * @returns {boolean} True if phone format is valid
-   */
-  function isValidPhone(phone) {
-    // basic international-ish check, allows leading +
-    if (!phone) return false;
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ""));
-  }
+  // NOTE: phone validation and phone usage removed as requested
 
   // ========================================================================
   // USER FEEDBACK SYSTEM
@@ -276,86 +264,8 @@ function initAuth() {
 
   // ========================================================================
   // SIGNUP FORM HANDLING
-  // Processes signup form submission with comprehensive validation
+  // Removed from this file — signup is now handled in frontend/static/js/signup.js
   // ========================================================================
-
-  /**
-   * Initialize signup form submission handler
-   * Includes extensive validation for all required fields
-   * Only initializes if signup form exists in the DOM
-   */
-  if (signupForm) {
-    signupForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearMessages();
-
-      const firstname = (document.getElementById("signup-firstname")?.value || "").trim();
-      const lastname = (document.getElementById("signup-lastname")?.value || "").trim();
-      const email = (document.getElementById("signup-email")?.value || "").trim();
-      const phone = (document.getElementById("signup-phone")?.value || "").trim();
-      const password = document.getElementById("signup-password")?.value || "";
-      const confirmPassword =
-        document.getElementById("signup-confirm-password")?.value || "";
-      const termsAgreed = !!document.getElementById("terms-agreement")?.checked;
-
-      // Comprehensive client-side validation
-      if (!firstname || !lastname || !email || !phone || !password || !confirmPassword) {
-        showMessage("Please fill in all fields.", "error");
-        return;
-      }
-      if (!isValidEmail(email)) {
-        showMessage("Please enter a valid email address.", "error");
-        return;
-      }
-      if (!isValidPhone(phone)) {
-        showMessage("Please enter a valid phone number.", "error");
-        return;
-      }
-      if (password.length < 8) {
-        showMessage("Password must be at least 8 characters long.", "error");
-        return;
-      }
-      if (password !== confirmPassword) {
-        showMessage("Passwords do not match.", "error");
-        return;
-      }
-      if (!termsAgreed) {
-        showMessage(
-          "Please agree to the Terms of Service and Privacy Policy.",
-          "error"
-        );
-        return;
-      }
-
-      try {
-        const { success, data, message } = await postJSON("/api/auth/signup", {
-          firstname,
-          lastname,
-          email,
-          phone,
-          password,
-        });
-
-        if (success) {
-          showMessage("Account created successfully! Please log in.", "success");
-          signupForm.reset();
-          // Automatically switch to login form after successful signup
-          setTimeout(() => switchToLogin(), 1200);
-        } else {
-          showMessage(
-            message || data?.error || "Account creation failed. Please try again.",
-            "error"
-          );
-        }
-      } catch (err) {
-        console.error("Signup error:", err);
-        showMessage(
-          "An error occurred during account creation. Please try again.",
-          "error"
-        );
-      }
-    });
-  }
 
   // ========================================================================
   // PASSWORD VISIBILITY TOGGLE (OPTIONAL FEATURE)
@@ -404,4 +314,10 @@ function initAuth() {
 }
 
 // Auto-init on first DOM ready
-document.addEventListener('DOMContentLoaded', initAuth);
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    initAuth();
+  } catch (err) {
+    console.error('Failed to initialize auth handlers:', err);
+  }
+});

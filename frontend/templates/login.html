@@ -20,7 +20,7 @@
                 <button class="toggle-btn active" id="login-toggle">Log In</button>
                 <button class="toggle-btn" id="signup-toggle">Sign Up</button>
             </div>
-
+    
             <!-- Login Form -->
             <form class="auth-form active" id="login-form">
                 <h2>Welcome Back</h2>
@@ -48,108 +48,7 @@
                 <button type="submit" class="auth-btn">Sign In</button>
             </form>
 
-            <!-- Sign Up Form -->
-            <form class="auth-form" id="signup-form">
-                <h2>Create Account</h2>
-                <p class="auth-subtitle">Join Data Cleaners today</p>
-                
-                <!-- Personal Information -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="signup-firstname">First Name</label>
-                        <input type="text" id="signup-firstname" name="firstname" required placeholder="First name">
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-surname">Surname</label>
-                        <input type="text" id="signup-surname" name="surname" required placeholder="Surname">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-email">Email Address</label>
-                    <input type="email" id="signup-email" name="email" required placeholder="Enter your email">
-                </div>
-                
-                <!-- Notifications Preference -->
-                <div class="form-group">
-                    <label class="form-label">Email Notifications</label>
-                    <div class="notification-toggle">
-                        <input type="radio" name="notifications" value="yes" id="notifications-yes" required>
-                        <input type="radio" name="notifications" value="no" id="notifications-no" required>
-                        <label for="notifications-yes" class="toggle-option">
-                            <span class="toggle-text">
-                                <strong>Yes</strong>
-                                <small>Send me updates and notifications</small>
-                            </span>
-                        </label>
-                        <label for="notifications-no" class="toggle-option">
-                            <span class="toggle-text">
-                                <strong>No</strong>
-                                <small>I prefer no email notifications</small>
-                            </span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Address Section -->
-                <div class="address-section">
-                    <h3 class="section-title">Address Information</h3>
-                    
-                    <div class="form-group">
-                        <label for="signup-country">Country</label>
-                        <select id="signup-country" name="country" required>
-                            <option value="">Select your country</option>
-                            <option value="Denmark">Denmark</option>
-                            <option value="Sweden">Sweden</option>
-                            <option value="Norway">Norway</option>
-                            <option value="Germany">Germany</option>
-                            <option value="United Kingdom">United Kingdom</option>
-                            <option value="United States">United States</option>
-                            <option value="Canada">Canada</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="signup-street">Street Address</label>
-                        <input type="text" id="signup-street" name="street" required placeholder="Enter your street address">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="signup-city">City</label>
-                            <input type="text" id="signup-city" name="city" required placeholder="City">
-                        </div>
-                        <div class="form-group">
-                            <label for="signup-postal">Postal Code</label>
-                            <input type="text" id="signup-postal" name="postal_code" required placeholder="Postal code">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Password Section -->
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" name="password" required placeholder="Create a password">
-                </div>
-                
-                <div class="form-group">
-                    <label for="signup-confirm-password">Confirm Password</label>
-                    <input type="password" id="signup-confirm-password" name="confirm_password" required placeholder="Confirm your password">
-                </div>
-                
-                <!-- Terms Agreement -->
-                <div class="form-options">
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="terms-agreement" required>
-                        <span class="checkmark"></span>
-                        I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
-                    </label>
-                </div>
-                
-                <button type="submit" class="auth-btn">Create Account</button>
-            </form>
-        </div>
+           
 
         <!-- Success/Error Messages -->
         <div id="message-container" class="message-container"></div>
@@ -160,5 +59,15 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // existing login handlers...
+        const signupToggle = document.getElementById('signup-toggle');
+        signupToggle?.addEventListener('click', (e) => {
+          // redirect to signup page
+          window.location.href = '/signup';
+        });
+      });
+    </script>
 </body>
 </html>

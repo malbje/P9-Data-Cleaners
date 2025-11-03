@@ -143,25 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
             `).join('');
             content += '</div>';
 
-            // Inject CSS styles for appointment card layout
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .appointments-list { display: grid; gap: 1em; }
-                .appointment-card { display: flex; align-items: center; background-color: #f8f9fa; padding: 1em; border-radius: 12px; border: 1px solid #e9ecef; }
-                .appointment-date { text-align: center; margin-right: 1.5em; padding-right: 1.5em; border-right: 1px solid #e9ecef; }
-                .appointment-date span { font-size: 1em; color: #666; }
-                .appointment-date strong { font-size: 2em; color: #007bff; display: block; }
-                .appointment-details { flex-grow: 1; }
-                .appointment-details p { margin: 0.25em 0; }
-                .appointment-details .address { font-size: 0.9em; color: #555; }
-                .appointment-details .notes { font-size: 0.9em; color: #777; font-style: italic; }
-                .appointment-actions .delete-btn { padding: 0.5em 1em; }
-            `;
-            
             // Clear previous content and inject new appointment cards
-            container.innerHTML = ""; 
-            container.appendChild(style);
-            container.innerHTML += content;
+            // Note: Presentation/CSS for the classes below should live in your stylesheet
+            // (e.g. frontend/static/css/style.css). Add the selectors shown in the comment
+            // at the end of this file if not already present.
+            container.innerHTML = "";
+            container.innerHTML = content;
 
         } catch (error) {
             container.innerHTML = "<p>Error loading appointments.</p>";
@@ -316,4 +303,5 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     loadUserData();
 });
+
 

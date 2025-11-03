@@ -5,57 +5,58 @@
 
 from database.DB_read import DB_read
 from database.DB_write import DB_write
-from flask import session # session is used to get user_id
+from flask import session
 
-# --- Custom Exception ---
 class ValidationError(Exception):
-    """Custom exception for handling validation errors."""
     pass
 
-# --- Create instances of the Data Access Layer ---
-# These objects hold the only functions that are allowed to talk to the database.
 db_reader = DB_read()
 db_writer = DB_write()
 
-
-# --- DATABASE LOGIC: USER AUTHENTICATION ---
-
 def find_user_by_email(email):
-    """
-    Finds a single user by their email address.
-    Uses the DAL (DB_read) to fetch data.
-    """
     return db_reader.get_customer_by_email(email)
 
 def create_user(data):
     """
-    Creates a new user in the database with validation.
-    This is a "Business Logic" function:
-    1. It validates input.
-    2. It coordinates database calls (first check if user exists, then create).
+    Creates a new user and optional address, validates and returns created ids.
+    Accepts either 'name'|'firstname' and 'surname'|'lastname' for compatibility with frontend.
     """
-    # Step 1: Validation
-    firstname = data.get("firstname", "").strip()
-    lastname = data.get("lastname", "").strip()
-    email = data.get("email", "").strip().lower()
+    name = (data.get("name") or data.get("firstname") or "").strip()
+    surname = (data.get("surname") or data.get("lastname") or "").strip()
+    email = (data.get("email") or "").strip().lower()
 
-    if not firstname or not lastname: 
+    if not name or not surname:
         raise ValidationError("First and last name are required.")
-    if "@" not in email: 
+    if "@" not in email:
         raise ValidationError("Invalid email address.")
-    
-    # Step 2: Business Rule: Check if user already exists (via DAL)
-    if db_reader.get_customer_by_email(email): 
+
+    if db_reader.get_customer_by_email(email):
         raise ValidationError("A user with this email already exists.")
 
-    # Step 3: Create user (via DAL)
-    try:
-        # Calls the simple, atomic function in the DAL
-        db_writer.create_customer(firstname, lastname, email)
-        return {"success": True, "message": "User created successfully"}
-    except Exception as e:
-        # Handle specific database errors if needed
-        raise e
+    # create customer
+    customer_id = db_writer.create_customer(name, surname, email)
+    if not customer_id:
+        raise Exception("Failed to create or resolve customer id.")
+
+    result = {"success": True, "customer_id": customer_id}
+
+    # optional address creation + link
+    addr = data.get("address") or {}
+    street = (addr.get("street_and_number") or addr.get("street") or "").strip()
+    postal = (addr.get("postal_code") or "").strip()
+    city = (addr.get("city_name") or addr.get("city") or "").strip()
+
+    address_id = None
+    if street and postal and city:
+        existing = db_reader.find_address(street, postal) if hasattr(db_reader, "find_address") else None
+        if existing and existing.get("id"):
+            address_id = existing["id"]
+        else:
+            address_id = db_writer.create_address(street, postal, city)
+        db_writer.link_customer_to_address(customer_id, address_id)
+        result.update({"address_id": address_id})
+
+    return result
 
 def get_all_users():
     """Fetches a list of all users (pass-through to DAL)."""
