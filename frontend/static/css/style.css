@@ -105,11 +105,40 @@ hr {
    ======================================================================== */
 
 .calendar-widget { padding: 0.5rem; }
+
+/* Reduce top whitespace when the calendar widget is shown inside the modal.
+   This targets the calendar only and won't affect other widgets.  */
+.widget-shell .widget-body > .calendar-widget {
+    margin-top: -7.0rem;
+    padding-top: 0.4rem;
+}
+
+@media (max-width: 600px) {
+    /* On small screens keep the pull smaller to avoid overlaps */
+    .widget-shell .widget-body > .calendar-widget {
+        margin-top: -0.4rem;
+        padding-top: 0.35rem;
+    }
+}
 /* Keep the calendar header (month + nav) visible while scrolling the modal */
-.calendar-widget .cal-header { position: sticky; top: 0; display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:0.5rem; background: #fff; z-index: 10; padding: 0.35rem 0.25rem; border-bottom: 1px solid #eef1f4; }
-.cal-title { font-weight:700; font-size:1.05rem; text-align:center; flex:1; }
-.cal-nav { background:#fff; border:1px solid #e0e0e0; padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer; }
-.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.calendar-widget .cal-header { position: sticky; top: 0; display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:0.5rem; background: #fff; z-index: 1200; padding: 0.35rem 0.25rem; border-bottom: 1px solid #eef1f4; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+.cal-title { font-weight:700; font-size:1.05rem; text-align:center; flex:-1; }
+.cal-nav { background:#fff; border:3px solid #e0e0e0; padding:.5rem 0.8rem; border-radius:6px; cursor:pointer; }
+
+/* Nudge the month navigation slightly upward so its top border extends
+   a bit closer to the modal header. This is scoped to the calendar widget
+   when shown inside the modal to avoid affecting other elements. */
+.widget-shell .widget-body > .calendar-widget .cal-header .cal-nav {
+    transform: translateY(-0.rem);
+}
+
+@media (max-width: 600px) {
+    /* Smaller nudge on narrow screens to prevent overlap */
+    .widget-shell .widget-body > .calendar-widget .cal-header .cal-nav {
+        transform: translateY(-0.15rem);
+    }
+}
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding-top:0.5rem; position:relative; z-index:0; }
 .cal-weekday { text-align:center; font-size:0.75rem; color:#666; padding:0.25rem 0; }
 .cal-day { min-height:56px; background:#fbfcfd; border:1px solid #eef1f4; border-radius:8px; padding:6px; position:relative; cursor:pointer; display:flex; align-items:flex-start; justify-content:flex-start; }
 .cal-day.disabled { opacity:0.35; cursor:default; }
@@ -124,7 +153,7 @@ hr {
     content: '';
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: 40%;
     transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
@@ -789,7 +818,7 @@ body {
 .modal-body {
     padding: 2em;
     overflow-y: auto;
-    max-height: calc(85vh - 120px);
+    max-height: calc(70vh - 140px);
 }
 
 /* Profile widget specific styles */
