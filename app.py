@@ -17,6 +17,15 @@ from database.DB_access import get_connection
 import backend.service.database_logic as db 
 import os
 
+# ============================================================================
+# WEATHER SERVICE IMPORT
+# ============================================================================
+from backend.service.weather_service import get_weather_data  
+# 🟢 Imports the helper function 'get_weather_data()' from our weather_service module.
+# This function is responsible for fetching weather information (from DMI or Open-Meteo)
+# and returning it in a clean JSON structure that can be sent to the frontend.
+
+
 # Import Blueprints for API routes
 from backend.routes.api_auth import api_auth_bp
 from backend.routes.api_data import api_data_bp
@@ -246,6 +255,30 @@ def api_create_customer():
      except Exception:
          app.logger.exception("Failed to create customer")
          return jsonify({"error": "Internal server error"}), 500
+# ============================================================================
+# WEATHER SERVICE ROUTE
+# ============================================================================
+@app.route("/api/weather", methods=["GET"])
+def api_weather():
+    """
+    API route: Provides live weather data to the frontend and other modules.
+    
+    Why:
+        This endpoint allows the main dashboard and AI logic to access
+        up-to-date weather information for contextual suggestions and
+        user-facing widgets.
+    
+    How:
+        Calls get_weather_data() from backend/service/weather_service.py,
+        which handles both DMI and fallback APIs (Open-Meteo).
+        Returns the structured JSON data to the frontend for rendering.
+    """
+    # 🟢 Fetch latest weather data using helper function
+    data = get_weather_data()
+    
+    # 🟢 Convert the Python dict to JSON and send it back to the browser
+    return jsonify(data)
+
 
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
