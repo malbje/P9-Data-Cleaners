@@ -125,6 +125,13 @@ def get_all_services():
     """Fetches all available services from the database (pass-through to DAL)."""
     return db_reader.get_all_services()
 
+def get_all_appointments_for_notification():
+    """
+    Returns simplified appointment data for notification service.
+    Wrapper around DB_read.get_appointments_for_notifications().
+    """
+    return db_reader.get_appointments_for_notifications()
+
 def create_appointment(customer_id, data):
     """
     Creates a new appointment in the database (alternate version).
@@ -137,8 +144,8 @@ def create_appointment(customer_id, data):
             data['date'],
             data['time'],
             data.get('notes', '')
-            # Note: Your original function had 'notification_preference'.
-            # If needed, you must add that field to the DB_write.create_appointment function.
+            # Note: Our original function had 'notification_preference'.
+            # If needed, we must add that field to the DB_write.create_appointment function.
         )
         
         if not appointment_id:

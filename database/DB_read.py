@@ -387,10 +387,6 @@ class DB_read:
             self.__close_DB_connection(database)
 
     
-            # ----------------------------------------------------------------
-            # New methods for chatbot integration can be added here as needed.
-            # ----------------------------------------------------------------
-
     def search_customers_by_name(self, query: Optional[str] = None, limit: int = 100):
         """
         Searches for customers whose names contain the given substring (name, surname, email).
@@ -419,56 +415,87 @@ class DB_read:
             self.__close_DB_connection(database)
 
     def get_customer_by_name_or_email(self, name_or_email: str) -> Optional[Dict[str, any]]:
+        """
+        Finds first match on name/surname or email.
+        Good for questions like: 'Who is Anne Madsen?' Or 'find customer with anne@...' .
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            sql = """
+                SELECT id, name, surname, email
+                FROM customers
+                WHERE email = %s
+                OR CONCAT(name, ' ', surname) LIKE %s
+                OR name LIKE %s
+                OR surname LIKE %s
+                LIMIT 1
             """
-            Finds first match on name/surname or email.
-            Good for questions like: 'Who is Anne Madsen?' Or 'find customer with anne@...'.
-            """
-            database, cursorObject = self.__open_DB_connection()
-            try:
-                sql = """
-                    SELECT id, name, surname, email
-                    FROM customers
-                    WHERE email = %s
-                    OR CONCAT(name, ' ', surname) LIKE %s
-                    OR name LIKE %s
-                    OR surname LIKE %s
-                    LIMIT 1
-                """
-                like = f"%{name_or_email}%"
-                cursorObject.execute(sql, (name_or_email, like, like, like))
-                return cursorObject.fetchone()
-            finally:
-                self.__close_DB_connection(database)
+            like = f"%{name_or_email}%"
+            cursorObject.execute(sql, (name_or_email, like, like, like))
+            return cursorObject.fetchone()
+        finally:
+            self.__close_DB_connection(database)
 
     def get_addresses_for_customer_name_or_email(self, name_or_email: str) -> List[Dict[str, Any]]:
+        """
+        Returns all addresses for a customer when only the name or email is known.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            sql = """
+                SELECT 
+                    a.id AS address_id,
+                    a.street_and_number,
+                    a.postal_code,
+                    a.city_name,
+                    c.id AS customer_id,
+                    c.name,
+                    c.surname,
+                    c.email
+                FROM customers c
+                JOIN lives_in li ON li.customer_id = c.id
+                JOIN addresses a ON a.id = li.address_id
+                WHERE c.email = %s
+                OR CONCAT(c.name, ' ', c.surname) LIKE %s
+                OR c.name LIKE %s
+                OR c.surname LIKE %s
+                ORDER BY a.id
             """
-            Returns all adressess for a customer when only name is known (+ possibly surname) or email.
-            Uses for: 'What is the address for Anne Madsen?'.
+            like = f"%{name_or_email}%"
+            cursorObject.execute(sql, (name_or_email, like, like, like))
+            rows = cursorObject.fetchall()
+            return rows
+        finally:
+            self.__close_DB_connection(database)
+
+    # NEW: Notification-safe appointment fetcher
+    def get_appointments_for_notifications(self):
+        """
+        A simple appointment query that avoids GROUP BY issues.
+        Returns customer name, email, date, time for all upcoming appointments.
+        Safe to use for the notification service.
+        """
+        database, cursorObject = self.__open_DB_connection()
+        try:
+            query = """
+                SELECT 
+                    a.id AS appointment_id,
+                    c.name AS name,
+                    c.surname AS surname,
+                    c.email AS email,
+                    a.date AS date,
+                    a.time AS time
+                FROM appointments a
+                JOIN addresses ad ON ad.id = a.address_id
+                JOIN lives_in li ON li.address_id = ad.id
+                JOIN customers c ON c.id = li.customer_id
+                ORDER BY a.date ASC, a.time ASC;
             """
-            database, cursorObject = self.__open_DB_connection()
-            try:
-                sql = """
-                    SELECT 
-                        a.id AS address_id,
-                        a.street_and_number,
-                        a.postal_code,
-                        a.city_name,
-                        c.id AS customer_id,
-                        c.name,
-                        c.surname,
-                        c.email
-                    FROM customers c
-                    JOIN lives_in li ON li.customer_id = c.id
-                    JOIN addresses a ON a.id = li.address_id
-                    WHERE c.email = %s
-                    OR CONCAT(c.name, ' ', c.surname) LIKE %s
-                    OR c.name LIKE %s
-                    OR c.surname LIKE %s
-                    ORDER BY a.id
-                """
-                like = f"%{name_or_email}%"
-                cursorObject.execute(sql, (name_or_email, like, like, like))
-                rows = cursorObject.fetchall()
-                return rows
-            finally:
-                self.__close_DB_connection(database)
+            cursorObject.execute(query)
+            return cursorObject.fetchall()
+        finally:
+            self.__close_DB_connection(database)
+
+    # ----------------------------------------------------------------
+    # New methods for chatbot integration can be added here as needed.
+    # ----------------------------------------------------------------
