@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database.DB_read import (
     list_customers, find_address_by_text, get_appointments_by_address_id
 )
-from main import ask_llm
 
+from main import ask_llm
 
 def simple_test():
     """

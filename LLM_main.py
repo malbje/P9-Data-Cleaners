@@ -146,7 +146,7 @@ Hvis du mangler information for at udføre en opgave, stil spørgsmål til bruge
     # Andet kald: få det endelige, naturlige svar til brugeren
     final = client.chat.completions.create(
         model="gpt-5",
-        messages=messages
+        messages = messages
     )
     return final.choices[0].message.content
 
@@ -161,11 +161,11 @@ def interactive_chat():
     print("=== DataCleaners Interactive Assistant ===")
     print("Skriv 'exit' for at afslutte\n")
     
-    conversation_history = []
+    conversation_history: list = []
     
     while True:
         # Get user input
-        user_input = input("Du: ").strip()
+        user_input: str = input("Du: ").strip()
         
         if user_input.lower() in ['exit', 'quit', 'afslut']:
             print("Tak for denne gang!")
