@@ -194,20 +194,7 @@ def interactive_chat() -> None:
             # Add to conversation history
             conversation_history.append({"role": "user", "content": user_input})
             conversation_history.append({"role": "assistant", "content": response})
-
-            """
-            # Check if the response contains a question - if so, wait for follow-up
-            if "?" in response and any(word in response.lower() for word in ["vil du", "skal", "godkend", "angiv", "præferenc", "titel", "varighed"]):
-                follow_up: str = input("Dit svar: ").strip()
-                if follow_up:
-                    # Process the follow-up response
-                    follow_response: str = ask_llm(follow_up, conversation_history)
-                    print(f"\nAssistent: {follow_response}\n")
-                    
-                    # Add follow-up to history
-                    conversation_history.append({"role": "user", "content": follow_up})
-                    conversation_history.append({"role": "assistant", "content": follow_response})
-            """
+        
 
         except Exception as e:
             print(f"Fejl: {e}\n")
