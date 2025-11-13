@@ -10,9 +10,9 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
-from backend.service.llm_tools import chat_with_tools # Import chat function with tool integration
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
+from LLM_main import ask_llm # Import function to interact with LLM
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
 import os # For environment variable access
@@ -269,7 +269,7 @@ def api_chat():
     # valgfrit: historik for bedre dialogflow
     history = session.get("chat_history", [])
 
-    reply = chat_with_tools(user_message, chat_history=history)
+    reply = ask_llm(user_message, chat_history=history)
 
     history.append({"role": "user", "content": user_message})
     history.append({"role": "assistant", "content": reply})
