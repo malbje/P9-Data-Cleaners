@@ -15,17 +15,23 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from database.DB_access import get_connection
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
-import os
+import os # For environment variable access
 
 # Import Blueprints for API routes
 from backend.routes.api_auth import api_auth_bp
 from backend.routes.api_data import api_data_bp
 from backend.routes.api_customers import api_customers_bp
 
-# Add DB_write import so we can create customers from frontend JSON
-from database.DB_write import DB_write
+# Imports for Google Calendars API integration (not directly used in this file, but needed for database_logic functions)
+import pathlib #to Google API client libraries
+from dotenv import load_dotenv # to load environment variables from .env file
+from google.oauth2.credentials import Credentials # to handle OAuth2 credentials
+from google_auth_oauthlib.flow import Flow # to manage OAuth2 flow (authorization, code, token exchange)
+from googleapiclient.discovery import build # to build Google API service clients
 
+# ---------------------------------------------------------------------------
 # FLASK APPLICATION INITIALIZATION
+# ---------------------------------------------------------------------------
 """
 Flask application instance with custom template and static folders
 Configured to serve frontend files from the frontend directory structure
@@ -54,7 +60,48 @@ if not secret_key:
     secret_key = 'dev-secret-change-me-please-set-SECRET_KEY'
     print("WARNING: Flask SECRET_KEY not set. Set environment variable SECRET_KEY or private_settings.SECRET_KEY for production.")
 
-app.secret_key = secret_key
+app.secret_key = secret_key # Set Flask secret key for session management
+
+# =====================================================================================================================================================================================
+# GOOGLE CALENDAR / OAUTH CONFIGURATION
+# To start Google OAuth2 flow and access Calendar API: http://127.0.0.1:5000/calendar/connect
+# To get users calendar events: http://127.0.0.1:5000/calendar/status
+# To create a calendar event: http://127.0.0.1:5000/calendar/create-cleaning
+# To update or delete events, use Event ID from event creation response
+# To check if user is free / busy at a time: Implement route using FreeBusy (@app.route('/calendar/freebusy') xxx), afterwards use: http://127.0.0.1:5000/calendar/freebusy
+# To combine with AI assistant, add functionality in e.g: LLM_main.py (from backend.service.calendar import get_calendar_service) + function (def suggest_cleaning_time(): xxx...)
+# ======================================================================================================================================================================================
+
+load_dotenv()  # Load environment variables from .env file
+
+BASE_DIR = pathlib.Path(__file__).parent
+CLIENT_SECRETS_FILE = BASE_DIR / "secrets" / "client_secret.json" # "secrets" and "client_secret.json" for correct path to client secrets
+
+GOOGLE_SCOPES = [os.getenv("GOOGLE_OAUTH_SCOPE", "https://www.googleapis.com/auth/calendar")] # OAuth2 scopes for Google Calendar access
+GOOGLE_REDIRECT_URI = "http://127.0.0.1:5000/google/oauth2callback"  # Redirect URI for OAuth2 flow
+
+def build_flow():
+    return Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE,
+        scopes=GOOGLE_SCOPES,
+        redirect_uri=GOOGLE_REDIRECT_URI
+    )
+
+def get_calendar_service(): # builds authorized Google Calendar API client
+    creds_data = session.get('google_credentials')
+    if not creds_data:
+        return None
+    
+    creds = Credentials(
+        token=creds_data['token'],
+        refresh_token=creds_data.get('refresh_token'),
+        token_uri=creds_data['token_uri'],
+        client_id=creds_data['client_id'],
+        client_secret=creds_data['client_secret'],
+        scopes=creds_data['scopes']
+    )
+    service = build('calendar', 'v3', credentials=creds) # Build Google Calendar API service client
+    return service # Return the service client
 
 # ============================================================================
 # CUSTOM EXCEPTIONS
@@ -205,7 +252,7 @@ def signup_page():
         return render_template('signup.html', error="Internal server error"), 500
 
 # ============================================================================
-# REGISTRER BLUEPRINTS defined in separate route files
+# REGISTERED BLUEPRINTS defined in separate route files
 # ============================================================================
 
 # API route for AI assistant chat interaction

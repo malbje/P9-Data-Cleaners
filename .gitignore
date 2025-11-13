@@ -20,3 +20,7 @@ private_settings.py
 
 # Logs
 *.log
+
+# Google API credentials
+secrets/
+client_secret.json
