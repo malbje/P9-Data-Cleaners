@@ -7,7 +7,7 @@ import private_settings  # Contains OPENAI_API_KEY - referenced from private_set
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
 from database.DB_read import DB_read
 from database.DB_write import DB_write
-
+import LLM_prompts
 
 def ask_llm(
         user_prompt: str, 
@@ -30,27 +30,20 @@ def ask_llm(
     reader = DB_read()
     writer = DB_write()
 
+    # Rules:
+    # 0'th dict in messages list is the prompt with general rules for the chatbot.
+    # 1'st dict is the case we are using to further guide the model on specific choices.
+
     # Start med system message og tilføj samtale kontekst hvis den findes
     messages: list[dict[str, str]] = [{
-        "role": "system", "content": """Du er en assistent for et rengøringsfirma med fokus på deres kundekartotek. 
-
-        ABSOLUT KRITISK REGEL: Du SKAL ALTID bruge de tilgængelige tools til at udføre opgaver. Du må ALDRIG, UNDER NOGEN OMSTÆNDIGHEDER, simulere, gætte eller opfinde resultater.
-
-        PÅKRÆVET ADFÆRD:
-        - Når brugeren beder om at oprette en aftale: SKAL kalde add_appointment funktionen
-        - Når brugeren beder om kunde-info: SKAL kalde relevante kunde-funktioner  
-        - Når brugeren beder om adresse-info: SKAL kalde adresse-funktioner
-        - Når brugeren beder om at finde noget: SKAL bruge søge-funktioner
-
-        Du må ALDRIG skrive noget som:
-        - "Jeg opretter aftalen nu" uden at kalde add_appointment
-        - "Aftalen er oprettet" uden at have modtaget resultat fra add_appointment
-        - JSON eksempler eller simulerede resultater
-
-        ALTID vent på det faktiske resultat fra funktionerne før du svarer brugeren.
-
-        Hvis du mangler information for at udføre en opgave, stil spørgsmål til brugeren."""
+        "role": "system", "content": LLM_prompts.rules
         }]
+    
+    # Appending the case of anna and mikkel to the rules prompt
+    # messages[0]["content"] += LLM_prompts.case_anna_mikkel
+    messages.extend([{
+        "role": "system", "content": LLM_prompts.case_anna_mikkel
+        }])
     
     # Tilføj samtale kontekst hvis den findes
     if conversation_context:
@@ -59,7 +52,8 @@ def ask_llm(
     # Tilføj den nye bruger besked
     messages.append({"role": "user", "content": user_prompt})
 
-    # Første kald: TVING modellen til at bruge tools eller stille spørgsmål
+    # Første kald: TVING modellen til at bruge tools eller stille spørgsmål 
+    # (hvordan tvinges?)
     # resp er et objekt af klassen ChatCompletion
     resp = client.chat.completions.create(
         model="gpt-5",
@@ -68,10 +62,19 @@ def ask_llm(
         tool_choice = "auto"  # Tilbage til auto så den kan stille spørgsmål
     )
 
+    # 'choices[]' is a list of Choice objects
+    # each Choice object has a 'message' attribute of type ChatCompletionMessage
     assistant_msg = resp.choices[0].message
-    messages.append({"role": "assistant", "content": assistant_msg.content or "", "tool_calls": assistant_msg.tool_calls})
+    #
+    
+    messages.append({"role": "assistant", "content": assistant_msg.content, "tool_calls": assistant_msg.tool_calls})
+
 
     # Hvis modellen vil kalde et tool, udfør det og send resultatet tilbage som role="tool"
+    # 'tool_calls' er en liste af ChatCompletionMessageFunctionToolCall
+    # each ChatCompletionMessageFunctionToolCall has a 'function' object with a name and a json list of arguments (str)
+    # each of those arguments is an argument to call the given function with
+    
     tool_calls = assistant_msg.tool_calls or []
     for call in tool_calls:
         name = call.function.name
@@ -79,10 +82,11 @@ def ask_llm(
 
         # Map tool names to DB class methods. Accept multiple common argument
         # key variants to be resilient to different model argument naming.
-        def _pick(*keys, default=None):
-            for k in keys:
-                if k in args:
-                    return args.get(k)
+        # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
+        def _pick(*keys: str, default = None):
+            for key in keys:
+                if key in args:
+                    return args.get(key)
             return default
 
         if name == "list_customers":
@@ -138,27 +142,36 @@ def ask_llm(
             result = reader.get_address_by_id(**args)
         else:
             result = {"error": f"Ukendt funktion: {name}"}
-
+        
+            
         # svar tilbage til modellen med tool-resultatet (vigtigt: tool_call_id)
+        
         messages.append({
             "role": "tool",
             "tool_call_id": call.id,
             "name": name,
             "content": json.dumps(result, ensure_ascii=False),
         })
+    
+    if messages[-1]["role"] == "tool":
+        final = client.chat.completions.create(
+            model = "gpt-5",
+            messages = messages,
+        )
 
-    # Andet kald: få det endelige, naturlige svar til brugeren
-    # the 'final' variable is an object of the ChatCompletion class
-    final = client.chat.completions.create(
-        model="gpt-5",
-        messages = messages
-    )
+        response2 = final.choices[0].message
+        messages.append({"role": "assistant", "content": response2.content})
+        print('All messages: ')
+        print(messages)
+        return final.choices[0].message.content #type: ignore
+
+
     print('All messages: ')
     print(messages)
     # 'choices[]' is a list of Choice objects
     # each Choice object has a 'message' attribute of type ChatCompletionMessage
     # the 'content' instance variable is a string
-    return final.choices[0].message.content #type: ignore
+    return resp.choices[0].message.content #type: ignore
 
 
 def interactive_chat() -> None:
@@ -178,7 +191,7 @@ def interactive_chat() -> None:
         # input is a blocking function, meaning that it's call pauses the program until the user inputs something
         user_input: str = input("Du: ").strip()
         
-        if user_input.lower() in ['exit', 'quit', 'afslut']:
+        if 'exit' in user_input.lower():
             print("Tak for denne gang!")
             break
         

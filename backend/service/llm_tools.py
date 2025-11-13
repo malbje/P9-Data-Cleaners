@@ -171,7 +171,7 @@ def _execute_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]: # Exe
 # -----------------------------
 # Organizing: chat-loop
 # -----------------------------
-def chat_with_tools(user_message: str, chat_history: Optional[List[Dict[str, str]]] = None, model: str = "gpt-4o-mini") -> str:
+def chat_with_tools(user_message: str, chat_history: Optional[List[Dict[str, str]]] = None, model: str = "gpt-5") -> str:
     """
     Called from Flask-route. Sends the user's message to the model,
     handles tool-calls, and returns a final, formulated response in Danish.
