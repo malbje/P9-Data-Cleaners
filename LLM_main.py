@@ -173,7 +173,6 @@ def ask_llm(
     # the 'content' instance variable is a string
     return resp.choices[0].message.content #type: ignore
 
-
 def interactive_chat() -> None:
     """
     Terminal-based chat interface with conversation memory.
@@ -211,7 +210,6 @@ def interactive_chat() -> None:
 
         except Exception as e:
             print(f"Fejl: {e}\n")
-
 
 if __name__ == "__main__":
     # Start the interactive chat session
