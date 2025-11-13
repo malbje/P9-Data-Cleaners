@@ -9,7 +9,10 @@ from database.DB_read import DB_read
 from database.DB_write import DB_write
 
 
-def ask_llm(user_prompt: str, conversation_context: list = None):
+def ask_llm(
+        user_prompt: str, 
+        conversation_context: list[dict[str, str]] | None = None
+        ) -> str:
     """
     Process natural language prompts through OpenAI with database function calling.
     
@@ -22,32 +25,32 @@ def ask_llm(user_prompt: str, conversation_context: list = None):
     """
     client = OpenAI(api_key=private_settings.OPENAI_API_KEY)
 
-    # Instantiate DB access classes (read/write). These are thin, stateless wrappers
+    # Instantiate DB access classes (read/write),
     # that open connections only when their methods are called.
     reader = DB_read()
     writer = DB_write()
 
     # Start med system message og tilføj samtale kontekst hvis den findes
-    messages = [
-        {"role": "system", "content": """Du er en assistent for et rengøringsfirma med fokus på deres kundekartotek. 
+    messages: list[dict[str, str]] = [{
+        "role": "system", "content": """Du er en assistent for et rengøringsfirma med fokus på deres kundekartotek. 
 
-ABSOLUT KRITISK REGEL: Du SKAL ALTID bruge de tilgængelige tools til at udføre opgaver. Du må ALDRIG, UNDER NOGEN OMSTÆNDIGHEDER, simulere, gætte eller opfinde resultater.
+        ABSOLUT KRITISK REGEL: Du SKAL ALTID bruge de tilgængelige tools til at udføre opgaver. Du må ALDRIG, UNDER NOGEN OMSTÆNDIGHEDER, simulere, gætte eller opfinde resultater.
 
-PÅKRÆVET ADFÆRD:
-- Når brugeren beder om at oprette en aftale: SKAL kalde add_appointment funktionen
-- Når brugeren beder om kunde-info: SKAL kalde relevante kunde-funktioner  
-- Når brugeren beder om adresse-info: SKAL kalde adresse-funktioner
-- Når brugeren beder om at finde noget: SKAL bruge søge-funktioner
+        PÅKRÆVET ADFÆRD:
+        - Når brugeren beder om at oprette en aftale: SKAL kalde add_appointment funktionen
+        - Når brugeren beder om kunde-info: SKAL kalde relevante kunde-funktioner  
+        - Når brugeren beder om adresse-info: SKAL kalde adresse-funktioner
+        - Når brugeren beder om at finde noget: SKAL bruge søge-funktioner
 
-Du må ALDRIG skrive noget som:
-- "Jeg opretter aftalen nu" uden at kalde add_appointment
-- "Aftalen er oprettet" uden at have modtaget resultat fra add_appointment
-- JSON eksempler eller simulerede resultater
+        Du må ALDRIG skrive noget som:
+        - "Jeg opretter aftalen nu" uden at kalde add_appointment
+        - "Aftalen er oprettet" uden at have modtaget resultat fra add_appointment
+        - JSON eksempler eller simulerede resultater
 
-ALTID vent på det faktiske resultat fra funktionerne før du svarer brugeren.
+        ALTID vent på det faktiske resultat fra funktionerne før du svarer brugeren.
 
-Hvis du mangler information for at udføre en opgave, stil spørgsmål til brugeren."""}
-    ]
+        Hvis du mangler information for at udføre en opgave, stil spørgsmål til brugeren."""
+        }]
     
     # Tilføj samtale kontekst hvis den findes
     if conversation_context:
@@ -57,11 +60,12 @@ Hvis du mangler information for at udføre en opgave, stil spørgsmål til bruge
     messages.append({"role": "user", "content": user_prompt})
 
     # Første kald: TVING modellen til at bruge tools eller stille spørgsmål
+    # resp er et objekt af klassen ChatCompletion
     resp = client.chat.completions.create(
         model="gpt-5",
-        messages=messages,
-        tools=TOOLS,
-        tool_choice="auto"  # Tilbage til auto så den kan stille spørgsmål
+        messages = messages,
+        tools = TOOLS,
+        tool_choice = "auto"  # Tilbage til auto så den kan stille spørgsmål
     )
 
     assistant_msg = resp.choices[0].message
@@ -144,14 +148,20 @@ Hvis du mangler information for at udføre en opgave, stil spørgsmål til bruge
         })
 
     # Andet kald: få det endelige, naturlige svar til brugeren
+    # the 'final' variable is an object of the ChatCompletion class
     final = client.chat.completions.create(
         model="gpt-5",
         messages = messages
     )
-    return final.choices[0].message.content
+    print('All messages: ')
+    print(messages)
+    # 'choices[]' is a list of Choice objects
+    # each Choice object has a 'message' attribute of type ChatCompletionMessage
+    # the 'content' instance variable is a string
+    return final.choices[0].message.content #type: ignore
 
 
-def interactive_chat():
+def interactive_chat() -> None:
     """
     Terminal-based chat interface with conversation memory.
     
@@ -165,36 +175,40 @@ def interactive_chat():
     
     while True:
         # Get user input
+        # input is a blocking function, meaning that it's call pauses the program until the user inputs something
         user_input: str = input("Du: ").strip()
         
         if user_input.lower() in ['exit', 'quit', 'afslut']:
             print("Tak for denne gang!")
             break
-            
+        
+        # If user_input == None, then 'continue' will skip the rest of this iteration of the loop and start the loop over
         if not user_input:
             continue
             
         try:
             # Get response from assistant
-            response = ask_llm(user_input, conversation_history)
+            response: str = ask_llm(user_input, conversation_history)
             print(f"\nAssistent: {response}\n")
             
             # Add to conversation history
             conversation_history.append({"role": "user", "content": user_input})
             conversation_history.append({"role": "assistant", "content": response})
-            
+
+            """
             # Check if the response contains a question - if so, wait for follow-up
             if "?" in response and any(word in response.lower() for word in ["vil du", "skal", "godkend", "angiv", "præferenc", "titel", "varighed"]):
-                follow_up = input("Dit svar: ").strip()
+                follow_up: str = input("Dit svar: ").strip()
                 if follow_up:
                     # Process the follow-up response
-                    follow_response = ask_llm(follow_up, conversation_history)
+                    follow_response: str = ask_llm(follow_up, conversation_history)
                     print(f"\nAssistent: {follow_response}\n")
                     
                     # Add follow-up to history
                     conversation_history.append({"role": "user", "content": follow_up})
                     conversation_history.append({"role": "assistant", "content": follow_response})
-            
+            """
+
         except Exception as e:
             print(f"Fejl: {e}\n")
 
