@@ -333,7 +333,7 @@ def create_cleaning_event():
         sendUpdates='none' # No notifications
     ).execute()
 
-    return f'Event created ✔ Event ID: {created.get("id")}'
+    return f'Event created ✔ Event ID: {create.get("id")}'
 
 
 @app.route('/calendar/connect')
