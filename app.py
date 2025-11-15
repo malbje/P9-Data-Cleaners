@@ -80,6 +80,7 @@ CLIENT_SECRETS_FILE = BASE_DIR / "secrets" / "client_secret.json" # "secrets" an
 GOOGLE_SCOPES = [os.getenv("GOOGLE_OAUTH_SCOPE", "https://www.googleapis.com/auth/calendar")] # OAuth2 scopes for Google Calendar access
 GOOGLE_REDIRECT_URI = "http://127.0.0.1:5000/google/oauth2callback"  # Redirect URI for OAuth2 flow
 
+
 def build_flow():
     return Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
@@ -298,11 +299,7 @@ app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
 app.register_blueprint(api_customers_bp)
 
-
-# ============================================================================
-# APPLICATION ENTRY POINT
-# ============================================================================
-
+# This means that the app is run, if this file is run
 if __name__ == '__main__':
     """
     Development server entry point
