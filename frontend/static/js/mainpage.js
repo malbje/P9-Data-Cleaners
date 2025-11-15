@@ -242,19 +242,61 @@ document.addEventListener("DOMContentLoaded", () => {
         // Fetch appointments and render an interactive month calendar highlighting
         // days that have appointments. Clicking a highlighted day shows that
         // day's appointments below the calendar.
-        try {
-            const response = await fetch('/api/appointments');
+            try {
+            // Fetch merged events (Google + DB). The backend returns an array of
+            // objects: { google: <event|null>, appointment: <dbRow|null>, matched: bool }
+            // We normalize each item into the same shape the calendar UI expects
+            // so the existing rendering code can be reused.
+            const now = new Date();
+            const startIso = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const endIso = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+            const response = await fetch(`/api/calendar/combined?start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
             if (!response.ok) {
-                return;
+                throw new Error('Failed to fetch combined calendar data');
             }
-            const appointments = await response.json();
-            
+            const merged = await response.json();
+
             // Organize appointments by ISO date string (YYYY-MM-DD)
             const apptsByDate = {};
-            appointments.forEach(appt => {
-                const d = appt.date; // expected format YYYY-MM-DD
-                if (!apptsByDate[d]) apptsByDate[d] = [];
-                apptsByDate[d].push(appt);
+
+            function pushAppt(dateStr, item) {
+                if (!apptsByDate[dateStr]) apptsByDate[dateStr] = [];
+                apptsByDate[dateStr].push(item);
+            }
+
+            merged.forEach(pair => {
+                // If there is a DB appointment, prefer its date/time for grouping
+                const dbAppt = pair.appointment;
+                const g = pair.google;
+                if (dbAppt) {
+                    const d = dbAppt.date; // YYYY-MM-DD
+                    const time = dbAppt.time ? dbAppt.time.slice(0,5) : '00:00';
+                    pushAppt(d, Object.assign({}, dbAppt, {
+                        _source: g && dbAppt ? (pair.matched ? 'Both' : 'DB') : 'DB'
+                    }));
+                }
+                if (g) {
+                    // Google event: extract date and time from start (could be date-only or dateTime)
+                    const startStr = g.start || '';
+                    let dateOnly = startStr.slice(0,10);
+                    let timeOnly = '';
+                    if (startStr.includes('T')) {
+                        // format like 2025-11-15T10:00:00+00:00
+                        const t = startStr.split('T')[1] || '';
+                        timeOnly = t.slice(0,5);
+                    }
+                    // Create a DB-like representation so UI can reuse rendering
+                    const synthetic = {
+                        id: g.id || `g-${Math.random().toString(36).slice(2,8)}`,
+                        date: dateOnly,
+                        time: timeOnly || '00:00',
+                        notes: g.description || '',
+                        address: g.location || '',
+                        service_names: g.summary || 'Google Event',
+                        _source: dbAppt && pair.matched ? 'Both' : 'Google'
+                    };
+                    pushAppt(dateOnly, synthetic);
+                }
             });
 
             // Fetch user's addresses with preferences so we can show preference info
@@ -386,6 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="appt-item">
                             <div><strong>${a.service_names || 'General Cleaning'}</strong> — ${a.time.slice(0,5)}</div>
                             <div class="small">📍 ${a.address}</div>
+                            <div class="small">🔗 Source: ${a._source || 'DB'}</div>
                             ${a.notes? `<div class="small">Notes: ${a.notes}</div>` : ''}
                             ${prefs ? `
                                 <div class="small" style="margin-top:0.5rem"><strong>Preferences:</strong></div>

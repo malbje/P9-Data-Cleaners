@@ -10,23 +10,24 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
-from backend.service.llm_tools import chat_with_tools # Import chat function with tool integration
+from backend.service.llm_tools import chat_with_tools
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
-# Sørg for at db-importstien er korrekt
-import backend.service.database_logic as db 
-import os # For environment variable access
+import backend.service.database_logic as db
+import os
 
 # Import Blueprints for API routes
 from backend.routes.api_auth import api_auth_bp
 from backend.routes.api_data import api_data_bp
+from backend.routes.api_calendar import api_calendar_bp
 
-# Imports for Google Calendars API integration (not directly used in this file, but needed for database_logic functions)
-import pathlib #to Google API client libraries
-from dotenv import load_dotenv # to load environment variables from .env file
-from google.oauth2.credentials import Credentials # to handle OAuth2 credentials
-from google_auth_oauthlib.flow import Flow # to manage OAuth2 flow (authorization, code, token exchange)
-from googleapiclient.discovery import build # to build Google API service clients
+# Google API helpers used by some routes (Flow/Credentials/build are used
+# directly in the calendar-related routes below).
+import pathlib
+from dotenv import load_dotenv
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 
 # ---------------------------------------------------------------------------
 # FLASK APPLICATION INITIALIZATION
@@ -40,7 +41,7 @@ app = Flask(
     template_folder="frontend/templates",
     static_folder="frontend/static"
 )
-
+    
 # Configure Flask session secret key.
 # Order of precedence:
 # 1) environment variable SECRET_KEY
@@ -223,12 +224,6 @@ def google_login():
     print("DEBUG: redirecting user to Google OAuth consent screen")
     return redirect(authorization_url)
 
-
-
-# Store state in session for callback verification
-    session['oauth_state'] = state
-    return redirect(authorization_url)
-
 @app.route('/google/oauth2callback') # Called by Google after user consents
 def google_oauth2callback():
     """
@@ -297,8 +292,8 @@ def calendar_status():
         start = ev['start'].get('dateTime', ev['start'].get('date')) # event start time
         title = ev.get('summary', 'No Title') # event title
         lines.append(f"{start} - {title}") # format event line
-
-        return '<br>'.join(lines) # Return formatted event list
+    # Return full list of formatted events (one per line)
+    return '<br>'.join(lines)
     
 
 @app.route('/calendar/create-cleaning')
@@ -389,6 +384,7 @@ def api_chat():
 
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
+app.register_blueprint(api_calendar_bp)
 
 
 # ============================================================================
