@@ -64,6 +64,8 @@ def ask_llm(
 
     # 'choices[]' is a list of Choice objects
     # each Choice object has a 'message' attribute of type ChatCompletionMessage
+    # 'tool_calls' er en liste af ChatCompletionMessageFunctionToolCall
+
     assistant_msg = resp.choices[0].message
     tools_used: list[ChatCompletionMessageToolCallUnion] | None = assistant_msg.tool_calls #type: ignore
     
@@ -73,31 +75,19 @@ def ask_llm(
         "tool_calls": tools_used
     })
 
-
     # Hvis modellen vil kalde et tool, udfør det og send resultatet tilbage som role="tool"
-    # 'tool_calls' er en liste af ChatCompletionMessageFunctionToolCall
-    # each ChatCompletionMessageFunctionToolCall has a 'function' object with a name and a json list of arguments (str)
-    # each of those arguments is an argument to call the given function with
+    # If a tool was used, then ChatCompletionMessageFunctionToolCall has a 'function' object with a name and a json list of arguments (str)
     
-    """
-    tool_call_id = messages[-1]['tool_calls'][0].id
-    name = None
-    result = None
+    # Hvis det første create() kald til chatten resulterede i et tool-kald, skal der kaldes igen for et få et svar på menneske sprog
+    if tools_used:
 
-    messages.append({
-        "role": "tool",
-        "tool_call_id": tool_call_id,
-        "name": name,
-        "content": json.dumps(result, ensure_ascii=False)
-    })
-    """
-    
-    for call in tools_used or []:
-        name = call.function.name
-        args = json.loads(call.function.arguments or "{}")
+        last_tool_call: list = messages[-1]['tool_calls'][0] #type: ignore
 
-        # Map tool names to DB class methods. Accept multiple common argument
-        # key variants to be resilient to different model argument naming.
+        call_id = last_tool_call.id #type:ignore
+        call_name = last_tool_call.function.name #type:ignore
+
+        args = json.loads(last_tool_call.function.arguments or "{}")
+
         # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
         def _pick(*keys: str, default = None):
             for key in keys:
@@ -105,35 +95,35 @@ def ask_llm(
                     return args.get(key)
             return default
 
-        if name == "list_customers":
+        if call_name == "list_customers":
             result = reader.get_all_customers()
-        elif name == "list_customers_by_name":
+        elif call_name == "list_customers_by_name":
             # model may pass 'query' or 'name'
             q = _pick('query', 'name')
             result = reader.search_customers_by_name(q) if q else reader.search_customers_by_name(None)
-        elif name == "add_customer":
+        elif call_name == "add_customer":
             # map to create_customer(name, surname, email)
             name_v = _pick('name')
             surname_v = _pick('surname')
             email_v = _pick('email')
             result = writer.create_customer(name_v, surname_v, email_v)
-        elif name == "add_appointment":
+        elif call_name == "add_appointment":
             # expect address_id, date, time, notes (notes optional)
             addr = _pick('address_id', 'addressId', 'address')
             date = _pick('date')
             time = _pick('time')
             notes = _pick('notes', '')
             result = writer.create_appointment(addr, date, time, notes)
-        elif name == "get_customer_by_email":
+        elif call_name == "get_customer_by_email":
             result = reader.get_customer_by_email(**args)
-        elif name == "get_customer_by_id":
+        elif call_name == "get_customer_by_id":
             result = reader.get_customer_by_id(**args)
-        elif name == "add_address":
+        elif call_name == "add_address":
             street = _pick('street_and_number', 'street', 'streetAndNumber')
             postal = _pick('postal_code', 'postalCode', 'postal')
             city = _pick('city_name', 'city', 'cityName')
             result = writer.create_address(street, postal, city)
-        elif name == "update_customer_address":
+        elif call_name == "update_customer_address":
             # normalize various possible arg names
             customer_id = _pick('customer_id', 'customerId', 'id')
             address_id = _pick('address_id', 'addressId', 'id')
@@ -141,32 +131,25 @@ def ask_llm(
             postal = _pick('postal_code', 'postalCode', 'postal')
             street = _pick('street_and_number', 'street', 'streetAndNumber')
             result = writer.update_customer_address(customer_id, address_id, city, postal, street)
-        elif name == "get_appointments_by_address_id":
+        elif call_name == "get_appointments_by_address_id":
             result = reader.get_appointments_by_address_id(**args)
-        elif name == "get_appointment_by_id":
+        elif call_name == "get_appointment_by_id":
             result = reader.get_appointment_by_id(**args)
-        elif name == "delete_customer":
+        elif call_name == "delete_customer":
             cid = _pick('customer_id', 'id')
             result = writer.delete_customer_by_id(cid)
-        elif name == "get_customers_by_appointment_id":
+        elif call_name == "get_customers_by_appointment_id":
             result = reader.get_customers_by_appointment_id(**args)
-        elif name == "get_customers_by_address_id":
+        elif call_name == "get_customers_by_address_id":
             result = reader.get_customers_by_address_id(**args)
-        elif name == "find_address_by_text":
+        elif call_name == "find_address_by_text":
             result = reader.find_address_by_text(**args)
-        elif name == "get_address_by_id":
+        elif call_name == "get_address_by_id":
             result = reader.get_address_by_id(**args)
         else:
-            result = {"error": f"Ukendt funktion: {name}"}
+            result = {"error": f"Ukendt funktion: {call_name}"}
         
-            
-        # svar tilbage til modellen med tool-resultatet (vigtigt: tool_call_id)
-        
-        call_id = messages[-1]['tool_calls'][0].id #type:ignore
-        print(f'Tool call id: {call_id}')
-        call_name = messages[-1]['tool_calls'][0].function.name #type:ignore
-        print(f'Tool call name: {call_name}')
-
+        # add the tool result to messages (chat history)
         messages.append({
             "role": "tool",
             "tool_call_id": call_id,
@@ -174,27 +157,23 @@ def ask_llm(
             "content": json.dumps(result, ensure_ascii=False)
         })
     
-
-    # Hvis det første create() kald til chatten resulterede i et tool-kald, skal der kaldes igen for et få et svar på menneske sprog
-    if messages[-1]["role"] == "tool":
+        # get a natural language response from the chat, which uses the result from the tool call that was just appended to messages (chat history)
         final = client.chat.completions.create(
             model = "gpt-5",
             messages = messages,
         )
 
+        # adding the natural language response to messages and returning it
         response2 = final.choices[0].message
         messages.append({"role": "assistant", "content": response2.content})
         print('All messages: ')
         print(messages)
-        return final.choices[0].message.content #type: ignore
-
+        return response2.content #type: ignore
 
     print('All messages: ')
     print(messages)
-    # 'choices[]' is a list of Choice objects
-    # each Choice object has a 'message' attribute of type ChatCompletionMessage
     # the 'content' instance variable is a string
-    return resp.choices[0].message.content #type: ignore
+    return assistant_msg.content #type: ignore
 
 def interactive_chat() -> None:
     """
