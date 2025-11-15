@@ -41,9 +41,9 @@ def ask_llm(
     
     # Appending the case of anna and mikkel to the rules prompt
     # messages[0]["content"] += LLM_prompts.case_anna_mikkel
-    messages.extend([{
+    messages.append({
         "role": "system", "content": LLM_prompts.case_anna_mikkel
-        }])
+        })
     
     # Tilføj samtale kontekst hvis den findes
     if conversation_context:
