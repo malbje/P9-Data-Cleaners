@@ -35,7 +35,7 @@ def ask_llm(
     # 1'st dict is the case we are using to further guide the model on specific choices.
 
     # Start med system message og tilføj samtale kontekst hvis den findes
-    messages: list[dict[str, str]] = [{
+    messages: list[dict[str, str | List[ChatCompletionMessageToolCallUnion] | None]] = [{ #type: ignore
         "role": "system", "content": LLM_prompts.rules
         }]
     
@@ -65,9 +65,13 @@ def ask_llm(
     # 'choices[]' is a list of Choice objects
     # each Choice object has a 'message' attribute of type ChatCompletionMessage
     assistant_msg = resp.choices[0].message
-    #
+    tools_used: list[ChatCompletionMessageToolCallUnion] | None = assistant_msg.tool_calls #type: ignore
     
-    messages.append({"role": "assistant", "content": assistant_msg.content, "tool_calls": assistant_msg.tool_calls})
+    messages.append({
+        "role": "assistant", 
+        "content": assistant_msg.content, 
+        "tool_calls": tools_used
+    })
 
 
     # Hvis modellen vil kalde et tool, udfør det og send resultatet tilbage som role="tool"
@@ -75,8 +79,20 @@ def ask_llm(
     # each ChatCompletionMessageFunctionToolCall has a 'function' object with a name and a json list of arguments (str)
     # each of those arguments is an argument to call the given function with
     
-    tool_calls = assistant_msg.tool_calls or []
-    for call in tool_calls:
+    """
+    tool_call_id = messages[-1]['tool_calls'][0].id
+    name = None
+    result = None
+
+    messages.append({
+        "role": "tool",
+        "tool_call_id": tool_call_id,
+        "name": name,
+        "content": json.dumps(result, ensure_ascii=False)
+    })
+    """
+    
+    for call in tools_used or []:
         name = call.function.name
         args = json.loads(call.function.arguments or "{}")
 
@@ -146,13 +162,20 @@ def ask_llm(
             
         # svar tilbage til modellen med tool-resultatet (vigtigt: tool_call_id)
         
+        call_id = messages[-1]['tool_calls'][0].id #type:ignore
+        print(f'Tool call id: {call_id}')
+        call_name = messages[-1]['tool_calls'][0].function.name #type:ignore
+        print(f'Tool call name: {call_name}')
+
         messages.append({
             "role": "tool",
-            "tool_call_id": call.id,
-            "name": name,
-            "content": json.dumps(result, ensure_ascii=False),
+            "tool_call_id": call_id,
+            "name": call_name,
+            "content": json.dumps(result, ensure_ascii=False)
         })
     
+
+    # Hvis det første create() kald til chatten resulterede i et tool-kald, skal der kaldes igen for et få et svar på menneske sprog
     if messages[-1]["role"] == "tool":
         final = client.chat.completions.create(
             model = "gpt-5",
