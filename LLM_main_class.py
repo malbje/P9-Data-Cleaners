@@ -57,8 +57,8 @@ class LLM_Conversation:
         # resp er et objekt af klassen ChatCompletion
         resp = LLM_Conversation.client.chat.completions.create(
             model="gpt-5",
-            messages = self.messages,
-            tools = TOOLS,
+            messages = self.messages, #type: ignore
+            tools = TOOLS,            #type: ignore
             tool_choice = "auto"
         )
 
