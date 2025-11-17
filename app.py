@@ -12,7 +12,8 @@
 
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
-from LLM_main import ask_llm # Import function to interact with LLM
+from LLM_main_class import LLM_Conversation # Import LLM_Conversation class
+from LLM_main import ask_llm # Import functcon to interact with LLM
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
 import os # For environment variable access
@@ -256,6 +257,7 @@ def signup_page():
 # REGISTERED BLUEPRINTS defined in separate route files
 # ============================================================================
 
+
 # API route for AI assistant chat interaction
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
@@ -267,14 +269,8 @@ def api_chat():
     if not user_message:
         return jsonify({"reply": "Skriv noget, så hjælper jeg dig 😊"})
 
-    # valgfrit: historik for bedre dialogflow
-    history = session.get("chat_history", [])
-
-    reply = ask_llm(user_message, chat_history=history)
-
-    history.append({"role": "user", "content": user_message})
-    history.append({"role": "assistant", "content": reply})
-    session["chat_history"] = history[-12:]  # model can follow conversation history for performance
+    # Asking chat_gpt for a reply
+    reply = chatbot.ask_llm(user_message)
 
     return jsonify({"reply": reply})
 
@@ -307,4 +303,6 @@ if __name__ == '__main__':
     
     Note: Change debug=False for production deployment
     """
+    chatbot = LLM_Conversation()  # Initialize chatbot instance
+
     app.run(debug=True)
