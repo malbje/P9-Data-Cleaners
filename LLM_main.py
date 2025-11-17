@@ -9,6 +9,12 @@ from database.DB_read import DB_read
 from database.DB_write import DB_write
 import LLM_prompts
 
+# 
+
+# Function to change the case prompt
+def change_case_prompt(conversation_context: list[dict[str, str]], new_case_prompt: str) -> None: 
+    conversation_context[1]["content"] = new_case_prompt
+
 def ask_llm(
         user_prompt: str, 
         conversation_context: list[dict[str, str]] | None = None
@@ -63,7 +69,7 @@ def ask_llm(
     )
 
     # 'choices[]' is a list of Choice objects
-    # each Choice object has a 'message' attribute of type ChatCompletionMessage
+    # Choice object has a 'message' attribute of type ChatCompletionMessage
     # 'tool_calls' er en liste af ChatCompletionMessageFunctionToolCall
 
     assistant_msg = resp.choices[0].message
