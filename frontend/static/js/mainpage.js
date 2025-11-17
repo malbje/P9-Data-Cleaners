@@ -427,8 +427,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     html += `
                         <div class="appt-item">
                             <div><strong>${a.service_names || 'General Cleaning'}</strong> — ${a.time.slice(0,5)}</div>
-                            <div class="small">📍 ${a.address}</div>
-                            <div class="small">🔗 Source: ${a._source || 'DB'}</div>
+                            <div class="small"> ${a.address}</div>
+                            <div class="small"> Source: ${a._source || 'DB'}</div>
                             ${a.notes? `<div class="small">Notes: ${a.notes}</div>` : ''}
                             ${prefs ? `
                                 <div class="small" style="margin-top:0.5rem"><strong>Preferences:</strong></div>
