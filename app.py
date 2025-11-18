@@ -15,6 +15,7 @@ from database.DB_access import get_connection
 from LLM_main_class import LLM_Conversation # Import LLM_Conversation class
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
+from database.DB_write import DB_write
 import os # For environment variable access
 
 # Import Blueprints for API routes
