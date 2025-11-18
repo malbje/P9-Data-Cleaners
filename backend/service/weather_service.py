@@ -5,6 +5,9 @@ Fetches current forecast (temperature, humidity, wind speed, and precipitation)
 from DMI or falls back to Open-Meteo. Returns structured JSON for the frontend.
 """
 
+import sys, os
+sys.path.insert(0, os.getcwd())
+
 import requests
 from private_settings import DMI_API_KEY
 
@@ -114,3 +117,8 @@ def get_weather_data():
             return {
                 "error": f"Could not fetch weather data from either source: {fallback_error}"
             }
+
+if __name__ == "__main__":
+    # Test the function
+    weather_info = get_weather_data()
+    print(weather_info)
