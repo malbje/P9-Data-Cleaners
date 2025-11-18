@@ -165,6 +165,7 @@ class LLM_Conversation:
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
             self.__asking_llm()
 
+        # Now we have the tool result, time to ask chat_gpt again to get another tool call or a natural language response
         if message_role == "tool" and text_response:
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
             self.__asking_llm()
