@@ -40,6 +40,8 @@ README bruges som et "opslagsværk" til vores struktur for kode.
 
 * Når filer referer på tværs, beskriv referencen. Hvor er den, hvad er funktionen? Hvorfor?
 
+* Filen LLM_main_class.py bør være et godt eksempel på, hvordan man gør sin kode mere overskuelig og nemmere at læse, ved hjælp af kommentare, og deklarering af variable typer.
+
 ## Opsætning og tjek (kort, dansk)
 
 1) Opret og aktivér et virtuelt miljø i projektroden

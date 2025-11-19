@@ -1,5 +1,10 @@
+# ---------------------------------------------
+# This file holds the class used to handle our chat_gpt prompts, 
+# Used by creating a LLM_conversation object and calling its ask_llm() method.
+# 
 # This is supposed to work just like the LLM_main.py file and it's funcitons, 
 # but it's a class to each chat-gpt conversation can remember it's own chat history with all the tool calls.
+# ---------------------------------------------
 
 from openai import OpenAI
 import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
@@ -8,7 +13,6 @@ from database.DB_write import DB_write
 import LLM_prompts
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
 import json
-
 
 class LLM_Conversation:
     """
@@ -21,6 +25,7 @@ class LLM_Conversation:
     # Tool use tracker. Should never be more than 10 tool calls in a conversation
     tool_use_count: int = 0
     
+    # Constructor
     def __init__(self):
         """
         Constructor for LLM_Conversation class.
@@ -194,8 +199,8 @@ class LLM_Conversation:
         return text_response 
 
 # Used for chatting with our chat_gpt in the terminal
-def interactive_chat() -> None:
-
+if __name__ == "__main__":
+    # Start the interactive chat session
     print("=== DataCleaners Interactive Assistant ===")
     print("Skriv 'exit' for at afslutte\n")
 
@@ -220,7 +225,3 @@ def interactive_chat() -> None:
         print(f"The whole chat history: {chatbot.messages}")
 
         print(f"\nAssistent: {response}\n")
-
-if __name__ == "__main__":
-    # Start the interactive chat session
-    interactive_chat()
