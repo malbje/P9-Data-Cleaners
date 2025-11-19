@@ -46,7 +46,7 @@ class LLM_Conversation:
         # A conversation needs a case
         self.messages.append({"role": "system", "content": LLM_prompts.case_anna_mikkel})
 
-    # This one adds to the object's chat hisotry
+    # Private method *only* called by ask_llm()
     def __asking_llm(self):
         """
         Private method to prompt chat_gpt, handle tool calls, and update chat history recursively.
@@ -175,6 +175,7 @@ class LLM_Conversation:
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
             self.__asking_llm()
 
+    # Public method to ask chat_gpt a prompt
     def ask_llm(self, user_prompt: str) -> str:
         """
         The method to ask chat_gpt a prompt. 
