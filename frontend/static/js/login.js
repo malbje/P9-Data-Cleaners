@@ -229,7 +229,7 @@ function initAuth() {
       const password = document.getElementById("login-password")?.value || "";
       const rememberMe = !!document.getElementById("remember-me")?.checked;
 
-      // Perform client-side validation before API call
+      // Perform client-side validation before API call (what api call exactly???)
       if (!email) {
         showMessage("Please enter an email address.", "error");
         return;
@@ -242,7 +242,7 @@ function initAuth() {
       try {
         const { success, data, message } = await postJSON("/api/auth/login", {
           email,
-          password,     // Backend may ignore this field for certain auth methods
+          password,     
           rememberMe,
         });
 

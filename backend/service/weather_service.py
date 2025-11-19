@@ -5,6 +5,9 @@ Fetches current forecast (temperature, humidity, wind speed, and precipitation)
 from DMI or falls back to Open-Meteo. Returns structured JSON for the frontend.
 """
 
+import sys, os
+sys.path.insert(0, os.getcwd())
+
 import requests
 from private_settings import DMI_API_KEY
 

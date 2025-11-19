@@ -141,4 +141,11 @@ Note (English commands to run):
 Error messages:
 - Fejl: kunne ikke kontakte serveren ❌: Insufficient funds - der skal tankes op på AI tokens
 - En fejl i login: Tjek adgang til AI nøgle i private_settings. "pip install requests"
-- Hvis UI'en på frontenden prompter "Request failed", er det sandsynligvis fordi, du ikke har åbnet din My SQL Workbench app på din computer. 
+- Hvis UI'en på frontenden prompter "Request failed", er det sandsynligvis fordi, du ikke har åbnet din My SQL Workbench app på din computer.
+
+---
+
+Imports troubles
+
+1) googleapiclient.discovery won't import?
+- pip install google-api-python-client, så vil importen lykkedes.
