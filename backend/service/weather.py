@@ -1,3 +1,4 @@
+# Think of this file as "private". It is only to be used by weather_service.py
 # backend/service/weather.py
 # If run doesnt work - try "pip install requests" in the active venv
 
@@ -196,12 +197,13 @@ def get_7day_forecast_by_coords(lat: float, lon: float, api_key: Optional[str] =
     # Fallback to Open-Meteo for 7-day forecast
     try:
         om_url = "https://api.open-meteo.com/v1/forecast"
+        # Change "forecast_days" to get more or less days into the future
         om_params = {
             "latitude": lat,
             "longitude": lon,
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode",
             "timezone": "auto",
-            "forecast_days": 7
+            "forecast_days": 16
         }
         resp = requests.get(om_url, params=om_params, timeout=10)
         resp.raise_for_status()
