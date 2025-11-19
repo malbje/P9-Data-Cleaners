@@ -117,8 +117,3 @@ def get_weather_data():
             return {
                 "error": f"Could not fetch weather data from either source: {fallback_error}"
             }
-
-if __name__ == "__main__":
-    # Test the function
-    weather_info = get_weather_data()
-    print(weather_info)
