@@ -47,8 +47,38 @@ class LLM_Conversation:
         # A conversation needs a case
         self.messages.append({"role": "system", "content": LLM_prompts.case_anna_mikkel})
 
+    # Method for tool that prompts chat to change intent.
+    def choose_case(self) -> str | None:
+        
+        # Append the request to chat history
+        self.messages.append({"role": "system", "content": """
+                              Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases, 
+                              then respond only with the name of each case in lower case. The two cases are:
+                              1 - name: jonas, defintion: would like appointments to be placed on the day of the week with the least rain.
+                              2 - name: anna_mikkel, definition: would like appointments to be places on the day of the week after the day where it rains the most"""
+                              })
+
+        # Ask chat_gpt to choose case
+        resp = LLM_Conversation.client.chat.completions.create(
+            model="gpt-5",
+            messages = self.messages, #type: ignore
+            tools = TOOLS,            #type: ignore
+            tool_choice = "auto"
+        )
+
+        case_chosen: str | None = resp.choices[0].message.content
+
+        if case_chosen == "jonas":
+            self.messages[1] = {"role": "system", "content": LLM_prompts.case_jonas}
+        elif case_chosen == "anna_mikkel":
+            self.messages[1] = {"role": "system", "content": LLM_prompts.case_anna_mikkel}
+
+        print(f'Case chosen: {case_chosen}')
+
+        return case_chosen
+
     # Private method *only* called by ask_llm()
-    def __asking_llm(self):
+    def __asking_llm(self) -> None:
         """
         Private method to prompt chat_gpt, handle tool calls, and update chat history recursively.
 
@@ -159,6 +189,8 @@ class LLM_Conversation:
                 result = self.reader.get_address_by_id(**args)
             elif call_name == "get_precipitation":
                 result = get_precipitation()
+            elif call_name == "choose_case":
+                result = self.choose_case()
             else:
                 result = {"error": f"Ukendt funktion: {call_name}"}
             

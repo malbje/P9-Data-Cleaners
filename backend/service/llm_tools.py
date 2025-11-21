@@ -123,6 +123,16 @@ TOOLS: List[Dict[str, Any]] = [
                 "properties": {}
             }
         }
+    },
+    {
+        "type": 'function',
+        'function': {
+            'name': 'choose_case',
+            'description': 'ask chat_gpt to choose which case the user belongs to, based on the chat history. Then inserts that case into chat history.',
+            'parameters': {
+                'type': 'object',
+                'properties': {}
+            }
+        }
     }
-
 ]

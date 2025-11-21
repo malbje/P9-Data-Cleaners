@@ -10,6 +10,8 @@ rules: str = """
     - JSON eksempler eller simulerede resultater
 
     Hvis du mangler information for at udføre en opgave, stil spørgsmål til brugeren.
+
+    Første gang (og kun første gang) brugeren beder om en dato for en aftale, så brug tool'et 'choose_case' til at kategorisere brugeren.
     """
 
 # --- Cases are custom rules that can easilty be changed during the conversation with the chatbot,
