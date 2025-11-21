@@ -112,5 +112,17 @@ TOOLS: List[Dict[str, Any]] = [
                 "required": ["appointment_id"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_precipitation",
+            "description": "Returns a list of precipitation values (in mm) for the next 16 days including today. Call this when looking for info expected rain",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
     }
+
 ]

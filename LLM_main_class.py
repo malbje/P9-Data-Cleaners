@@ -12,6 +12,7 @@ from database.DB_read import DB_read
 from database.DB_write import DB_write
 import LLM_prompts
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
+from backend.service.weather_service import get_precipitation
 import json
 
 class LLM_Conversation:
@@ -156,6 +157,8 @@ class LLM_Conversation:
                 result = self.reader.find_address_by_text(**args)
             elif call_name == "get_address_by_id":
                 result = self.reader.get_address_by_id(**args)
+            elif call_name == "get_precipitation":
+                result = get_precipitation()
             else:
                 result = {"error": f"Ukendt funktion: {call_name}"}
             

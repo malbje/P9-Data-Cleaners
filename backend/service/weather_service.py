@@ -10,9 +10,14 @@ def get_forecast() -> dict | None:
     """
     Gets 16 days forecast. That seemed to be max
     """
-    coords: tuple[float, float] | None = get_location_from_ip()
-    lat, lon = coords
+    # coords: tuple[float, float] | None = get_location_from_ip()
+    # lat, lon = coords
     # fc = forecast
+
+    # Jank putting in aalborg cords
+    lat = 57.0488
+    lon = 9.9217
+
     return get_7day_forecast_by_coords(lat, lon, DMI_API_KEY)
 
 def get_precipitation() -> list:
