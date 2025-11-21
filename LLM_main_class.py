@@ -51,7 +51,12 @@ class LLM_Conversation:
     def choose_case(self) -> str | None:
         
         # Append the request to chat history
-        self.messages.append({"role": "system", "content": """
+
+        temp_messages: list[dict] = self.messages.copy()
+
+        temp_messages.pop() # To remove the last message, which is a list of tool_calls
+
+        temp_messages.append({"role": "user", "content": """
                               Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases, 
                               then respond only with the name of each case in lower case. The two cases are:
                               1 - name: jonas, defintion: would like appointments to be placed on the day of the week with the least rain.
@@ -61,7 +66,7 @@ class LLM_Conversation:
         # Ask chat_gpt to choose case
         resp = LLM_Conversation.client.chat.completions.create(
             model="gpt-5",
-            messages = self.messages, #type: ignore
+            messages = temp_messages, #type: ignore
             tools = TOOLS,            #type: ignore
             tool_choice = "auto"
         )
