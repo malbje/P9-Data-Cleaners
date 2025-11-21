@@ -67,8 +67,8 @@ class LLM_Conversation:
         resp = LLM_Conversation.client.chat.completions.create(
             model="gpt-5",
             messages = temp_messages, #type: ignore
-            tools = TOOLS,            #type: ignore
-            tool_choice = "auto"
+            # tools = TOOLS,            #type: ignore
+            # tool_choice = "auto"
         )
 
         case_chosen: str | None = resp.choices[0].message.content
