@@ -120,100 +120,104 @@ class LLM_Conversation:
         # Get result of chosen tool and append it to 'self.messages'
         if tools_used and message_role == "assistant":
 
-            LLM_Conversation.tool_use_count += 1
-            print(f"TOOL was decided. This is nr. {LLM_Conversation.tool_use_count}")
+            # Whole tool handling section needs to be put in a for-each loop to handle if multiple tools are called at once
+            for call in tools_used:
+                
+                LLM_Conversation.tool_use_count += 1
+                print(f"TOOL was decided. This is nr. {LLM_Conversation.tool_use_count}")
 
-            # If tool used, get the info from the latest list of tool calls
-            last_tool_call: list = self.messages[-1]['tool_calls'][0] #type: ignore
+                # If tool used, get the info from the latest list of tool calls
+                # last_tool_call: list = self.messages[-1]['tool_calls'][0] #type: ignore
 
-            # Form that tool call, get id and name
-            call_id = last_tool_call.id #type:ignore
-            call_name = last_tool_call.function.name #type:ignore
+                # Form that tool call, get id and name
+                # call_id = last_tool_call.id #type:ignore
+                # call_name = last_tool_call.function.name #type:ignore
+                call_id = call.id
+                call_name = call.function.name
 
-            # Don't ask me, honestly
-            args = json.loads(last_tool_call.function.arguments or "{}") #type: ignore
+                # Don't ask me, honestly
+                args = json.loads(call.function.arguments or "{}") #type: ignore
 
-            # Gets the diffente words form the list of args (generally)
-            # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
-            def _pick(*keys: str, default = None):
-                for key in keys:
-                    if key in args:
-                        return args.get(key)
-                return default
-                   
-            if call_name == "list_customers":
-                result = self.reader.get_all_customers()
-            elif call_name == "list_customers_by_name":
-                # model may pass 'query' or 'name'
-                q = _pick('query', 'name')
-                result = self.reader.search_customers_by_name(q) if q else self.reader.search_customers_by_name(None)
-            elif call_name == "add_customer":
-                # map to create_customer(name, surname, email)
-                name_v = _pick('name')
-                surname_v = _pick('surname')
-                email_v = _pick('email')
-                result = self.writer.create_customer(name_v, surname_v, email_v)
-            elif call_name == "add_appointment":
-                # expect address_id, date, time, notes (notes optional)
-                addr = _pick('address_id', 'addressId', 'address')
-                date = _pick('date')
-                time = _pick('time')
-                notes = _pick('notes', '')
-                result = self.writer.create_appointment(addr, date, time, notes) #type: ignore
-            elif call_name == "get_customer_by_email":
-                result = self.reader.get_customer_by_email(**args)
-            elif call_name == "get_customer_by_id":
-                result = self.reader.get_customer_by_id(**args)
-            elif call_name == "add_address":
-                street = _pick('street_and_number', 'street', 'streetAndNumber')
-                postal = _pick('postal_code', 'postalCode', 'postal')
-                city = _pick('city_name', 'city', 'cityName')
-                result = self.writer.create_address(street, postal, city)
-            elif call_name == "update_customer_address":
-                # normalize various possible arg names
-                customer_id = _pick('customer_id', 'customerId', 'id')
-                address_id = _pick('address_id', 'addressId', 'id')
-                city = _pick('city_name', 'city', 'cityName')
-                postal = _pick('postal_code', 'postalCode', 'postal')
-                street = _pick('street_and_number', 'street', 'streetAndNumber')
-                result = self.writer.update_customer_address(customer_id, address_id, city, postal, street)
-            elif call_name == "get_appointments_by_address_id":
-                result = self.reader.get_appointments_by_address_id(**args)
-            elif call_name == "get_appointment_by_id":
-                result = self.reader.get_appointment_by_id(**args)
-            elif call_name == "delete_customer":
-                cid = _pick('customer_id', 'id')
-                result = self.writer.delete_customer_by_id(cid)
-            elif call_name == "get_customers_by_appointment_id":
-                result = self.reader.get_customers_by_appointment_id(**args)
-            elif call_name == "get_customers_by_address_id":
-                result = self.reader.get_customers_by_address_id(**args)
-            elif call_name == "find_address_by_text":
-                result = self.reader.find_address_by_text(**args)
-            elif call_name == "get_address_by_id":
-                result = self.reader.get_address_by_id(**args)
-            elif call_name == "get_precipitation":
-                result = get_precipitation()
-            elif call_name == "choose_case":
-                result = self.choose_case()
-            else:
-                result = {"error": f"Ukendt funktion: {call_name}"}
-            
-            # add the tool result to messages (chat history)
-            self.messages.append({
-                "role": "tool",
-                "tool_call_id": call_id,
-                "name": call_name,
-                "content": json.dumps(result, ensure_ascii=False)
-            })
+                # Gets the diffente words form the list of args (generally)
+                # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
+                def _pick(*keys: str, default = None):
+                    for key in keys:
+                        if key in args:
+                            return args.get(key)
+                    return default
+                    
+                if call_name == "list_customers":
+                    result = self.reader.get_all_customers()
+                elif call_name == "list_customers_by_name":
+                    # model may pass 'query' or 'name'
+                    q = _pick('query', 'name')
+                    result = self.reader.search_customers_by_name(q) if q else self.reader.search_customers_by_name(None)
+                elif call_name == "add_customer":
+                    # map to create_customer(name, surname, email)
+                    name_v = _pick('name')
+                    surname_v = _pick('surname')
+                    email_v = _pick('email')
+                    result = self.writer.create_customer(name_v, surname_v, email_v)
+                elif call_name == "add_appointment":
+                    # expect address_id, date, time, notes (notes optional)
+                    addr = _pick('address_id', 'addressId', 'address')
+                    date = _pick('date')
+                    time = _pick('time')
+                    notes = _pick('notes', '')
+                    result = self.writer.create_appointment(addr, date, time, notes) #type: ignore
+                elif call_name == "get_customer_by_email":
+                    result = self.reader.get_customer_by_email(**args)
+                elif call_name == "get_customer_by_id":
+                    result = self.reader.get_customer_by_id(**args)
+                elif call_name == "add_address":
+                    street = _pick('street_and_number', 'street', 'streetAndNumber')
+                    postal = _pick('postal_code', 'postalCode', 'postal')
+                    city = _pick('city_name', 'city', 'cityName')
+                    result = self.writer.create_address(street, postal, city)
+                elif call_name == "update_customer_address":
+                    # normalize various possible arg names
+                    customer_id = _pick('customer_id', 'customerId', 'id')
+                    address_id = _pick('address_id', 'addressId', 'id')
+                    city = _pick('city_name', 'city', 'cityName')
+                    postal = _pick('postal_code', 'postalCode', 'postal')
+                    street = _pick('street_and_number', 'street', 'streetAndNumber')
+                    result = self.writer.update_customer_address(customer_id, address_id, city, postal, street)
+                elif call_name == "get_appointments_by_address_id":
+                    result = self.reader.get_appointments_by_address_id(**args)
+                elif call_name == "get_appointment_by_id":
+                    result = self.reader.get_appointment_by_id(**args)
+                elif call_name == "delete_customer":
+                    cid = _pick('customer_id', 'id')
+                    result = self.writer.delete_customer_by_id(cid)
+                elif call_name == "get_customers_by_appointment_id":
+                    result = self.reader.get_customers_by_appointment_id(**args)
+                elif call_name == "get_customers_by_address_id":
+                    result = self.reader.get_customers_by_address_id(**args)
+                elif call_name == "find_address_by_text":
+                    result = self.reader.find_address_by_text(**args)
+                elif call_name == "get_address_by_id":
+                    result = self.reader.get_address_by_id(**args)
+                elif call_name == "get_precipitation":
+                    result = get_precipitation()
+                elif call_name == "choose_case":
+                    result = self.choose_case()
+                else:
+                    result = {"error": f"Ukendt funktion: {call_name}"}
+                
+                # add the tool result to messages (chat history)
+                self.messages.append({
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "name": call_name,
+                    "content": json.dumps(result, ensure_ascii=False)
+                })
 
-            print(self.messages)
-
-            # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
+            # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it doesn't want more tool results
             self.__asking_llm()
 
         # Now we have the tool result, time to ask chat_gpt again to get another tool call or a natural language response
         if message_role == "tool" and text_response:
+            
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
             self.__asking_llm()
 
