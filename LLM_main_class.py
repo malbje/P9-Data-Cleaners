@@ -207,6 +207,8 @@ class LLM_Conversation:
                 "content": json.dumps(result, ensure_ascii=False)
             })
 
+            print(self.messages)
+
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it returns a natural language text_response
             self.__asking_llm()
 
