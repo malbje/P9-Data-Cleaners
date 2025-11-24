@@ -146,9 +146,7 @@ class LLM_Conversation:
                             return args.get(key)
                     return default
                     
-                if call_name == "list_customers":
-                    result = self.reader.get_all_customers()
-                elif call_name == "list_customers_by_name":
+                if call_name == "list_customers_by_name":
                     # model may pass 'query' or 'name'
                     q = _pick('query', 'name')
                     result = self.reader.search_customers_by_name(q) if q else self.reader.search_customers_by_name(None)
@@ -186,9 +184,6 @@ class LLM_Conversation:
                     result = self.reader.get_appointments_by_address_id(**args)
                 elif call_name == "get_appointment_by_id":
                     result = self.reader.get_appointment_by_id(**args)
-                elif call_name == "delete_customer":
-                    cid = _pick('customer_id', 'id')
-                    result = self.writer.delete_customer_by_id(cid)
                 elif call_name == "get_customers_by_appointment_id":
                     result = self.reader.get_customers_by_appointment_id(**args)
                 elif call_name == "get_customers_by_address_id":

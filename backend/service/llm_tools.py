@@ -17,20 +17,6 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "type": "function",
         "function": {
-            "name": "list_customers",
-            "description": "Returns customers. Optional: filter with a free-text search on name/surname/email.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "free text (name, surname or email)"},
-                    "limit": {"type": "integer", "description": "max number of rows", "default": 20}
-                }
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "list_customers_by_name",
             "description": "Find customers with partial/full first name and last name (LIKE search).",
             "parameters": {
