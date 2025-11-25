@@ -60,6 +60,22 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "add_customer",
+            "description": "Create a new customer with name, surname, and email.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "surname": { "type": "string" },
+                    "email": { "type": "string", "format": "email" }
+                },
+                "required": ["name", "surname", "email"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_customer_addresses",
             "description": "Find all addresses for a customer by name (possibly full name) or email.",
             "parameters": {

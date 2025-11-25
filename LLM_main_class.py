@@ -138,6 +138,9 @@ class LLM_Conversation:
                 # Don't ask me, honestly
                 args = json.loads(call.function.arguments or "{}") #type: ignore
 
+                print(f"Tool's name: {call_name}")
+                print(f"Tool's args: {args}")
+
                 # Gets the diffente words form the list of args (generally)
                 # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
                 def _pick(*keys: str, default = None):
@@ -156,6 +159,8 @@ class LLM_Conversation:
                     surname_v = _pick('surname')
                     email_v = _pick('email')
                     result = self.writer.create_customer(name_v, surname_v, email_v)
+                    if result:
+                        result = 'Success'
                 elif call_name == "add_appointment":
                     # expect address_id, date, time, notes (notes optional)
                     addr = _pick('address_id', 'addressId', 'address')
