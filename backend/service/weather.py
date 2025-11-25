@@ -15,12 +15,8 @@ Naming convention:
 - All functions use Google-style docstrings to make the behavior explicit for other developers.
 """
 
-try:
-    import requests  # type: ignore
-    REQUESTS_AVAILABLE = True
-except Exception:
-    requests = None  # type: ignore
-    REQUESTS_AVAILABLE = False
+import requests  # type: ignore
+REQUESTS_AVAILABLE = True
 
 from typing import Tuple, Dict, Optional, Any
 import sys, os
