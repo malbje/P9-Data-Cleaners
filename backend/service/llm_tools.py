@@ -14,6 +14,7 @@ db = DB_read()               # Our data access layer
 # Only READ-related tools for now.
 # -----------------------------
 TOOLS: List[Dict[str, Any]] = [
+    # list_customers_by_name
     {
         "type": "function",
         "function": {
@@ -29,6 +30,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_customer_by_id
     {
         "type": "function",
         "function": {
@@ -43,6 +45,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_customers_by_appointment_id
     {
         "type": "function",
         "function": {
@@ -57,6 +60,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_customers_by_address_id
     {
         "type": "function",
         "function": {
@@ -71,7 +75,8 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
-        {
+    # find_address_by_text
+    {
         "type": "function",
         "function": {
             "name": "find_address_by_text",
@@ -85,6 +90,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # add_customer
     {
         "type": "function",
         "function": {
@@ -101,6 +107,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # add_address
     {
         'type': 'function',
         'function': {
@@ -117,6 +124,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # link_customer_to_address
     {
         'type': 'function',
         'function': {
@@ -132,7 +140,8 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
-        {
+    # add_appointment
+    {
         'type': 'function',
         'function': {
             'name': 'add_appointment',
@@ -149,6 +158,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_customer_by_email
     {
         "type": "function",
         "function": {
@@ -163,6 +173,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_address_by_id
     {
         'type': 'funciton',
         'function': {
@@ -177,6 +188,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_addresses_by_customer_id
     {
         "type": "function",
         "function": {
@@ -191,6 +203,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # update_customer_address
     {
         "type": "function",
         "function": {
@@ -209,6 +222,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_appointments_by_address_id
     {
         "type": "function",
         "function": {
@@ -223,6 +237,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_appointment_by_id
     {
         "type": "function",
         "function": {
@@ -237,6 +252,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_precipitation
     {
         "type": "function",
         "function": {
@@ -248,6 +264,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # choose_case
     {
         "type": 'function',
         'function': {
