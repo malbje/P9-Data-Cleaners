@@ -2,12 +2,6 @@
 # OpenAI function-calling + integration to our DB_read.py
 
 from typing import Any, Dict, List, Optional
-from openai import OpenAI
-from database.DB_read import DB_read
-from private_settings import OPENAI_API_KEY
-
-client = OpenAI(api_key=OPENAI_API_KEY)            # reads OPENAI_API_KEY from private_settings
-db = DB_read()               # Our data access layer
 
 # -----------------------------
 # Tool-definitions (JSON schema)
