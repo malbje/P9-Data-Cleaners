@@ -10,6 +10,7 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
+from backend.service.llm_tools import chat_with_tools
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
 from LLM_main_class import LLM_Conversation # Import LLM_Conversation class
@@ -31,13 +32,15 @@ from backend.service.weather_service import get_weather_data
 from backend.routes.api_auth import api_auth_bp
 from backend.routes.api_data import api_data_bp
 from backend.routes.api_customers import api_customers_bp
+from backend.routes.api_calendar import api_calendar_bp
 
-# Imports for Google Calendars API integration (not directly used in this file, but needed for database_logic functions)
-import pathlib #to Google API client libraries
-from dotenv import load_dotenv # to load environment variables from .env file
-from google.oauth2.credentials import Credentials # to handle OAuth2 credentials
-from google_auth_oauthlib.flow import Flow # to manage OAuth2 flow (authorization, code, token exchange)
-from googleapiclient.discovery import build # to build Google API service clients
+# Google API helpers used by some routes (Flow/Credentials/build are used
+# directly in the calendar-related routes below).
+import pathlib
+from dotenv import load_dotenv
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 
 # Import Weather function
 from backend.service.weather_service import get_weather_data
@@ -54,7 +57,7 @@ app = Flask(
     template_folder="frontend/templates",
     static_folder="frontend/static"
 )
-
+    
 # Configure Flask session secret key.
 # Order of precedence:
 # 1) environment variable SECRET_KEY
@@ -216,54 +219,153 @@ def logout():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup_page():
     """
-    Render signup form (GET) and handle signup submissions (GET with query params, POST form or JSON).
-    On successful creation, redirect to signup_confirmed with the new customer id.
+    Step 1 of Google Calendar login
+    Sends user to Google OAuth2 consent screen for authentication
     """
-    # If this is a simple page load -> render the template
-    if request.method == 'GET' and not any(k in request.args for k in ('firstname', 'lastname', 'email', 'street', 'city', 'postal_code')):
-        return render_template('signup.html')
+    if not ensure_logged_in(): 
+        return redirect(url_for('login_page'))
+    
+    flow = build_flow()
 
-    # Accept data from multiple sources (GET query, POST form, or JSON)
-    source = request.args if request.method == 'GET' else (request.form if request.form else request.get_json(silent=True) or {})
-    name = source.get('firstname') or source.get('name')
-    surname = source.get('lastname') or source.get('surname')
-    email = source.get('email')
-    street = source.get('street')
-    city = source.get('city')
-    postal_code = source.get('postal_code') or source.get('postalcode') or source.get('postal')
+    authorization_url, state = flow.authorization_url(
+        access_type='offline', # to get refresh token
+        include_granted_scopes='true', # to reuse existing permissions
+        prompt='consent' # to ensure refresh token is provided
+    )
 
-    # Basic validation
-    if not (name and surname and email):
-        # Render the form again with an error message (frontend can show it)
-        return render_template('signup.html', error="Missing required fields: firstname, lastname, email", form=source), 400
+    session['google_auth_state'] = state
+    print("DEBUG: redirecting user to Google OAuth consent screen")
+    return redirect(authorization_url)
 
-    # Build payload for DB_write.create_customer_with_address
-    payload = {
-        "name": name,
-        "surname": surname,
-        "email": email,
+@app.route('/google/oauth2callback') # Called by Google after user consents
+def google_oauth2callback():
+    """
+    Step 2 of Google Calendar login
+    Google redirects back here after user consents
+    Exchange authorization code for access and refresh tokens
+    """
+    if not ensure_logged_in(): 
+        return redirect(url_for('login_page'))
+    
+    state = session.get('google_auth_state')
+    if not state:
+        return 'State parameter missing in session. Try /google/login again', 400
+
+    flow = build_flow()
+    flow.fetch_token(authorization_response=request.url) # Exchange code for tokens
+
+    Creds = flow.credentials # Get OAuth2 credentials
+
+    # Temporarily: Store credentials in session (for demo purposes)
+    # Later: Store in database connected to session['user_id']
+    session['google_credentials'] = {
+        'token': Creds.token,
+        'refresh_token': Creds.refresh_token,
+        'token_uri': Creds.token_uri,
+        'client_id': Creds.client_id,
+        'client_secret': Creds.client_secret,
+        'scopes': Creds.scopes
     }
-    if street and city and postal_code:
-        payload["address"] = {
-            "street_and_number": street,
-            "postal_code": postal_code,
-            "city_name": city
-        }
 
-    try:
-        writer = DB_write()
-        result = writer.create_customer_with_address(payload)
-        customer_id = result.get("customer_id")
-        if customer_id:
-            # signup confirmation page removed — redirect user to login instead
-            return redirect(url_for('login_page'))
-        # fallback if creation didn't return id
-        return render_template('signup.html', error="Failed to create account, please try again."), 500
-    except ValueError as ve:
-        return render_template('signup.html', error=str(ve), form=source), 400
-    except Exception:
-        app.logger.exception("Signup failed")
-        return render_template('signup.html', error="Internal server error"), 500
+# Directs user to status-page after successful OAuth2 flow
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/calendar/status')
+def calendar_status():
+    """
+    Debug/inspection page:
+    - Shows whether user has allowed Google Calendar access
+    - Displays upcoming calendar events if access granted
+    """
+    if not ensure_logged_in(): 
+        return redirect(url_for('login_page'))
+    
+    service = get_calendar_service()
+    if service is None:
+        # not yet authorized
+        return (
+            'You have not authorized Google Calendar access yet. '
+            'Please <a href="/google/login">login with Google</a> to enable calendar features.'
+        )
+    
+    events_result = service.events().list( # Fetch upcoming events
+        calendarId='primary', # user's primary calendar
+        maxResults=10, # fetch next 10 events
+        singleEvents=True, # expand recurring events
+        orderBy='startTime' # order by start time
+    ).execute()
+
+    items = events_result.get('items', []) # Get list of events
+    if not items:
+        return 'Connected, but no upcoming events found in your Google Calendar.'
+    
+    lines = [] # Prepare event display lines
+    for ev in items: # Iterate over events
+        start = ev['start'].get('dateTime', ev['start'].get('date')) # event start time
+        title = ev.get('summary', 'No Title') # event title
+        lines.append(f"{start} - {title}") # format event line
+    # Return full list of formatted events (one per line)
+    return '<br>'.join(lines)
+    
+
+@app.route('/calendar/create-cleaning')
+def create_cleaning_event():
+    """
+    Creates cleaning appointment event in user's Google Calendar
+    (Hardcoded example for demonstration purposes - AI-suggestions can be integrated later)
+    """
+    if not ensure_logged_in():
+        return redirect(url_for('login_page'))
+    
+    service = get_calendar_service()
+    if service is None:
+        return redirect(url_for('google_login')) # Prompt user to authorize if not done
+    
+    event_body = {
+        'Summary': 'House Cleaning Appointment',
+        'Description': 'Vacuuming, floor mopping, kitchen, bathroom',
+        'Start': {
+            'dateTime': '2024-07-01T10:00:00',
+            'timeZone': 'Europe/Copenhagen',
+        },
+        'End': {
+            'dateTime': '2024-07-01T12:00:00',
+            'timeZone': 'Europe/Copenhagen'
+        }
+    }
+
+    create = service.events().insert( # Create event in calendar
+        calendarId='primary',
+        body=event_body,
+        sendUpdates='none' # No notifications
+    ).execute()
+
+    return f'Event created ✔ Event ID: {create.get("id")}'
+
+
+@app.route('/calendar/connect')
+def calendar_connect():
+    # Midlertidigt: ikke kræv login, så vi kan teste OAuth-flowet nemt.
+    # Når I er færdige med at teste, kan I slå det her til igen:
+    # if not ensure_logged_in():
+    #     return redirect(url_for('login_page'))
+
+    print("DEBUG: /calendar/connect route was hit!")
+
+    flow = build_flow()
+
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",          # vi vil gerne have refresh_token
+        include_granted_scopes="true",  # genbrug eksisterende tilladelser
+        prompt="consent"                # tving dialogen så vi får refresh_token i dev
+    )
+
+    # gem state i session, så vi kan validere callbacket
+    session["google_auth_state"] = state
+
+    print("DEBUG: redirecting user to Google OAuth consent:", authorization_url)
+    return redirect(authorization_url)
 
 # ============================================================================
 # REGISTERED BLUEPRINTS defined in separate route files
@@ -329,7 +431,8 @@ def api_weather():
 
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
-app.register_blueprint(api_customers_bp)
+app.register_blueprint(api_calendar_bp)
+
 
 # ============================================================================
 # WEATHER SERVICE ROUTE

@@ -271,7 +271,9 @@ class DB_read:
                 LEFT JOIN customers c ON li.customer_id = c.id
                 LEFT JOIN has_ordered ho ON apt.id = ho.appointment_id
                 LEFT JOIN services s ON ho.service_id = s.id
-                GROUP BY apt.id
+                GROUP BY apt.id, apt.date, apt.time, apt.notes,
+                         addr.street_and_number, addr.postal_code, addr.city_name,
+                         c.name, c.surname, c.email
                 ORDER BY apt.date, apt.time
             """
             cursorObject.execute(query)
