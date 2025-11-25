@@ -88,7 +88,22 @@ TOOLS: List[Dict[str, Any]] = [
                 'required': ['steet', 'postal', 'city']
             }
         }
-    }
+    },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'link_customer_to_address',
+            'description': 'Adds to junction table the id for a customer and id for an address, giving the customer that address',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'customer_id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' }
+                },
+                'required': ['customer_id', 'address_id']
+            }
+        }
+    },
     {
         "type": "function",
         "function": {

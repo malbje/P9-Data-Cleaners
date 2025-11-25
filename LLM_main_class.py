@@ -135,7 +135,7 @@ class LLM_Conversation:
                 call_id = call.id
                 call_name = call.function.name
 
-                # Don't ask me, honestly
+                # Dict of arguments for the function call for given tool
                 args = json.loads(call.function.arguments or "{}") #type: ignore
 
                 print(f"Tool's name: {call_name}")
@@ -177,6 +177,12 @@ class LLM_Conversation:
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     city = _pick('city_name', 'city', 'cityName')
                     result = self.writer.create_address(street, postal, city)
+                    if result:
+                        result = 'Success'
+                elif call_name == 'link_customer_to_address':
+                    customer_id = _pick('customer_id')
+                    address_id = _pick('address_id')
+                    result = self.writer.link_customer_to_address(customer_id, address_id)
                     if result:
                         result = 'Success'
                 elif call_name == "update_customer_address":
