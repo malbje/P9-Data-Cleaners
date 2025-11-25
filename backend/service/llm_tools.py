@@ -104,6 +104,22 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+        {
+        'type': 'function',
+        'function': {
+            'name': 'add_appointment',
+            'description': 'Create a new appointment, with an address id, a date and a time for the appointment, and optional notes.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'address_id': { 'type': 'integer' },
+                    'date': { 'type': 'integer' },
+                    'city': { 'type': 'string' }
+                },
+                'required': ['steet', 'postal', 'city']
+            }
+        }
+    },
     {
         "type": "function",
         "function": {
