@@ -175,6 +175,20 @@ class LLM_Conversation:
                 elif call_name == "get_addresses_by_customer_id":
                     customer_id = _pick('customer_id')
                     result = self.reader.get_addresses_by_customer_id(customer_id) #type: ignore
+                elif call_name == 'get_addresses_and_preferences_for_customer':
+                    customer_id = _pick('customer_id')
+                    result = self.reader.get_addresses_and_preferences_for_customer(customer_id)
+                elif call_name == "add_prefrences_for_address_id":
+                    address_id = _pick('address_id')
+                    allergies = _pick('allergies')
+                    pets = _pick('pets')
+                    kids = _pick('kids')
+                    square_footage = _pick('square_footage')
+                    notes = _pick('notes')
+                    result = self.writer.add_prefrences_for_address_id(address_id, allergies, pets, kids, square_footage, notes)
+                    return result
+
+
                 elif call_name == "add_address":
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     postal = _pick('postal_code', 'postalCode', 'postal')

@@ -21,7 +21,7 @@ import os # For environment variable access
 # ============================================================================
 # WEATHER SERVICE IMPORT
 # ============================================================================
-from backend.service.weather_service import get_weather_data  
+from backend.service.weather_service import get_precipitation  
 # 🟢 Imports the helper function 'get_weather_data()' from our weather_service module.
 # This function is responsible for fetching weather information (from DMI or Open-Meteo)
 # and returning it in a clean JSON structure that can be sent to the frontend.
@@ -38,9 +38,6 @@ from dotenv import load_dotenv # to load environment variables from .env file
 from google.oauth2.credentials import Credentials # to handle OAuth2 credentials
 from google_auth_oauthlib.flow import Flow # to manage OAuth2 flow (authorization, code, token exchange)
 from googleapiclient.discovery import build # to build Google API service clients
-
-# Import Weather function
-from backend.service.weather_service import get_weather_data
 
 # ---------------------------------------------------------------------------
 # FLASK APPLICATION INITIALIZATION
@@ -321,7 +318,7 @@ def api_weather():
         Returns the structured JSON data to the frontend for rendering.
     """
     # 🟢 Fetch latest weather data using helper function
-    data = get_weather_data()
+    data = get_precipitation()
     
     # 🟢 Convert the Python dict to JSON and send it back to the browser
     return jsonify(data)
@@ -330,36 +327,6 @@ def api_weather():
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
 app.register_blueprint(api_customers_bp)
-
-# ============================================================================
-# WEATHER SERVICE ROUTE
-# ============================================================================
-@app.route("/api/weather", methods=["GET"])
-def api_weather():
-    """
-    API route: Provides live weather data to the frontend and other modules.
-    
-    Why:
-        This endpoint allows the main dashboard and AI logic to access
-        up-to-date weather information for contextual suggestions and
-        user-facing widgets.
-    
-    How:
-        Calls get_weather_data() from backend/service/weather_service.py,
-        which handles both DMI and fallback APIs (Open-Meteo).
-        Returns the structured JSON data to the frontend for rendering.
-    """
-    # 🟢 Fetch latest weather data using helper function
-    data = get_weather_data()
-    
-    # 🟢 Convert the Python dict to JSON and send it back to the browser
-    return jsonify(data)
-
-
-app.register_blueprint(api_auth_bp)
-app.register_blueprint(api_data_bp)
-app.register_blueprint(api_customers_bp)
-
 
 
 # This means that the app is run, if this file is run

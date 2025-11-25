@@ -15,7 +15,7 @@ Naming convention:
 - All functions use Google-style docstrings to make the behavior explicit for other developers.
 """
 
-import requests  # type: ignore
+import requests
 REQUESTS_AVAILABLE = True
 
 from typing import Tuple, Dict, Optional, Any

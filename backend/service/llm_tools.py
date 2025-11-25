@@ -84,6 +84,41 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_addresses_and_preferences_for_customer
+    {
+        'type': 'function',
+        'function': {
+            'name': 'get_addresses_and_preferences_for_customer',
+            'description': 'Gets all addresses and their associated preferences for a specific customer.',
+            'parameters': {
+                'type': 'obejct',
+                'properties': {
+                    'customer_id': {'type': 'integer' }
+                },
+                'required': ['customer_id']
+            }
+        }
+    },
+    # add_prefrences_for_address_id
+    {
+        'type': 'function',
+        'function': {
+            'name': 'add_prefrences_for_address_id',
+            'description': 'Adds additional info about an address to a table.',
+            'parameters': {
+                'type': 'obejct',
+                'properties': {
+                    'address_id': {'type': 'integer' },
+                    'allergies': {'type': 'string'},
+                    'pets': {'type': 'string'},
+                    'kids': {'type': 'string'},
+                    'square_footage': {'type': 'number', 'description': 'Has two decimal spaces'},
+                    'notes': {'type': 'string'}
+                },
+                'required': ['address_id']
+            }
+        }
+    },
     # add_customer
     {
         "type": "function",

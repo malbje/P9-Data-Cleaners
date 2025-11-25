@@ -69,6 +69,11 @@ class DB_write:
         new_address = (street_and_number, postal_code, city_name)
         return self.__execute_query(query, new_address, commit=True)
 
+    def add_prefrences_for_address_id(self, address_id, allergies = None, pets = None, kids = None, square_footage = None, notes = None):
+        query = "INSERT INTO preferences (address_id, allergies, pets, kids, square_footage, notes) VALUES (%s, %s, %s, %s, %s, %s)"
+        new_preferences = (address_id, allergies, pets, kids, square_footage, notes)
+        return self.__execute_query(query, new_preferences, commit=True)
+
     def link_customer_to_address(self, customer_id, address_id):
         """Links a customer and an address in the lives_in table."""
         # First, check if the link already exists to avoid errors
