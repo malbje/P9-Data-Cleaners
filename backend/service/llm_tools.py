@@ -74,6 +74,22 @@ TOOLS: List[Dict[str, Any]] = [
         }
     },
     {
+        'type': 'function',
+        'function': {
+            'name': 'add_address',
+            'description': 'Create a new address with an steet name, 4 digit postal code, and city name.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'street': { 'type': 'string' },
+                    'postal': { 'type': 'integer' },
+                    'city': { 'type': 'string' }
+                },
+                'required': ['steet', 'postal', 'city']
+            }
+        }
+    }
+    {
         "type": "function",
         "function": {
             "name": "get_customer_addresses",

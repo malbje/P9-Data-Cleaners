@@ -177,6 +177,8 @@ class LLM_Conversation:
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     city = _pick('city_name', 'city', 'cityName')
                     result = self.writer.create_address(street, postal, city)
+                    if result:
+                        result = 'Success'
                 elif call_name == "update_customer_address":
                     # normalize various possible arg names
                     customer_id = _pick('customer_id', 'customerId', 'id')
