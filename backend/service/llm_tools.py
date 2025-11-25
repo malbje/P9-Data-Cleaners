@@ -32,20 +32,6 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "type": "function",
         "function": {
-            "name": "get_customer_by_email",
-            "description": "Find a customer by email (unique).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "email": {"type": "string"}
-                },
-                "required": ["email"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "get_customer_by_id",
             "description": "Get a customer by customer ID.",
             "parameters": {
@@ -54,6 +40,48 @@ TOOLS: List[Dict[str, Any]] = [
                     "customer_id": {"type": "integer"}
                 },
                 "required": ["customer_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customers_by_appointment_id",
+            "description": "Get a customer by the id of one of their appointments.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": {"type": "integer"}
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customers_by_address_id",
+            "description": "Get a customer by the id of one of their addresses",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {"type": "integer"}
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+        {
+        "type": "function",
+        "function": {
+            "name": "find_address_by_text",
+            "description": "Search addresses across street, postal code and city using partial matching. Returns list of matching addresses.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "search_text": {"type": "string", 'description': 'includes street name, postal code and/or city name'}
+                },
+                "required": ["search_text"]
             }
         }
     },
@@ -82,7 +110,7 @@ TOOLS: List[Dict[str, Any]] = [
                 'type': 'object',
                 'properties': {
                     'street': { 'type': 'string' },
-                    'postal': { 'type': 'integer' },
+                    'postal': { 'type': 'string' },
                     'city': { 'type': 'string' }
                 },
                 'required': ['steet', 'postal', 'city']
@@ -108,29 +136,76 @@ TOOLS: List[Dict[str, Any]] = [
         'type': 'function',
         'function': {
             'name': 'add_appointment',
-            'description': 'Create a new appointment, with an address id, a date and a time for the appointment, and optional notes.',
+            'description': 'Create a new appointment, with an address id, a date (yyyy-mm-dd) and a time (format like 14:35:55) for the appointment, and optional notes.',
             'parameters': {
                 'type': 'object',
                 'properties': {
                     'address_id': { 'type': 'integer' },
-                    'date': { 'type': 'integer' },
-                    'city': { 'type': 'string' }
+                    'date': { 'type': 'string' },
+                    'time': { 'type': 'string' },
+                    'notes': { 'type': 'string' }
                 },
-                'required': ['steet', 'postal', 'city']
+                'required': ['address_id', 'date', 'time']
             }
         }
     },
     {
         "type": "function",
         "function": {
-            "name": "get_customer_addresses",
-            "description": "Find all addresses for a customer by name (possibly full name) or email.",
+            'name': 'get_customer_by_email',
+            'description': 'Find a customer and their info from the customer table by their email.',
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "name_or_email": {"type": "string", "description": "e.g. 'Anne Madsen' or 'anne@firma.dk'"}
+                    "email": {"type": "string"}
                 },
-                "required": ["name_or_email"]
+                "required": ["email"]
+            }
+        }
+    },
+    {
+        'type': 'funciton',
+        'function': {
+            'name': 'get_address_by_id',
+            'description': 'Get address info from given address id',
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {"type": "integer"}
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_addresses_by_customer_id",
+            "description": "use a customers id to get all their addresses.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {"type": "integer"}
+                },
+                "required": ["customer_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_customer_address",
+            "description": "Update the city name, postal code, and street name and number for a given customers address",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {"type": "integer"},
+                    'address_id': {'type': 'integer'},
+                    'city': {'type': 'string', 'description': 'city name'},
+                    'postal': {'type': 'string', 'description': 'a 4 digit postal code'},
+                    'street': {'type': 'string', 'description': 'street name, and street number if needed'}
+                },
+                "required": ["customer_id", 'address_id', 'city', 'postal', 'street']
             }
         }
     },

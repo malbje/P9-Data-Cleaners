@@ -172,6 +172,9 @@ class LLM_Conversation:
                     result = self.reader.get_customer_by_email(**args)
                 elif call_name == "get_customer_by_id":
                     result = self.reader.get_customer_by_id(**args)
+                elif call_name == "get_addresses_by_customer_id":
+                    customer_id = _pick('customer_id')
+                    result = self.reader.get_addresses_by_customer_id(customer_id) #type: ignore
                 elif call_name == "add_address":
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     postal = _pick('postal_code', 'postalCode', 'postal')
@@ -198,7 +201,8 @@ class LLM_Conversation:
                 elif call_name == "get_appointment_by_id":
                     result = self.reader.get_appointment_by_id(**args)
                 elif call_name == "get_customers_by_appointment_id":
-                    result = self.reader.get_customers_by_appointment_id(**args)
+                    appointment_id = _pick('appointment_id')
+                    result = self.reader.get_customers_by_appointment_id(appointment_id) #type: ignore
                 elif call_name == "get_customers_by_address_id":
                     result = self.reader.get_customers_by_address_id(**args)
                 elif call_name == "find_address_by_text":
