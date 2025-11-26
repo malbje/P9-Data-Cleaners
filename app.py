@@ -17,6 +17,8 @@ from LLM_main_class import LLM_Conversation # Import LLM_Conversation class
 import backend.service.database_logic as db 
 from database.DB_write import DB_write
 import os # For environment variable access
+import private_settings as ps
+
 
 # ============================================================================
 # WEATHER SERVICE IMPORT
@@ -40,6 +42,7 @@ from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
 
 
 # ---------------------------------------------------------------------------
@@ -88,34 +91,78 @@ app.secret_key = secret_key # Set Flask secret key for session management
 load_dotenv()  # Load environment variables from .env file
 
 BASE_DIR = pathlib.Path(__file__).parent
-CLIENT_SECRETS_FILE = BASE_DIR / "secrets" / "client_secret.json" # "secrets" and "client_secret.json" for correct path to client secrets
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 
 GOOGLE_SCOPES = [os.getenv("GOOGLE_OAUTH_SCOPE", "https://www.googleapis.com/auth/calendar")] # OAuth2 scopes for Google Calendar access
 GOOGLE_REDIRECT_URI = "http://127.0.0.1:5000/google/oauth2callback"  # Redirect URI for OAuth2 flow
 
 
 def build_flow():
-    return Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
+    # Hvis du har en client-secrets JSON som dict i private_settings.Credentials
+    client_config = getattr(ps, "Credentials", None)
+    if not client_config:
+        raise FileNotFoundError("Ingen OAuth client configuration fundet i private_settings.Credentials")
+
+    # Flow.from_client_config forventer format som {'web': {...}} eller {'installed': {...}}
+    # Google client JSON vist i private_settings bruger 'installed', så vi kan bruge det direkte.
+    return Flow.from_client_config(
+        client_config,
         scopes=GOOGLE_SCOPES,
         redirect_uri=GOOGLE_REDIRECT_URI
     )
 
 def get_calendar_service(): # builds authorized Google Calendar API client
+    creds = None
+
+    # 1) Prefer credentials stored in session (current-user ephemeral)
     creds_data = session.get('google_credentials')
-    if not creds_data:
+    if creds_data:
+        try:
+            creds = Credentials(
+                token=creds_data['token'],
+                refresh_token=creds_data.get('refresh_token'),
+                token_uri=creds_data['token_uri'],
+                client_id=creds_data['client_id'],
+                client_secret=creds_data['client_secret'],
+                scopes=creds_data['scopes']
+            )
+        except Exception:
+            app.logger.exception("Failed to build Credentials from session data")
+
+    # 2) Fallback: try persistent token in private_settings.TOKEN
+    if creds is None:
+        try:
+            import private_settings as ps
+            if hasattr(ps, 'TOKEN') and ps.TOKEN:
+                creds = Credentials.from_authorized_user_info(ps.TOKEN, GOOGLE_SCOPES)
+        except Exception:
+            app.logger.exception("Failed to load credentials from private_settings")
+
+    if not creds:
         return None
-    
-    creds = Credentials(
-        token=creds_data['token'],
-        refresh_token=creds_data.get('refresh_token'),
-        token_uri=creds_data['token_uri'],
-        client_id=creds_data['client_id'],
-        client_secret=creds_data['client_secret'],
-        scopes=creds_data['scopes']
-    )
-    service = build('calendar', 'v3', credentials=creds) # Build Google Calendar API service client
-    return service # Return the service client
+
+    # Ensure credentials are fresh: refresh if expired and refresh_token available
+    try:
+        if creds.expired and getattr(creds, 'refresh_token', None):
+            creds.refresh(Request())
+            # Persist refreshed credentials back to private_settings for future use
+            try:
+                from backend.service import calendar as gcal
+                gcal._write_token_to_private_settings(creds)
+            except Exception:
+                app.logger.exception("Failed to persist refreshed credentials to private_settings")
+    except Exception:
+        app.logger.exception("Credential refresh failed")
+        return None
+
+    # Build and return Google Calendar service
+    try:
+        service = build('calendar', 'v3', credentials=creds)
+        return service
+    except Exception:
+        app.logger.exception("Failed to build Google Calendar service")
+        return None
 
 # ============================================================================
 # CUSTOM EXCEPTIONS
@@ -241,6 +288,7 @@ def google_oauth2callback():
     Google redirects back here after user consents
     Exchange authorization code for access and refresh tokens
     """
+
     if not ensure_logged_in(): 
         return redirect(url_for('login_page'))
     
@@ -252,6 +300,14 @@ def google_oauth2callback():
     flow.fetch_token(authorization_response=request.url) # Exchange code for tokens
 
     Creds = flow.credentials # Get OAuth2 credentials
+    # optionally persist to private_settings for dev convenience
+    try:
+        from backend.service import calendar as gcal
+        gcal._write_token_to_private_settings(Creds)
+        print("DEBUG: Credentials written to private_settings.TOKEN")
+    except Exception:
+        app.logger.exception("Failed to write credentials to private_settings")
+
 
     # Temporarily: Store credentials in session (for demo purposes)
     # Later: Store in database connected to session['user_id']
@@ -263,6 +319,20 @@ def google_oauth2callback():
         'client_secret': Creds.client_secret,
         'scopes': Creds.scopes
     }
+
+    # Debug output: print key credential fields so developer can verify
+    print("DEBUG: Creds.token:", Creds.token)
+    print("DEBUG: Creds.refresh_token:", Creds.refresh_token)
+    print("DEBUG: Creds.expiry:", getattr(Creds, 'expiry', None))
+
+    # Attempt to persist credentials to private_settings.py for development convenience
+    try:
+        from backend.service import calendar as gcal
+        # gcal._write_token_to_private_settings expects a google.oauth2.credentials.Credentials
+        gcal._write_token_to_private_settings(Creds)
+        print("DEBUG: Credentials written to private_settings.TOKEN")
+    except Exception:
+        app.logger.exception("Failed to write credentials to private_settings")
 
 # Directs user to status-page after successful OAuth2 flow
     return redirect(url_for('dashboard'))
