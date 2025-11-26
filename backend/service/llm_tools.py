@@ -330,7 +330,37 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
-    
+    # link_service_to_appointment
+    {
+        "type": "function",
+        "function": {
+            "name": "link_service_to_appointment",
+            "description": "Links a service to an appointment in the junction table.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": {"type": "integer"},
+                    "service_id": {"type": "integer"}
+                },
+                "required": ["appointment_id", "service_id"]
+            }
+        }
+    },
+    # delete_orders_by_appointment_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_orders_by_appointment_id",
+            "description": "Deletes all orders associated with a specific appointment ID from the has_ordered junction table.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": { "type": "integer" }
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
     # get_precipitation
     {
         "type": "function",

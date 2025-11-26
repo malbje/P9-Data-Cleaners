@@ -224,6 +224,10 @@ class LLM_Conversation:
                 elif call_name == "delete_appointment_by_id":
                     id = _pick('appointment_id')
                     result = self.writer.delete_appointment_by_id(id)
+                elif call_name == "link_service_to_appointment":
+                    appointment_id = _pick('appointment_id')
+                    service_id = _pick('service_id')
+                    result = self.writer.link_service_to_appointment(appointment_id, service_id)
                 elif call_name == "get_customers_by_appointment_id":
                     appointment_id = _pick('appointment_id')
                     result = self.reader.get_customers_by_appointment_id(appointment_id) #type: ignore

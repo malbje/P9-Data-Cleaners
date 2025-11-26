@@ -222,3 +222,6 @@ class DB_write:
         query = "DELETE FROM preferences WHERE address_id = %s"
         self.__execute_query(query, (address_id,), commit=True)
 
+    def delete_orders_by_appointment_id(self, appointment_id):
+        query = "DELETE FROM has_ordered WHERE appointment_id = %s"
+        self.__execute_query(query, (appointment_id,), commit=True)
