@@ -254,9 +254,9 @@ class LLM_Conversation:
                 
                 # This function only called once, right after this definition, in the json.dumps() call
                 def __json_rules_for_serialization(data_object):
-                    if isinstance(data_object, (datetime.date, datetime.time)):
+                    if isinstance(data_object, datetime.date): #If date object, make it ISO format string
                         return data_object.isoformat()
-                    if isinstance(data_object, datetime.timedelta):
+                    if isinstance(data_object, datetime.timedelta): #If timedelta object, make it ISO format string
                         return (datetime.datetime.min + data_object).time().isoformat()
                     return str(data_object)    
 
