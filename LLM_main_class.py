@@ -252,24 +252,20 @@ class LLM_Conversation:
                 else:
                     result = {"error": f"Ukendt funktion: {call_name}"}
                 
+                # This function only called once, right after this definition, in the json.dumps() call
+                def __json_rules_for_serialization(data_object):
+                    if isinstance(data_object, (datetime.date, datetime.time)):
+                        return data_object.isoformat()
+                    if isinstance(data_object, datetime.timedelta):
+                        return (datetime.datetime.min + data_object).time().isoformat()
+                    return str(data_object)    
+
                 # add the tool result to messages (chat history)
                 self.messages.append({
                     "role": "tool",
                     "tool_call_id": call_id,
                     "name": call_name,
-                    "content": json.dumps(
-                        result,
-                        ensure_ascii=False,
-                        default=lambda o: ( # This lambda handles date and timedelta objects that come from the appointments table. Makes them 'json serializable', which is needed for json.dumps().
-                            o.isoformat()
-                            if isinstance(o, (datetime.datetime, datetime.date, datetime.time))
-                            else (
-                                (datetime.datetime.min + o).time().isoformat()
-                                if isinstance(o, datetime.timedelta)
-                                else str(o)
-                            )
-                        )
-                    )                
+                    "content": json.dumps(result, ensure_ascii=False, default=__json_rules_for_serialization)                
                 })
 
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it doesn't want more tool results
