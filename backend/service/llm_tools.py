@@ -91,7 +91,7 @@ TOOLS: List[Dict[str, Any]] = [
             'name': 'get_addresses_and_preferences_for_customer',
             'description': 'Gets all addresses and their associated preferences for a specific customer.',
             'parameters': {
-                'type': 'obejct',
+                'type': 'object',
                 'properties': {
                     'customer_id': {'type': 'integer' }
                 },
@@ -106,7 +106,7 @@ TOOLS: List[Dict[str, Any]] = [
             'name': 'add_prefrences_for_address_id',
             'description': 'Adds additional info about an address to a table.',
             'parameters': {
-                'type': 'obejct',
+                'type': 'object',
                 'properties': {
                     'address_id': {'type': 'integer' },
                     'allergies': {'type': 'string'},
@@ -238,7 +238,7 @@ TOOLS: List[Dict[str, Any]] = [
     },
     # get_address_by_id
     {
-        'type': 'funciton',
+        'type': 'function',
         'function': {
             'name': 'get_address_by_id',
             'description': 'Get address info from given address id',
@@ -285,6 +285,18 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_all_appointments
+    {
+        "type": "function",
+        "function": {
+            "name": "get_all_appointments",
+            "description": "Get all appointments in the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
     # get_appointments_by_address_id
     {
         "type": "function",
@@ -327,6 +339,18 @@ TOOLS: List[Dict[str, Any]] = [
                     "appointment_id": { "type": "integer" }
                 },
                 "required": ["appointment_id"]
+            }
+        }
+    },
+    # get_all_services
+    {
+        "type": "function",
+        "function": {
+            "name": "get_all_services",
+            "description": "Get all services available in the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
             }
         }
     },

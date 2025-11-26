@@ -14,7 +14,8 @@ import LLM_prompts
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
 from backend.service.weather_service import get_precipitation
 import json
-
+import datetime
+ 
 class LLM_Conversation:
     """
     Class to handle a conversation with chat_gpt that can call tools and remember chat history.
@@ -54,13 +55,15 @@ class LLM_Conversation:
 
         temp_messages: list[dict] = self.messages.copy()
 
-        temp_messages.pop() # To remove the last message, which is a list of tool_calls
+        # If the last message has the role of 'tool', or has a list of tool_calls, we need to remove it from temp_messages for this prompt
+        if temp_messages[-1].get("role") == "tool" or temp_messages[-1].get("tool_calls"):
+            temp_messages.pop() # To remove the last message
 
         temp_messages.append({"role": "user", "content": """
-                              Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases, 
-                              then respond only with the name of each case in lower case. The two cases are:
+                              Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases: 
                               1 - name: jonas, defintion: would like appointments to be placed on the day of the week with the least rain.
-                              2 - name: anna_mikkel, definition: would like appointments to be places on the day of the week after the day where it rains the most"""
+                              2 - name: anna_mikkel, definition: would like appointments to be places on the day of the week after the day where it rains the most.
+                              Respond with only the case name: 'jonas' or 'anna_mikkel'."""
                               })
 
         # Ask chat_gpt to choose case
@@ -91,8 +94,8 @@ class LLM_Conversation:
         """
 
         print("called __asking_llm() :D")
-        if LLM_Conversation.tool_use_count >= 10:
-            raise RuntimeError("Using Too Many Tools (10) - Elia")
+        # if LLM_Conversation.tool_use_count >= 10:
+        #    raise RuntimeError("Using Too Many Tools (10) - Elia")
 
         # Now it's time to ask the chat.
         # resp er et objekt af klassen ChatCompletion
@@ -210,6 +213,8 @@ class LLM_Conversation:
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     result = self.writer.update_customer_address(customer_id, address_id, city, postal, street)
+                elif call_name == "get_all_appointments":
+                    result = self.reader.get_all_appointments()
                 elif call_name == "get_appointments_by_address_id":
                     result = self.reader.get_appointments_by_address_id(**args)
                 elif call_name == "get_appointment_by_id":
@@ -224,6 +229,8 @@ class LLM_Conversation:
                 elif call_name == "delete_appointment_by_id":
                     id = _pick('appointment_id')
                     result = self.writer.delete_appointment_by_id(id)
+                elif call_name == "get_all_services":
+                    result = self.reader.get_all_services()
                 elif call_name == "link_service_to_appointment":
                     appointment_id = _pick('appointment_id')
                     service_id = _pick('service_id')
@@ -234,7 +241,8 @@ class LLM_Conversation:
                 elif call_name == "get_customers_by_address_id":
                     result = self.reader.get_customers_by_address_id(**args)
                 elif call_name == "find_address_by_text":
-                    result = self.reader.find_address_by_text(**args)
+                    search_text = _pick('search_text')
+                    result = self.reader.find_address_by_text(search_text) #type: ignore
                 elif call_name == "get_address_by_id":
                     result = self.reader.get_address_by_id(**args)
                 elif call_name == "get_precipitation":
@@ -249,7 +257,19 @@ class LLM_Conversation:
                     "role": "tool",
                     "tool_call_id": call_id,
                     "name": call_name,
-                    "content": json.dumps(result, ensure_ascii=False)
+                    "content": json.dumps(
+                        result,
+                        ensure_ascii=False,
+                        default=lambda o: ( # This lambda handles date and timedelta objects that come from the appointments table. Makes them 'json serializable', which is needed for json.dumps().
+                            o.isoformat()
+                            if isinstance(o, (datetime.datetime, datetime.date, datetime.time))
+                            else (
+                                (datetime.datetime.min + o).time().isoformat()
+                                if isinstance(o, datetime.timedelta)
+                                else str(o)
+                            )
+                        )
+                    )                
                 })
 
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it doesn't want more tool results
