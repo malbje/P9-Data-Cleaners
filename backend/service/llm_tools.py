@@ -119,6 +119,21 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # delete_preference_by_address_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_preference_by_address_id",
+            "description": "Deletes rows from the preferences table based on the provided address ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": { "type": "integer" }
+                },
+                "required": ["address_id"]
+            }
+        }
+    },    
     # add_customer
     {
         "type": "function",
@@ -184,6 +199,25 @@ TOOLS: List[Dict[str, Any]] = [
                     'notes': { 'type': 'string' }
                 },
                 'required': ['address_id', 'date', 'time']
+            }
+        }
+    },
+    # update_appointment_by_id
+    {
+        'type': 'function',
+        'function': {
+            'name': 'update_appointment_by_id',
+            'description': 'Update an appointment by its ID. You can update the date, time, and notes.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' },
+                    'date': { 'type': 'string' },
+                    'time': { 'type': 'string' },
+                    'notes': { 'type': 'string' }
+                },
+                'required': ['id', 'address_id', 'date', 'time', 'notes']
             }
         }
     },
@@ -281,6 +315,22 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # delete_appointment_by_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_appointment_by_id",
+            "description": "Deletes an appointment from the database based on the provided appointment ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": { "type": "integer" }
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
+    
     # get_precipitation
     {
         "type": "function",

@@ -186,9 +186,9 @@ class LLM_Conversation:
                     square_footage = _pick('square_footage')
                     notes = _pick('notes')
                     result = self.writer.add_prefrences_for_address_id(address_id, allergies, pets, kids, square_footage, notes)
-                    return result
-
-
+                elif call_name == "delete_preference_by_address_id":
+                    address_id = _pick('address_id')
+                    result = self.writer.delete_preference_by_address_id(address_id)
                 elif call_name == "add_address":
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     postal = _pick('postal_code', 'postalCode', 'postal')
@@ -214,6 +214,16 @@ class LLM_Conversation:
                     result = self.reader.get_appointments_by_address_id(**args)
                 elif call_name == "get_appointment_by_id":
                     result = self.reader.get_appointment_by_id(**args)
+                elif call_name == "update_appointment_by_id":
+                    id = _pick('id')
+                    address_id = _pick('address_id')
+                    date = _pick('date')
+                    time = _pick('time')
+                    notes = _pick('notes')
+                    result = self.writer.update_appointment_by_id(id, address_id, date, time, notes)
+                elif call_name == "delete_appointment_by_id":
+                    id = _pick('appointment_id')
+                    result = self.writer.delete_appointment_by_id(id)
                 elif call_name == "get_customers_by_appointment_id":
                     appointment_id = _pick('appointment_id')
                     result = self.reader.get_customers_by_appointment_id(appointment_id) #type: ignore

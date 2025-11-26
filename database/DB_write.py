@@ -217,3 +217,8 @@ class DB_write:
                 result["address_id"] = address_id
 
         return result
+    
+    def delete_preference_by_address_id(self, address_id):
+        query = "DELETE FROM preferences WHERE address_id = %s"
+        self.__execute_query(query, (address_id,), commit=True)
+
