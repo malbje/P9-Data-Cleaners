@@ -225,3 +225,11 @@ class DB_write:
     def delete_orders_by_appointment_id(self, appointment_id):
         query = "DELETE FROM has_ordered WHERE appointment_id = %s"
         self.__execute_query(query, (appointment_id,), commit=True)
+
+    def delete_from_lives_in(self, customer_id, address_id):
+        query = 'DELETE FROM lives_in WHERE customer_id = %s AND address_id = %s'
+        self.__execute_query(query, (customer_id, address_id), commit=True)
+
+    def delete_from_has_ordered(self, appointment_id, service_id):
+        query = 'DELETE FROM has_ordered WHERE appointment_id = %s AND service_id = %s'
+        self.__execute_query(query, (appointment_id, service_id), commit=True)

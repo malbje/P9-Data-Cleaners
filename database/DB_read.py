@@ -496,6 +496,14 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
-    # ----------------------------------------------------------------
-    # New methods for chatbot integration can be added here as needed.
-    # ----------------------------------------------------------------
+
+if __name__ == "__main__":
+    reader = DB_read()
+    
+    customer_id: int = 21
+    result = reader.get_addresses_by_customer_id(customer_id)
+    print(result)
+
+    text = "Myrdal 2"
+    result = reader.find_address_by_text(text)
+    print(result)

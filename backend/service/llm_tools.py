@@ -74,11 +74,11 @@ TOOLS: List[Dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "find_address_by_text",
-            "description": "Search addresses across street, postal code and city using partial matching. Returns list of matching addresses.",
+            "description": "Search addresses across street name and number, postal code, or city name. Returns list of matching addresses.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "search_text": {"type": "string", 'description': 'includes street name, postal code and/or city name'}
+                    "search_text": {"type": "string", 'description': 'is either street name and any relevant numbers, postal code, or city name'}
                 },
                 "required": ["search_text"]
             }
@@ -156,7 +156,9 @@ TOOLS: List[Dict[str, Any]] = [
         'type': 'function',
         'function': {
             'name': 'add_address',
-            'description': 'Create a new address with an steet name, 4 digit postal code, and city name.',
+            'description': 'Create a new address with an steet name, 4 digit postal code, and city name. '
+            'When calling for this tool, also link it to a customer by calling link_customer_to_address.'
+            'If an address with same street name and numbers, postal code, and city name already exists, do not add it again. Instead link the user to the existing address with link_customer_to_address.',
             'parameters': {
                 'type': 'object',
                 'properties': {
@@ -174,6 +176,22 @@ TOOLS: List[Dict[str, Any]] = [
         'function': {
             'name': 'link_customer_to_address',
             'description': 'Adds to junction table the id for a customer and id for an address, giving the customer that address',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'customer_id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' }
+                },
+                'required': ['customer_id', 'address_id']
+            }
+        }
+    },
+    # delete_from_lives_in
+    {
+        'type': 'function',
+        'function': {
+            'name': 'delete_from_lives_in',
+            'description': 'When a customer does not live at or belong to an address anymore, this delete a link between the customer and the address from the lives_in junction table.',
             'parameters': {
                 'type': 'object',
                 'properties': {
@@ -382,6 +400,22 @@ TOOLS: List[Dict[str, Any]] = [
                     "appointment_id": { "type": "integer" }
                 },
                 "required": ["appointment_id"]
+            }
+        }
+    },
+    # delete_from_has_ordered
+    {
+        'type': 'function',
+        'function': {
+            'name': 'delete_from_has_ordered',
+            'description': 'When the customer wants to remove a specific service order from their appointment, this deletes that order from the has_ordered junction table.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'appointment_id': { 'type': 'integer' },
+                    'service_id': { 'type': 'integer' }
+                },
+                'required': ['appointment_id', 'service_id']
             }
         }
     },

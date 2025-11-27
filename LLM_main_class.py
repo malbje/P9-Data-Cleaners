@@ -213,6 +213,10 @@ class LLM_Conversation:
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     result = self.writer.update_customer_address(customer_id, address_id, city, postal, street)
+                elif call_name == "delete_from_lives_in":
+                    customer_id = _pick('customer_id')
+                    address_id = _pick('address_id')
+                    result = self.writer.delete_from_lives_in(customer_id, address_id)
                 elif call_name == "get_all_appointments":
                     result = self.reader.get_all_appointments()
                 elif call_name == "get_appointments_by_address_id":
@@ -235,6 +239,13 @@ class LLM_Conversation:
                     appointment_id = _pick('appointment_id')
                     service_id = _pick('service_id')
                     result = self.writer.link_service_to_appointment(appointment_id, service_id)
+                elif call_name == "delete_from_has_ordered":
+                    appointment_id = _pick('appointment_id')
+                    service_id = _pick('service_id')
+                    result = self.writer.delete_from_has_ordered(appointment_id, service_id)
+                elif call_name == 'delete_orders_by_appointment_id':
+                    appointment_id = _pick('appointment_id')
+                    result = self.writer.delete_orders_by_appointment_id(appointment_id)
                 elif call_name == "get_customers_by_appointment_id":
                     appointment_id = _pick('appointment_id')
                     result = self.reader.get_customers_by_appointment_id(appointment_id) #type: ignore
