@@ -12,6 +12,63 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeModal();
     initializeModeToggle();
 
+
+        const loadUserData = async () => {
+        try {
+            // Check user authentication status and get user details
+            const statusResponse = await fetch('/api/auth/status');
+            if (!statusResponse.ok) {
+                throw new Error(`Authentication status check failed: ${statusResponse.statusText}`);
+            }
+            const statusData = await statusResponse.json();
+            
+                if (statusData.logged_in) {
+                // Pre-populate form fields with user data if those elements exist
+                const createNameEl = document.getElementById('create_name');
+                const createEmailEl = document.getElementById('create_email');
+                if (createNameEl) createNameEl.value = statusData.user.name;
+                if (createEmailEl) createEmailEl.value = statusData.user.email;
+
+                // Set user's default notification preference in dropdown if present
+                const userPreference = statusData.user.notification_preference;
+                const notificationSelect = document.getElementById('create_notification');
+                if (userPreference && notificationSelect) {
+                    notificationSelect.value = userPreference;
+                }
+
+                // Load appointment data after confirming authentication
+                fetchAllAppointments(); 
+
+            } else {
+                // Handle unauthenticated state
+                document.getElementById('select_address').innerHTML = '<option value="">Please log in to see addresses</option>';
+                document.getElementById("customer-table-container").innerHTML = "<p>Please log in to see your appointments.</p>";
+                return; // Exit early for unauthenticated users
+            }
+
+            // Fetch user's saved addresses from API
+            const addressResponse = await fetch('/api/user/addresses');
+            if (!addressResponse.ok) throw new Error('Failed to fetch addresses');
+            const addresses = await addressResponse.json();
+            
+            // Populate address dropdowns for page elements if present. Templates may no longer
+            // include dedicated create/reschedule selects because creation is handled from the
+            // calendar details pane.
+            const createAddressSelect = document.getElementById('select_address');
+            const rescheduleAddressSelect = document.getElementById('reschedule_address_select');
+            const addressOptions = addresses.map(addr => 
+                `<option value="${addr.id}">${addr.street_and_number}, ${addr.postal_code} ${addr.city_name}</option>`
+            ).join('');
+            if (createAddressSelect) createAddressSelect.innerHTML = addressOptions;
+            if (rescheduleAddressSelect) rescheduleAddressSelect.innerHTML = '<option value="">-- Select an address --</option>' + addressOptions;
+
+        } catch (error) {
+            console.error("Error loading user data:", error);
+            // Display error message in address dropdown
+            document.getElementById('select_address').innerHTML = '<option value="">Error loading addresses</option>';
+        }
+    };
+
     // ========================================================================
     // WIDGETS - CLICK INITIALIZATION
     // ========================================================================
@@ -31,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
             default: console.log('Unknown widget type:', widgetType);
         }
     }
+
 
     // ========================================================================
     // APPOINTMENTS WIDGET
