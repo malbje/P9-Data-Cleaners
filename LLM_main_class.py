@@ -8,6 +8,8 @@
 
 what of this line
 
+and this line
+
 from openai import OpenAI
 import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
 from database.DB_read import DB_read
