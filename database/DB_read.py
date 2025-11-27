@@ -159,7 +159,7 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
-    def find_address_by_text(self, search_text: str): #værd opmærksom på denne metode - kan være en der laver fejl i AI logik
+    def find_address_by_text(self, search_text: str):
         """
         Search addresses across street, postal code and city using partial matching.
         Returns list of matching addresses.
@@ -498,6 +498,14 @@ class DB_read:
         finally:
             self.__close_DB_connection(database)
 
-    # ----------------------------------------------------------------
-    # New methods for chatbot integration can be added here as needed.
-    # ----------------------------------------------------------------
+
+if __name__ == "__main__":
+    reader = DB_read()
+    
+    customer_id: int = 21
+    result = reader.get_addresses_by_customer_id(customer_id)
+    print(result)
+
+    text = "Myrdal 2"
+    result = reader.find_address_by_text(text)
+    print(result)

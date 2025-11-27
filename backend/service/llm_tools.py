@@ -2,32 +2,13 @@
 # OpenAI function-calling + integration to our DB_read.py
 
 from typing import Any, Dict, List, Optional
-from openai import OpenAI
-from database.DB_read import DB_read
-from private_settings import OPENAI_API_KEY
-
-client = OpenAI(api_key=OPENAI_API_KEY)            # reads OPENAI_API_KEY from private_settings
-db = DB_read()               # Our data access layer
 
 # -----------------------------
 # Tool-definitions (JSON schema)
 # Only READ-related tools for now.
 # -----------------------------
 TOOLS: List[Dict[str, Any]] = [
-    {
-        "type": "function",
-        "function": {
-            "name": "list_customers",
-            "description": "Returns customers. Optional: filter with a free-text search on name/surname/email.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "free text (name, surname or email)"},
-                    "limit": {"type": "integer", "description": "max number of rows", "default": 20}
-                }
-            }
-        }
-    },
+    # list_customers_by_name
     {
         "type": "function",
         "function": {
@@ -43,20 +24,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_customer_by_email",
-            "description": "Find a customer by email (unique).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "email": {"type": "string"}
-                },
-                "required": ["email"]
-            }
-        }
-    },
+    # get_customer_by_id
     {
         "type": "function",
         "function": {
@@ -71,20 +39,283 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_customers_by_appointment_id
     {
         "type": "function",
         "function": {
-            "name": "get_customer_addresses",
-            "description": "Find all addresses for a customer by name (possibly full name) or email.",
+            "name": "get_customers_by_appointment_id",
+            "description": "Get a customer by the id of one of their appointments.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "name_or_email": {"type": "string", "description": "e.g. 'Anne Madsen' or 'anne@firma.dk'"}
+                    "appointment_id": {"type": "integer"}
                 },
-                "required": ["name_or_email"]
+                "required": ["appointment_id"]
             }
         }
     },
+    # get_customers_by_address_id
+    {
+        "type": "function",
+        "function": {
+            "name": "get_customers_by_address_id",
+            "description": "Get a customer by the id of one of their addresses",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {"type": "integer"}
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+    # find_address_by_text
+    {
+        "type": "function",
+        "function": {
+            "name": "find_address_by_text",
+            "description": "Search addresses across street name and number, postal code, or city name. Returns list of matching addresses.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "search_text": {"type": "string", 'description': 'is either street name and any relevant numbers, postal code, or city name'}
+                },
+                "required": ["search_text"]
+            }
+        }
+    },
+    # get_addresses_and_preferences_for_customer
+    {
+        'type': 'function',
+        'function': {
+            'name': 'get_addresses_and_preferences_for_customer',
+            'description': 'Gets all addresses and their associated preferences for a specific customer.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'customer_id': {'type': 'integer' }
+                },
+                'required': ['customer_id']
+            }
+        }
+    },
+    # add_prefrences_for_address_id
+    {
+        'type': 'function',
+        'function': {
+            'name': 'add_prefrences_for_address_id',
+            'description': 'Adds additional info about an address to a table.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'address_id': {'type': 'integer' },
+                    'allergies': {'type': 'string'},
+                    'pets': {'type': 'string'},
+                    'kids': {'type': 'string'},
+                    'square_footage': {'type': 'number', 'description': 'Has two decimal spaces'},
+                    'notes': {'type': 'string'}
+                },
+                'required': ['address_id']
+            }
+        }
+    },
+    # delete_preference_by_address_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_preference_by_address_id",
+            "description": "Deletes rows from the preferences table based on the provided address ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": { "type": "integer" }
+                },
+                "required": ["address_id"]
+            }
+        }
+    },    
+    # add_customer
+    {
+        "type": "function",
+        "function": {
+            "name": "add_customer",
+            "description": "Create a new customer with name, surname, and email.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "surname": { "type": "string" },
+                    "email": { "type": "string", "format": "email" }
+                },
+                "required": ["name", "surname", "email"]
+            }
+        }
+    },
+    # add_address
+    {
+        'type': 'function',
+        'function': {
+            'name': 'add_address',
+            'description': 'Create a new address with an steet name, 4 digit postal code, and city name. '
+            'When calling for this tool, also link it to a customer by calling link_customer_to_address.'
+            'If an address with same street name and numbers, postal code, and city name already exists, do not add it again. Instead link the user to the existing address with link_customer_to_address.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'street': { 'type': 'string' },
+                    'postal': { 'type': 'string' },
+                    'city': { 'type': 'string' }
+                },
+                'required': ['steet', 'postal', 'city']
+            }
+        }
+    },
+    # link_customer_to_address
+    {
+        'type': 'function',
+        'function': {
+            'name': 'link_customer_to_address',
+            'description': 'Adds to junction table the id for a customer and id for an address, giving the customer that address',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'customer_id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' }
+                },
+                'required': ['customer_id', 'address_id']
+            }
+        }
+    },
+    # delete_from_lives_in
+    {
+        'type': 'function',
+        'function': {
+            'name': 'delete_from_lives_in',
+            'description': 'When a customer does not live at or belong to an address anymore, this delete a link between the customer and the address from the lives_in junction table.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'customer_id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' }
+                },
+                'required': ['customer_id', 'address_id']
+            }
+        }
+    },
+    # add_appointment
+    {
+        'type': 'function',
+        'function': {
+            'name': 'add_appointment',
+            'description': 'Create a new appointment, with an address id, a date (yyyy-mm-dd) and a time (format like 14:35:55) for the appointment, and optional notes.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'address_id': { 'type': 'integer' },
+                    'date': { 'type': 'string' },
+                    'time': { 'type': 'string' },
+                    'notes': { 'type': 'string' }
+                },
+                'required': ['address_id', 'date', 'time']
+            }
+        }
+    },
+    # update_appointment_by_id
+    {
+        'type': 'function',
+        'function': {
+            'name': 'update_appointment_by_id',
+            'description': 'Update an appointment by its ID. You can update the date, time, and notes.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'id': { 'type': 'integer' },
+                    'address_id': { 'type': 'integer' },
+                    'date': { 'type': 'string' },
+                    'time': { 'type': 'string' },
+                    'notes': { 'type': 'string' }
+                },
+                'required': ['id', 'address_id', 'date', 'time', 'notes']
+            }
+        }
+    },
+    # get_customer_by_email
+    {
+        "type": "function",
+        "function": {
+            'name': 'get_customer_by_email',
+            'description': 'Find a customer and their info from the customer table by their email.',
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string"}
+                },
+                "required": ["email"]
+            }
+        }
+    },
+    # get_address_by_id
+    {
+        'type': 'function',
+        'function': {
+            'name': 'get_address_by_id',
+            'description': 'Get address info from given address id',
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "address_id": {"type": "integer"}
+                },
+                "required": ["address_id"]
+            }
+        }
+    },
+    # get_addresses_by_customer_id
+    {
+        "type": "function",
+        "function": {
+            "name": "get_addresses_by_customer_id",
+            "description": "use a customers id to get all their addresses.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {"type": "integer"}
+                },
+                "required": ["customer_id"]
+            }
+        }
+    },
+    # update_customer_address
+    {
+        "type": "function",
+        "function": {
+            "name": "update_customer_address",
+            "description": "Update the city name, postal code, and street name and number for a given customers address",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {"type": "integer"},
+                    'address_id': {'type': 'integer'},
+                    'city': {'type': 'string', 'description': 'city name'},
+                    'postal': {'type': 'string', 'description': 'a 4 digit postal code'},
+                    'street': {'type': 'string', 'description': 'street name, and street number if needed'}
+                },
+                "required": ["customer_id", 'address_id', 'city', 'postal', 'street']
+            }
+        }
+    },
+    # get_all_appointments
+    {
+        "type": "function",
+        "function": {
+            "name": "get_all_appointments",
+            "description": "Get all appointments in the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    # get_appointments_by_address_id
     {
         "type": "function",
         "function": {
@@ -99,6 +330,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # get_appointment_by_id
     {
         "type": "function",
         "function": {
@@ -113,6 +345,81 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # delete_appointment_by_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_appointment_by_id",
+            "description": "Deletes an appointment from the database based on the provided appointment ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": { "type": "integer" }
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
+    # get_all_services
+    {
+        "type": "function",
+        "function": {
+            "name": "get_all_services",
+            "description": "Get all services available in the database.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    # link_service_to_appointment
+    {
+        "type": "function",
+        "function": {
+            "name": "link_service_to_appointment",
+            "description": "Links a service to an appointment in the junction table.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": {"type": "integer"},
+                    "service_id": {"type": "integer"}
+                },
+                "required": ["appointment_id", "service_id"]
+            }
+        }
+    },
+    # delete_orders_by_appointment_id
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_orders_by_appointment_id",
+            "description": "Deletes all orders associated with a specific appointment ID from the has_ordered junction table.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "appointment_id": { "type": "integer" }
+                },
+                "required": ["appointment_id"]
+            }
+        }
+    },
+    # delete_from_has_ordered
+    {
+        'type': 'function',
+        'function': {
+            'name': 'delete_from_has_ordered',
+            'description': 'When the customer wants to remove a specific service order from their appointment, this deletes that order from the has_ordered junction table.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'appointment_id': { 'type': 'integer' },
+                    'service_id': { 'type': 'integer' }
+                },
+                'required': ['appointment_id', 'service_id']
+            }
+        }
+    },
+    # get_precipitation
     {
         "type": "function",
         "function": {
@@ -124,6 +431,7 @@ TOOLS: List[Dict[str, Any]] = [
             }
         }
     },
+    # choose_case
     {
         "type": 'function',
         'function': {

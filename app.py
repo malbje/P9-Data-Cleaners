@@ -246,7 +246,6 @@ app.register_blueprint(api_calendar_bp)
 app.register_blueprint(api_customers_bp)
 
 
-
 # This means that the app is run, if this file is run
 if __name__ == '__main__':
     """

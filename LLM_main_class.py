@@ -14,7 +14,8 @@ import LLM_prompts
 from backend.service.llm_tools import TOOLS  # Tool definitions for OpenAI function calling - referenced from backend/llm_tools.py
 from backend.service.weather_service import get_precipitation
 import json
-
+import datetime
+ 
 class LLM_Conversation:
     """
     Class to handle a conversation with chat_gpt that can call tools and remember chat history.
@@ -54,13 +55,15 @@ class LLM_Conversation:
 
         temp_messages: list[dict] = self.messages.copy()
 
-        temp_messages.pop() # To remove the last message, which is a list of tool_calls
+        # If the last message has the role of 'tool', or has a list of tool_calls, we need to remove it from temp_messages for this prompt
+        if temp_messages[-1].get("role") == "tool" or temp_messages[-1].get("tool_calls"):
+            temp_messages.pop() # To remove the last message
 
         temp_messages.append({"role": "user", "content": """
-                              Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases, 
-                              then respond only with the name of each case in lower case. The two cases are:
+                              Based on the chat history and your rules-based approtch, categorize the user as belonging to one of these two cases: 
                               1 - name: jonas, defintion: would like appointments to be placed on the day of the week with the least rain.
-                              2 - name: anna_mikkel, definition: would like appointments to be places on the day of the week after the day where it rains the most"""
+                              2 - name: anna_mikkel, definition: would like appointments to be places on the day of the week after the day where it rains the most.
+                              Respond with only the case name: 'jonas' or 'anna_mikkel'."""
                               })
 
         # Ask chat_gpt to choose case
@@ -91,8 +94,8 @@ class LLM_Conversation:
         """
 
         print("called __asking_llm() :D")
-        if LLM_Conversation.tool_use_count >= 10:
-            raise RuntimeError("Using Too Many Tools (10) - Elia")
+        # if LLM_Conversation.tool_use_count >= 10:
+        #    raise RuntimeError("Using Too Many Tools (10) - Elia")
 
         # Now it's time to ask the chat.
         # resp er et objekt af klassen ChatCompletion
@@ -135,8 +138,11 @@ class LLM_Conversation:
                 call_id = call.id
                 call_name = call.function.name
 
-                # Don't ask me, honestly
+                # Dict of arguments for the function call for given tool
                 args = json.loads(call.function.arguments or "{}") #type: ignore
+
+                print(f"Tool's name: {call_name}")
+                print(f"Tool's args: {args}")
 
                 # Gets the diffente words form the list of args (generally)
                 # the '*' before 'keys' says that the function can take any number of string arguments, and packs them together in a tuple
@@ -146,9 +152,7 @@ class LLM_Conversation:
                             return args.get(key)
                     return default
                     
-                if call_name == "list_customers":
-                    result = self.reader.get_all_customers()
-                elif call_name == "list_customers_by_name":
+                if call_name == "list_customers_by_name":
                     # model may pass 'query' or 'name'
                     q = _pick('query', 'name')
                     result = self.reader.search_customers_by_name(q) if q else self.reader.search_customers_by_name(None)
@@ -158,6 +162,8 @@ class LLM_Conversation:
                     surname_v = _pick('surname')
                     email_v = _pick('email')
                     result = self.writer.create_customer(name_v, surname_v, email_v)
+                    if result:
+                        result = 'Success'
                 elif call_name == "add_appointment":
                     # expect address_id, date, time, notes (notes optional)
                     addr = _pick('address_id', 'addressId', 'address')
@@ -169,11 +175,36 @@ class LLM_Conversation:
                     result = self.reader.get_customer_by_email(**args)
                 elif call_name == "get_customer_by_id":
                     result = self.reader.get_customer_by_id(**args)
+                elif call_name == "get_addresses_by_customer_id":
+                    customer_id = _pick('customer_id')
+                    result = self.reader.get_addresses_by_customer_id(customer_id) #type: ignore
+                elif call_name == 'get_addresses_and_preferences_for_customer':
+                    customer_id = _pick('customer_id')
+                    result = self.reader.get_addresses_and_preferences_for_customer(customer_id)
+                elif call_name == "add_prefrences_for_address_id":
+                    address_id = _pick('address_id')
+                    allergies = _pick('allergies')
+                    pets = _pick('pets')
+                    kids = _pick('kids')
+                    square_footage = _pick('square_footage')
+                    notes = _pick('notes')
+                    result = self.writer.add_prefrences_for_address_id(address_id, allergies, pets, kids, square_footage, notes)
+                elif call_name == "delete_preference_by_address_id":
+                    address_id = _pick('address_id')
+                    result = self.writer.delete_preference_by_address_id(address_id)
                 elif call_name == "add_address":
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     city = _pick('city_name', 'city', 'cityName')
                     result = self.writer.create_address(street, postal, city)
+                    if result:
+                        result = 'Success'
+                elif call_name == 'link_customer_to_address':
+                    customer_id = _pick('customer_id')
+                    address_id = _pick('address_id')
+                    result = self.writer.link_customer_to_address(customer_id, address_id)
+                    if result:
+                        result = 'Success'
                 elif call_name == "update_customer_address":
                     # normalize various possible arg names
                     customer_id = _pick('customer_id', 'customerId', 'id')
@@ -182,19 +213,47 @@ class LLM_Conversation:
                     postal = _pick('postal_code', 'postalCode', 'postal')
                     street = _pick('street_and_number', 'street', 'streetAndNumber')
                     result = self.writer.update_customer_address(customer_id, address_id, city, postal, street)
+                elif call_name == "delete_from_lives_in":
+                    customer_id = _pick('customer_id')
+                    address_id = _pick('address_id')
+                    result = self.writer.delete_from_lives_in(customer_id, address_id)
+                elif call_name == "get_all_appointments":
+                    result = self.reader.get_all_appointments()
                 elif call_name == "get_appointments_by_address_id":
                     result = self.reader.get_appointments_by_address_id(**args)
                 elif call_name == "get_appointment_by_id":
                     result = self.reader.get_appointment_by_id(**args)
-                elif call_name == "delete_customer":
-                    cid = _pick('customer_id', 'id')
-                    result = self.writer.delete_customer_by_id(cid)
+                elif call_name == "update_appointment_by_id":
+                    id = _pick('id')
+                    address_id = _pick('address_id')
+                    date = _pick('date')
+                    time = _pick('time')
+                    notes = _pick('notes')
+                    result = self.writer.update_appointment_by_id(id, address_id, date, time, notes)
+                elif call_name == "delete_appointment_by_id":
+                    id = _pick('appointment_id')
+                    result = self.writer.delete_appointment_by_id(id)
+                elif call_name == "get_all_services":
+                    result = self.reader.get_all_services()
+                elif call_name == "link_service_to_appointment":
+                    appointment_id = _pick('appointment_id')
+                    service_id = _pick('service_id')
+                    result = self.writer.link_service_to_appointment(appointment_id, service_id)
+                elif call_name == "delete_from_has_ordered":
+                    appointment_id = _pick('appointment_id')
+                    service_id = _pick('service_id')
+                    result = self.writer.delete_from_has_ordered(appointment_id, service_id)
+                elif call_name == 'delete_orders_by_appointment_id':
+                    appointment_id = _pick('appointment_id')
+                    result = self.writer.delete_orders_by_appointment_id(appointment_id)
                 elif call_name == "get_customers_by_appointment_id":
-                    result = self.reader.get_customers_by_appointment_id(**args)
+                    appointment_id = _pick('appointment_id')
+                    result = self.reader.get_customers_by_appointment_id(appointment_id) #type: ignore
                 elif call_name == "get_customers_by_address_id":
                     result = self.reader.get_customers_by_address_id(**args)
                 elif call_name == "find_address_by_text":
-                    result = self.reader.find_address_by_text(**args)
+                    search_text = _pick('search_text')
+                    result = self.reader.find_address_by_text(search_text) #type: ignore
                 elif call_name == "get_address_by_id":
                     result = self.reader.get_address_by_id(**args)
                 elif call_name == "get_precipitation":
@@ -204,12 +263,20 @@ class LLM_Conversation:
                 else:
                     result = {"error": f"Ukendt funktion: {call_name}"}
                 
+                # This function only called once, right after this definition, in the json.dumps() call
+                def __json_rules_for_serialization(data_object):
+                    if isinstance(data_object, datetime.date): #If date object, make it ISO format string
+                        return data_object.isoformat()
+                    if isinstance(data_object, datetime.timedelta): #If timedelta object, make it ISO format string
+                        return (datetime.datetime.min + data_object).time().isoformat()
+                    return str(data_object)    
+
                 # add the tool result to messages (chat history)
                 self.messages.append({
                     "role": "tool",
                     "tool_call_id": call_id,
                     "name": call_name,
-                    "content": json.dumps(result, ensure_ascii=False)
+                    "content": json.dumps(result, ensure_ascii=False, default=__json_rules_for_serialization)                
                 })
 
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it doesn't want more tool results
