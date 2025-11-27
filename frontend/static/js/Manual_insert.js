@@ -26,9 +26,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const today = now.toISOString().split("T")[0];  // Format: YYYY-MM-DD
     const currentTime = now.toTimeString().slice(0, 5);  // Format: HH:MM
     
-    // Pre-populate booking form with current date/time
-    document.getElementById("create_date").value = today;
-    document.getElementById("create_time").value = currentTime;
+    // Pre-populate booking form fields if they exist (forms were removed from template)
+    const createDateEl = document.getElementById("create_date");
+    const createTimeEl = document.getElementById("create_time");
+    if (createDateEl) createDateEl.value = today;
+    if (createTimeEl) createTimeEl.value = currentTime;
+    // Hidden update fields default (may not exist anymore)
+    const updateDateEl = document.getElementById("update_date");
+    const updateTimeEl = document.getElementById("update_time");
+    if (updateDateEl) updateDateEl.value = today;
+    if (updateTimeEl) updateTimeEl.value = currentTime;
 
     // ========================================================================
     // USER DATA LOADING AND AUTHENTICATION
@@ -48,12 +55,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             const statusData = await statusResponse.json();
             
-            if (statusData.logged_in) {
-                // Pre-populate form fields with user data
-                document.getElementById('create_name').value = statusData.user.name;
-                document.getElementById('create_email').value = statusData.user.email;
-                
-                // Set user's default notification preference in dropdown
+                if (statusData.logged_in) {
+                // Pre-populate form fields with user data if those elements exist
+                const createNameEl = document.getElementById('create_name');
+                const createEmailEl = document.getElementById('create_email');
+                if (createNameEl) createNameEl.value = statusData.user.name;
+                if (createEmailEl) createEmailEl.value = statusData.user.email;
+
+                // Set user's default notification preference in dropdown if present
                 const userPreference = statusData.user.notification_preference;
                 const notificationSelect = document.getElementById('create_notification');
                 if (userPreference && notificationSelect) {
@@ -75,20 +84,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!addressResponse.ok) throw new Error('Failed to fetch addresses');
             const addresses = await addressResponse.json();
             
-            // Populate address dropdowns for both booking forms
+            // Populate address dropdowns for page elements if present. Templates may no longer
+            // include dedicated create/reschedule selects because creation is handled from the
+            // calendar details pane.
             const createAddressSelect = document.getElementById('select_address');
             const rescheduleAddressSelect = document.getElementById('reschedule_address_select');
-            
-            // Generate HTML options for address dropdowns
             const addressOptions = addresses.map(addr => 
                 `<option value="${addr.id}">${addr.street_and_number}, ${addr.postal_code} ${addr.city_name}</option>`
             ).join('');
-
-            // Populate create appointment address dropdown
-            createAddressSelect.innerHTML = addressOptions;
-            
-            // Populate reschedule appointment dropdown with placeholder
-            rescheduleAddressSelect.innerHTML = '<option value="">-- Select an address --</option>' + addressOptions;
+            if (createAddressSelect) createAddressSelect.innerHTML = addressOptions;
+            if (rescheduleAddressSelect) rescheduleAddressSelect.innerHTML = '<option value="">-- Select an address --</option>' + addressOptions;
 
         } catch (error) {
             console.error("Error loading user data:", error);
@@ -177,48 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // ========================================================================
-    // APPOINTMENT BOOKING FORM HANDLING
-    // ========================================================================
-    
-    /**
-     * Handle new appointment creation form submission
-     * Collects form data and sends POST request to create appointment
-     */
-    document.getElementById("form_create").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        // Prepare appointment data from form inputs
-        const appointmentData = {
-            address_id: document.getElementById("select_address").value,
-            date: document.getElementById("create_date").value,
-            time: document.getElementById("create_time").value,
-            notes: document.getElementById("create_service").value,
-            // Placeholder service selection (TODO: implement proper service UI)
-            service_ids: document.getElementById("create_service").value ? [1] : [],
-        };
-
-        // Submit appointment to backend API
-        const response = await fetch("/api/manual_insert", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(appointmentData),
-        });
-
-        if (response.ok) {
-            showMessage("Appointment created successfully.");
-            // Reset form while preserving date/time defaults and user info
-            document.getElementById("form_create").reset();
-            document.getElementById("create_date").value = today;
-            document.getElementById("create_time").value = currentTime;
-            loadUserData(); // Re-populate user information after reset
-            fetchAllAppointments(); // Refresh appointment display
-        } else {
-            const errorData = await response.json();
-            showMessage(`Error: ${errorData.error}`, "error");
-        }
-    });
-
-    // ========================================================================
     // APPOINTMENT DELETION HANDLING
     // ========================================================================
     
@@ -246,52 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ========================================================================
-    // APPOINTMENT RESCHEDULING FUNCTIONALITY
-    // ========================================================================
-    
-    /**
-     * Handle address selection in reschedule form
-     * Populates appointment dropdown with appointments for selected address
-     */
-    document.getElementById('reschedule_address_select').addEventListener('change', async (e) => {
-        const addressId = e.target.value;
-        const appointmentSelect = document.getElementById('update_appointment_select');
-
-        // Reset appointment dropdown if no address selected
-        if (!addressId) {
-            appointmentSelect.innerHTML = '<option value="">-- Select address first --</option>';
-            appointmentSelect.disabled = true;
-            return;
-        }
-
-        try {
-            // Fetch all user appointments
-            const response = await fetch('/api/appointments');
-            if (!response.ok) throw new Error('Failed to fetch appointments');
-            const allAppointments = await response.json();
-            
-            // Filter appointments by selected address
-            const filteredAppointments = allAppointments.filter(appt => appt.address_id == addressId);
-
-            if (filteredAppointments.length > 0) {
-                // Populate dropdown with matching appointments
-                appointmentSelect.innerHTML = '<option value="">-- Select an appointment --</option>';
-                appointmentSelect.innerHTML += filteredAppointments.map(appt => 
-                    `<option value="${appt.id}">${appt.date} at ${appt.time.slice(0, 5)}</option>`
-                ).join('');
-                appointmentSelect.disabled = false;
-            } else {
-                // No appointments found for this address
-                appointmentSelect.innerHTML = '<option value="">-- No appointments at this address --</option>';
-                appointmentSelect.disabled = true;
-            }
-        } catch (error) {
-            console.error('Error fetching appointments for address:', error);
-            appointmentSelect.innerHTML = '<option value="">-- Error loading appointments --</option>';
-            appointmentSelect.disabled = true;
-        }
-    });
 
     // ========================================================================
     // APPLICATION STARTUP
@@ -302,6 +219,137 @@ document.addEventListener("DOMContentLoaded", () => {
      * loadUserData() handles authentication, addresses, and appointments in sequence
      */
     loadUserData();
+    // Initialize the calendar for manual booking view
+    initializeManualCalendar();
 });
+
+/**
+ * Initialize calendar on manual insert page by fetching appointments and
+ * addresses, building apptsByDate map, inserting the calendar skeleton and
+ * wiring callbacks for day click (create) and appointment click (reschedule).
+ */
+async function initializeManualCalendar() {
+    try {
+        // Fetch appointments (DB) for mapping
+        const resp = await fetch('/api/appointments');
+        const appointments = resp.ok ? await resp.json() : [];
+
+        // Build apptsByDate: { 'YYYY-MM-DD': [appts...] }
+        const apptsByDate = {};
+        appointments.forEach(a => {
+            const date = a.date;
+            if (!apptsByDate[date]) apptsByDate[date] = [];
+            apptsByDate[date].push({
+                id: a.id,
+                date: a.date,
+                time: a.time || '00:00',
+                notes: a.notes || '',
+                address: a.address || '',
+                address_id: a.address_id || a.address_id,
+                service_names: a.service_names || '',
+                _source: 'DB'
+            });
+        });
+
+        // Fetch address preferences to show in calendar details and provide address list
+        let prefsByAddressString = {};
+        let addressesList = [];
+        try {
+            const addrResp = await fetch('/api/user/addresses-with-preferences');
+            if (addrResp.ok) {
+                const addrs = await addrResp.json();
+                addressesList = addrs || [];
+                addrs.forEach(a => {
+                    const key = `${a.street_and_number}, ${a.postal_code} ${a.city_name}`;
+                    prefsByAddressString[key] = Object.assign({}, a, { id: a.id });
+                });
+            }
+        } catch (e) { console.warn('Could not fetch address prefs:', e); }
+
+        // Render calendar skeleton into page container
+        const container = document.getElementById('manual-calendar-container');
+        if (!container) return;
+        const skeleton = (window.getCalendarSkeleton && typeof window.getCalendarSkeleton === 'function')
+            ? window.getCalendarSkeleton()
+            : '<div class="calendar-widget"><p>Calendar not available.</p></div>';
+        container.innerHTML = skeleton;
+
+        // Attach calendar behavior with callbacks
+        if (window.attachAppointmentsCalendar && typeof window.attachAppointmentsCalendar === 'function') {
+            window.attachAppointmentsCalendar(apptsByDate, prefsByAddressString, {
+                onDayClick: (dateStr, list) => {
+                    // Page now uses calendar details for creation. Notify user instead
+                    showMessage(`Selected ${dateStr}. Use the calendar details to create an appointment.`, 'success');
+                },
+                editable: true,
+                addresses: addressesList,
+                onAppointmentUpdate: async (appt, updated) => {
+                    // PUT updated appointment to backend and refresh calendar on success
+                    if (!appt || !appt.id) {
+                        showMessage('Cannot update this appointment.', 'error');
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/api/appointments/${appt.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updated)
+                        });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            showMessage(`Error updating appointment: ${err.error || res.statusText}`, 'error');
+                            return;
+                        }
+                        showMessage('Appointment updated successfully.', 'success');
+                        // Re-initialize calendar to pick up changes
+                        initializeManualCalendar();
+                    } catch (err) {
+                        console.error('Update failed:', err);
+                        showMessage('Failed to update appointment.', 'error');
+                    }
+                },
+                onAppointmentClick: (appt) => {
+                    // Instead of filling removed reschedule form, instruct user to use the
+                    // calendar details pane which now contains edit/reschedule controls.
+                    if (!appt || !appt.id) { showMessage('This event cannot be rescheduled from manual UI.', 'error'); return; }
+                    showMessage(`Selected appointment #${appt.id}. Use the calendar details to edit or reschedule.`, 'success');
+                }
+                ,
+                onCreateAppointment: async (payload) => {
+                    // Expect payload: { date, time, address_id, service_names, notes }
+                    try {
+                        // Map to backend manual insert payload
+                        const createPayload = {
+                            address_id: payload.address_id,
+                            date: payload.date,
+                            time: payload.time,
+                            notes: payload.notes,
+                            service_ids: payload.service_names ? [1] : []
+                        };
+                        const res = await fetch('/api/manual_insert', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(createPayload)
+                        });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            showMessage(`Error creating appointment: ${err.error || res.statusText}`, 'error');
+                            return;
+                        }
+                        showMessage('Appointment created successfully.', 'success');
+                        // Refresh both calendar and appointment list
+                        initializeManualCalendar();
+                        fetchAllAppointments();
+                    } catch (err) {
+                        console.error('Create appointment failed:', err);
+                        showMessage('Failed to create appointment.', 'error');
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Calendar init error:', err);
+    }
+}
 
 

@@ -28,7 +28,7 @@ Last Modified: [Current Date]
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ Data Cleaners - Manual Mode</title>
+    <title> Data Cleaners - Manual Mode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -61,6 +61,15 @@ Last Modified: [Current Date]
             <!-- Message display area for form feedback -->
             <div id="message-container"></div>
 
+            <!-- Calendar container (replaces direct date/time inputs) -->
+            <div class="card">
+                <h2>Calendar</h2>
+                <div id="manual-calendar-container">
+                    <!-- Calendar skeleton injected by JS -->
+                    <p>Loading calendar…</p>
+                </div>
+            </div>
+
             <!-- Current appointments display section -->
             <div class="card">
                 <h2> Current Appointments</h2>
@@ -72,134 +81,6 @@ Last Modified: [Current Date]
 
             <hr>
 
-            <!-- Forms grid layout for booking and rescheduling -->
-            <div class="forms-grid">
-                <!-- NEW APPOINTMENT BOOKING FORM -->
-                <div class="card">
-                    <h2>Book Appointment</h2>
-                    <form id="form_create">
-                        <!-- Address selection dropdown -->
-                        <div class="form-group">
-                            <label for="select_address">Address</label>
-                            <select id="select_address" required>
-                                <!-- Options populated by JavaScript from API -->
-                                <option value="">Loading addresses...</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Customer information row -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                 <label for="create_name">Customer Name</label>
-                                <input type="text" id="create_name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="create_email">Customer Email</label>
-                                <input type="email" id="create_email">
-                            </div>
-                        </div>
-                        
-                        <!-- Date and time selection row -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="create_date">Date</label>
-                                <input type="date" id="create_date" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="create_time">Time</label>
-                                <input type="time" id="create_time" required>
-                            </div>
-                        </div>
-                        <!-- Service selection textarea -->
-                        <div class="form-group">
-                            <label for="create_services">Services</label>
-                            <textarea id="create_services" rows="2" placeholder="e.g., Standard Cleaning, Window Cleaning"></textarea>
-                        </div>
-                        
-                        <!-- Special notes/instructions textarea -->
-                        <div class="form-group">
-                            <label for="create_notes">Notes</label>
-                            <textarea id="create_notes" rows="2" placeholder="e.g., Please focus on the kitchen"></textarea>
-                        </div>
-                        
-                        <!-- Notification preference dropdown -->
-                        <div class="form-group">
-                            <label for="create_notification">Notification Preference</label>
-                            <select id="create_notification">
-                                <option value="none">No notification</option>
-                                <option value="1 hour before">1 hour before</option>
-                                <option value="3 hours before">3 hours before</option>
-                                <option value="24 hours before">24 hours before</option>
-                                <option value="3 days before">3 days before</option>
-                                <option value="1 week before">1 week before</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Submit button for new appointment -->
-                        <button type="submit">Book Appointment</button>
-                    </form>
-                </div>
-
-                <!-- APPOINTMENT RESCHEDULING FORM -->
-                <div class="card">
-                    <h2> Reschedule Appointment</h2>
-                    <form id="form_update">
-                        <!-- Address selection for existing appointments -->
-                        <div class="form-group">
-                            <label for="reschedule_address_select">Customer Address</label>
-                            <select id="reschedule_address_select" required>
-                                <!-- Options populated by JavaScript -->
-                                <option value="">-- Select an address --</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Appointment selection (filtered by address) -->
-                        <div class="form-group">
-                            <label for="update_appointment_select">Select Appointment to Reschedule</label>
-                            <select id="update_appointment_select" required disabled>
-                                <!-- Enabled after address selection -->
-                                <option value="">-- Enter address first --</option>
-                            </select>
-                        </div>
-                        
-                        <hr class="form-divider">
-                        
-                        <!-- New date and time selection -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="update_date">New Date</label>
-                                <input type="date" id="update_date" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="update_time">New Time</label>
-                                <input type="time" id="update_time" required>
-                            </div>
-                        </div>
-                        
-                        <!-- Updated notification preference -->
-                         <div class="form-group">
-                            <label for="update_notification">Notification Preference</label>
-                            <select id="update_notification">
-                                <option value="No notification">No notification</option>
-                                <option value="1 hour before">1 hour before</option>
-                                <option value="3 hours before">3 hours before</option>
-                                <option value="24 hours before">24 hours before</option>
-                                <option value="3 days before">3 days before</option>
-                                <option value="1 week before">1 week before</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Updated service/notes information -->
-                        <div class="form-group">
-                            <label for="update_service">Service / Notes</label>
-                            <textarea id="update_service" rows="3"></textarea>
-                        </div>
-                        
-                        <!-- Submit button for rescheduling -->
-                        <button type="submit">Reschedule</button>
-                    </form>
-                </div>
-            </div>
         </div>
     </div>
     
@@ -254,6 +135,7 @@ Last Modified: [Current Date]
     </script>
     
     <!-- Main manual booking functionality script -->
+    <script src="{{ url_for('static', filename='js/calendar_widget.js') }}"></script>
     <script src="{{ url_for('static', filename='js/Manual_insert.js') }}"></script>
 </body>
 </html>

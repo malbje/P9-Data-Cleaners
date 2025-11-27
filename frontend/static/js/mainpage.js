@@ -33,13 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ========================================================================
-    // WEATHER WIDGET
-    // ============================================================================
-    function handleWeatherClick() {
-        openWidget('weather', 'Weather Information', generateWeatherContent());
-    }
-
-    // ========================================================================
     // APPOINTMENTS WIDGET
     // ============================================================================
     async function handleAppointmentsClick() {
@@ -267,17 +260,17 @@ document.addEventListener("DOMContentLoaded", () => {
             merged.forEach(pair => {
                 // If there is a DB appointment, prefer its date/time for grouping
                 const dbAppt = pair.appointment;
-                const g = pair.google;
+                const gAppt = pair.google;
                 if (dbAppt) {
                     const d = dbAppt.date; // YYYY-MM-DD
                     const time = dbAppt.time ? dbAppt.time.slice(0,5) : '00:00';
                     pushAppt(d, Object.assign({}, dbAppt, {
-                        _source: g && dbAppt ? (pair.matched ? 'Both' : 'DB') : 'DB'
+                        _source: gAppt && dbAppt ? (pair.matched ? 'Both' : 'DB') : 'DB'
                     }));
                 }
-                if (g) {
+                if (gAppt) {
                     // Google event: extract date and time from start (could be date-only or dateTime)
-                    const startStr = g.start || '';
+                    const startStr = gAppt.start || '';
                     let dateOnly = startStr.slice(0,10);
                     let timeOnly = '';
                     if (startStr.includes('T')) {
@@ -286,16 +279,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         timeOnly = t.slice(0,5);
                     }
                     // Create a DB-like representation so UI can reuse rendering
-                    const synthetic = {
-                        id: g.id || `g-${Math.random().toString(36).slice(2,8)}`,
+                    const syntheticDataFormat = {
+                        id: gAppt.id || `g-${Math.random().toString(36).slice(2,8)}`,
                         date: dateOnly,
                         time: timeOnly || '00:00',
-                        notes: g.description || '',
-                        address: g.location || '',
-                        service_names: g.summary || 'Google Event',
+                        notes: gAppt.description || '',
+                        address: gAppt.location || '',
+                        service_names: gAppt.summary || 'Google Event',
                         _source: dbAppt && pair.matched ? 'Both' : 'Google'
                     };
-                    pushAppt(dateOnly, synthetic);
+                    pushAppt(dateOnly, syntheticDataFormat);
                 }
             });
 
@@ -317,193 +310,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.warn('Could not load address preferences:', err);
             }
 
-            // Calendar view state
-            const today = new Date();
-            let viewYear = today.getFullYear();
-            let viewMonth = today.getMonth(); // 0-11
-
-            // Calendar HTML structure (month navigation, grid, and details)
-            const content = `
-                <div class="calendar-widget">
-                    <div class="cal-header">
-                        <button id="cal-prev" class="cal-nav" aria-label="Previous month">‹</button>
-                        <div id="cal-month-year" class="cal-title"></div>
-                        <button id="cal-next" class="cal-nav" aria-label="Next month">›</button>
+            // Calendar rendering is delegated to the reusable calendar widget.
+            const content = (window.getCalendarSkeleton && typeof window.getCalendarSkeleton === 'function')
+                ? window.getCalendarSkeleton()
+                : `
+                    <div class="calendar-widget">
+                        <div class="cal-header">
+                            <button id="cal-prev" class="cal-nav" aria-label="Previous month">‹</button>
+                            <div id="cal-month-year" class="cal-title"></div>
+                            <button id="cal-next" class="cal-nav" aria-label="Next month">›</button>
+                        </div>
+                        <div id="cal-grid" class="cal-grid"></div>
+                        <div id="cal-day-appointments" class="cal-day-appointments"><em>Select a day to see appointments</em></div>
                     </div>
-                    <div id="cal-grid" class="cal-grid"></div>
-                    <div id="cal-day-appointments" class="cal-day-appointments"><em>Select a day to see appointments</em></div>
-                </div>
-                <!-- Calendar styles moved to frontend/static/css/style.css for maintainability -->
-            `;
+                `;
 
-            // Open modal with calendar skeleton
             openWidget('appointments', 'Upcoming Appointments', content);
 
-            // Helper utilities
-            const pad = (n) => n.toString().padStart(2, '0');
-
-            // Render calendar month into DOM
-            function renderCalendar(year, month) {
-                const monthStart = new Date(year, month, 1);
-                const monthName = monthStart.toLocaleString(undefined, { month: 'long' });
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const startWeekday = monthStart.getDay(); // 0 = Sunday
-
-                const grid = document.getElementById('cal-grid');
-                const title = document.getElementById('cal-month-year');
-                title.textContent = `${monthName} ${year}`;
-
-                // Weekday headers
-                const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-                let html = '';
-                weekdays.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
-
-                // Empty cells for previous month
-                for (let i = 0; i < startWeekday; i++) {
-                    html += `<div class="cal-day disabled"></div>`;
+            // Attach behavior provided by calendar_widget; pass prepared data structures
+            if (window.attachAppointmentsCalendar && typeof window.attachAppointmentsCalendar === 'function') {
+                try {
+                    window.attachAppointmentsCalendar(apptsByDate, prefsByAddressString || {});
+                } catch (err) {
+                    console.error('Failed to attach calendar widget:', err);
                 }
-
-                // Days
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
-                    const has = Array.isArray(apptsByDate[dateStr]) && apptsByDate[dateStr].length > 0;
-                    const isToday = (new Date().toISOString().slice(0,10) === dateStr);
-                    html += `
-                        <div class="cal-day ${has? 'has-appt':''} ${isToday? 'today':''}" data-date="${dateStr}">
-                            <div class="date-num">${day}</div>
-                            ${has? '<div class="dot" aria-hidden="true"></div>' : ''}
-                        </div>
-                    `;
-                }
-
-                grid.innerHTML = html;
-
-                // Attach click listeners to days; only days with appointments are selectable
-                grid.querySelectorAll('.cal-day').forEach(el => {
-                    if (el.classList.contains('disabled')) return;
-                    if (!el.classList.contains('has-appt')) {
-                        // mark visually as not having appointments (lighter interaction)
-                        el.classList.add('no-appt');
-                        return;
-                    }
-                    el.addEventListener('click', () => {
-                        // clear previous selection
-                        grid.querySelectorAll('.cal-day.selected').forEach(s => s.classList.remove('selected'));
-                        // mark this day selected and show details
-                        el.classList.add('selected');
-                        const ds = el.getAttribute('data-date');
-                        showAppointmentsForDate(ds);
-
-                        // Auto-scroll the details pane into view so the user sees
-                        // the appointment information without manual scrolling.
-                        // Use smooth behavior for a nicer UX.
-                        const details = document.getElementById('cal-day-appointments');
-                        if (details && typeof details.scrollIntoView === 'function') {
-                            // If the modal body provides its own scrolling, this will
-                            // bring the details into view within the modal.
-                            try {
-                                details.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            } catch (e) {
-                                // Fallback for older browsers/environments
-                                details.scrollIntoView();
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Show appointments for a specific date in the details pane
-            function showAppointmentsForDate(dateStr) {
+            } else {
+                // Fallback: if widget isn't loaded, just render a plain list of dates
                 const container = document.getElementById('cal-day-appointments');
-                const list = apptsByDate[dateStr] || [];
-                if (list.length === 0) {
-                    container.innerHTML = `<em>No appointments on ${dateStr}.</em>`;
-                    return;
-                }
-                let html = `<h4>Appointments on ${dateStr}</h4>`;
-                html += '<div class="appt-list">';
-                list.forEach(a => {
-                    const prefs = prefsByAddressString[a.address] || null;
-                    html += `
-                        <div class="appt-item">
-                            <div><strong>${a.service_names || 'General Cleaning'}</strong> — ${a.time.slice(0,5)}</div>
-                            <div class="small">📍 ${a.address}</div>
-                            <div class="small">🔗 Source: ${a._source || 'DB'}</div>
-                            ${a.notes? `<div class="small">Notes: ${a.notes}</div>` : ''}
-                            ${prefs ? `
-                                <div class="small" style="margin-top:0.5rem"><strong>Preferences:</strong></div>
-                                <ul class="small" style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">
-                                    <li>Allergies: ${prefs.allergies || 'None specified'}</li>
-                                    <li>Pets: ${prefs.pets || 'None specified'}</li>
-                                    <li>Kids: ${prefs.kids || 'None specified'}</li>
-                                    <li>Size: ${prefs.square_footage ? prefs.square_footage + ' m²' : 'Not specified'}</li>
-                                    <li>Notes: ${prefs.preference_notes || 'None'}</li>
-                                </ul>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            }
-            
-
-            // Month navigation handlers
-            document.getElementById('cal-prev').addEventListener('click', () => {
-                viewMonth -= 1;
-                if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
-                renderCalendar(viewYear, viewMonth);
-                document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
-
-                // Ensure the calendar header is visible after changing months.
-                // The modal body is the scrollable container, so scroll it to top.
-                const modalBody = document.getElementById('modal-body');
-                if (modalBody) {
-                    try {
-                        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
-                    } catch (e) {
-                        modalBody.scrollTop = 0;
-                    }
-                }
-            });
-            document.getElementById('cal-next').addEventListener('click', () => {
-                viewMonth += 1;
-                if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
-                renderCalendar(viewYear, viewMonth);
-                document.getElementById('cal-day-appointments').innerHTML = '<em>Select a day to see appointments</em>';
-
-                // Scroll modal body to top so the month navigation remains reachable
-                const modalBody = document.getElementById('modal-body');
-                if (modalBody) {
-                    try {
-                        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
-                    } catch (e) {
-                        modalBody.scrollTop = 0;
-                    }
-                }
-            });
-
-            // Initial render
-            renderCalendar(viewYear, viewMonth);
-
-            // Auto-select today's date if it has appointments
-            const todayStr = new Date().toISOString().slice(0,10);
-            if (apptsByDate[todayStr]) {
-                const todayEl = document.querySelector(`.cal-day[data-date="${todayStr}"]`);
-                if (todayEl) {
-                    // ensure selected class and show details
-                    todayEl.classList.add('selected');
-                    showAppointmentsForDate(todayStr);
-
-                    // Scroll the details into view when auto-selecting today
-                    const details = document.getElementById('cal-day-appointments');
-                    if (details && typeof details.scrollIntoView === 'function') {
-                        try {
-                            details.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        } catch (e) {
-                            details.scrollIntoView();
-                        }
-                    }
+                if (container) {
+                    container.innerHTML = '<p>Calendar not available.</p>';
                 }
             }
 
