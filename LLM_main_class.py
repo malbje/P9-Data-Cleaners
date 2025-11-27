@@ -279,6 +279,8 @@ class LLM_Conversation:
                     "content": json.dumps(result, ensure_ascii=False, default=__json_rules_for_serialization)                
                 })
 
+                print(f'Tool result {result}')
+
             # Recursion. Calls asking_llm to prompt chat_gpt until tools_used = None and it doesn't want more tool results
             self.__asking_llm()
 
@@ -336,6 +338,6 @@ if __name__ == "__main__":
         # Get response from assistant
         response: str = chatbot.ask_llm(user_input)
 
-        print(f"The whole chat history: {chatbot.messages}")
+        # print(f"The whole chat history: {chatbot.messages}")
 
         print(f"\nAssistent: {response}\n")
