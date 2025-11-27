@@ -6,6 +6,8 @@
 # but it's a class to each chat-gpt conversation can remember it's own chat history with all the tool calls.
 # ---------------------------------------------
 
+what of this line
+
 from openai import OpenAI
 import private_settings  # Contains OPENAI_API_KEY - referenced from private_settings.py
 from database.DB_read import DB_read
