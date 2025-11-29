@@ -254,6 +254,6 @@ if __name__ == '__main__':
     
     Note: Change debug=False for production deployment
     """
-    chatbot = LLM_Conversation()  # Initialize chatbot instance
+    chatbot = LLM_Conversation(session['user_id'])  # Initialize chatbot instance
 
     app.run(debug=True)

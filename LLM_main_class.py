@@ -28,7 +28,7 @@ class LLM_Conversation:
     tool_use_count: int = 0
     
     # Constructor
-    def __init__(self):
+    def __init__(self, user_id: int | None = None):
         """
         Constructor for LLM_Conversation class.
         Initializes Chat_GPT client, Database access, and chat history with rules and case.
@@ -47,6 +47,18 @@ class LLM_Conversation:
         
         # A conversation needs a case
         self.messages.append({"role": "system", "content": LLM_prompts.case_anna_mikkel})
+
+        # The id of the loggen in user
+        self.messages.append({"role": "system", "content": f"The user has id: {user_id}"})
+
+    def give_user_id(self, user_id: int) -> None:
+        """
+        The user's id is changed in the chat history, as the third message in the list
+        Because the user's id is also given to the constructor, this method is only for if the user changes during a session.
+
+        Args: The id of the logged in user
+        """
+        self.messages[2]['content'] = f"The user has id: {user_id}"
 
     # Method for tool that prompts chat to change intent.
     def choose_case(self) -> str | None:
@@ -320,7 +332,9 @@ if __name__ == "__main__":
     print("=== DataCleaners Interactive Assistant ===")
     print("Skriv 'exit' for at afslutte\n")
 
-    chatbot = LLM_Conversation()
+    chatbot = LLM_Conversation(user_id = 1)
+
+    chatbot.give_user_id(2)
 
     while True:
         # Get user input
