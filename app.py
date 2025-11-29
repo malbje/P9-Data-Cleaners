@@ -194,7 +194,13 @@ def api_chat():
     if not user_message:
         return jsonify({"reply": "Skriv noget, så hjælper jeg dig 😊"})
 
-    # Asking chat_gpt for a reply
+    # Asking chat_gpt for a reply:
+
+    # changes the chat the user's id. 
+    # Yes this is called needlessly everytime a message is sent. Idc to change that rn. 
+    # I guess irl the login POST should handle creating a 'session chat' with changen ID' -Elia
+    chatbot.change_user_id(session['user_id'])
+
     reply = chatbot.ask_llm(user_message)
 
     return jsonify({"reply": reply})
@@ -254,6 +260,6 @@ if __name__ == '__main__':
     
     Note: Change debug=False for production deployment
     """
-    chatbot = LLM_Conversation(session['user_id'])  # Initialize chatbot instance
+    chatbot = LLM_Conversation()  # Initialize chatbot instance
 
     app.run(debug=True)

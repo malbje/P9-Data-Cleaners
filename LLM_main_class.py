@@ -51,7 +51,7 @@ class LLM_Conversation:
         # The id of the loggen in user
         self.messages.append({"role": "system", "content": f"The user has id: {user_id}"})
 
-    def give_user_id(self, user_id: int) -> None:
+    def change_user_id(self, user_id: int) -> None:
         """
         The user's id is changed in the chat history, as the third message in the list
         Because the user's id is also given to the constructor, this method is only for if the user changes during a session.
@@ -333,8 +333,6 @@ if __name__ == "__main__":
     print("Skriv 'exit' for at afslutte\n")
 
     chatbot = LLM_Conversation(user_id = 1)
-
-    chatbot.give_user_id(2)
 
     while True:
         # Get user input
