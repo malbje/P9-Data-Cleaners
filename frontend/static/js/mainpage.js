@@ -223,8 +223,151 @@ document.addEventListener("DOMContentLoaded", () => {
     // ========================================================================
     // WEATHER CONTENT
     // ============================================================================
-    function generateWeatherContent() {
-        return `<p>Weather data coming soon 🌤</p>`;
+    async function handleWeatherClick() {
+        const content = await generateWeatherContent();
+        openWidget('weather', 'Weather Forecast', content);
+    }
+
+    async function generateWeatherContent() {
+        try {
+            const response = await fetch('/api/weather');
+            const weatherData = response.json();
+
+            if (!response.ok || !weatherData) {
+                return `
+                    <div class="weather-error">
+                        <p>❌ Could not load weather data. Please try again later.</p>
+                    </div>
+                `;
+            }
+
+            const data = await weatherData;
+            
+            // Check if we have forecast data
+            if (!data.data || !data.data.daily) {
+                return `
+                    <div class="weather-error">
+                        <p>⚠️ No forecast data available at this time.</p>
+                    </div>
+                `;
+            }
+
+            const daily = data.data.daily;
+            const dates = daily.time || [];
+            const temps_max = daily.temperature_2m_max || [];
+            const temps_min = daily.temperature_2m_min || [];
+            const precipitation = daily.precipitation_sum || [];
+            const weathercodes = daily.weathercode || [];
+
+            // Weather code descriptions (WMO Weather interpretation codes)
+            const weatherDescriptions = {
+                0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+                45: 'Foggy', 48: 'Foggy',
+                51: 'Light Drizzle', 53: 'Moderate Drizzle', 55: 'Dense Drizzle',
+                61: 'Slight Rain', 63: 'Moderate Rain', 65: 'Heavy Rain',
+                71: 'Slight Snow', 73: 'Moderate Snow', 75: 'Heavy Snow',
+                80: 'Slight Showers', 81: 'Moderate Showers', 82: 'Heavy Showers',
+                85: 'Slight Snow Showers', 86: 'Heavy Snow Showers',
+                95: 'Thunderstorm', 96: 'Thunderstorm w/ Hail', 99: 'Thunderstorm w/ Hail'
+            };
+
+            // Weather icons mapping
+            const weatherIcons = {
+                0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+                45: '🌫️', 48: '🌫️',
+                51: '🌦️', 53: '🌧️', 55: '🌧️',
+                61: '🌧️', 63: '🌧️', 65: '⛈️',
+                71: '🌨️', 73: '🌨️', 75: '❄️',
+                80: '🌧️', 81: '⛈️', 82: '⛈️',
+                85: '🌨️', 86: '❄️',
+                95: '⛈️', 96: '⛈️', 99: '⛈️'
+            };
+
+            let forecastHTML = `
+                <div class="weather-container">
+                    <div class="weather-header">
+                        <h3>📍 7-Day Forecast for Aalborg, Denmark</h3>
+                        <p class="weather-provider">Data provided by Open-Meteo</p>
+                    </div>
+                    <div class="forecast-grid">
+            `;
+
+            // Generate forecast cards for each day
+            dates.slice(0, 7).forEach((date, index) => {
+                const dateObj = new Date(date);
+                const dayName = dateObj.toLocaleDateString('da-DK', { weekday: 'short' });
+                const dayDate = dateObj.toLocaleDateString('da-DK', { month: 'short', day: 'numeric' });
+                
+                const maxTemp = temps_max[index] || 'N/A';
+                const minTemp = temps_min[index] || 'N/A';
+                const precip = precipitation[index] || 0;
+                const code = weathercodes[index] || 3;
+                const icon = weatherIcons[code] || '🌤️';
+                const description = weatherDescriptions[code] || 'Unknown';
+
+                forecastHTML += `
+                    <div class="forecast-card">
+                        <div class="forecast-day">
+                            <strong>${dayName}</strong>
+                            <small>${dayDate}</small>
+                        </div>
+                        <div class="forecast-icon">${icon}</div>
+                        <div class="forecast-condition">${description}</div>
+                        <div class="forecast-temps">
+                            <span class="temp-max">${Math.round(maxTemp)}°</span>
+                            <span class="temp-separator">/</span>
+                            <span class="temp-min">${Math.round(minTemp)}°</span>
+                        </div>
+                        ${precip > 0 ? `<div class="forecast-precip">💧 ${precip}mm</div>` : ''}
+                    </div>
+                `;
+            });
+
+            forecastHTML += `
+                    </div>
+                </div>
+                <style>
+                    .weather-container { padding: 1.5em; }
+                    .weather-header { text-align: center; margin-bottom: 1.5em; }
+                    .weather-header h3 { margin: 0 0 0.5em 0; color: #333; }
+                    .weather-provider { margin: 0; color: #999; font-size: 0.9em; }
+                    .weather-error { padding: 2em; text-align: center; color: #dc3545; }
+                    .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1em; }
+                    .forecast-card { 
+                        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                        border-radius: 12px; 
+                        padding: 1em; 
+                        text-align: center;
+                        border: 2px solid #90caf9;
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .forecast-card:hover { 
+                        transform: translateY(-4px);
+                        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+                    }
+                    .forecast-day { margin-bottom: 0.5em; }
+                    .forecast-day strong { display: block; color: #1976d2; font-size: 1.1em; }
+                    .forecast-day small { color: #666; font-size: 0.85em; }
+                    .forecast-icon { font-size: 2.5em; margin: 0.5em 0; }
+                    .forecast-condition { font-size: 0.9em; color: #444; margin-bottom: 0.5em; min-height: 2.4em; display: flex; align-items: center; justify-content: center; }
+                    .forecast-temps { font-size: 1.2em; font-weight: bold; margin: 0.5em 0; }
+                    .temp-max { color: #d32f2f; }
+                    .temp-separator { color: #999; margin: 0 0.25em; }
+                    .temp-min { color: #1976d2; }
+                    .forecast-precip { font-size: 0.85em; color: #0277bd; margin-top: 0.5em; }
+                </style>
+            `;
+
+            return forecastHTML;
+
+        } catch (error) {
+            console.error("Error loading weather:", error);
+            return `
+                <div class="weather-error">
+                    <p>❌ Error loading weather data: ${error.message}</p>
+                </div>
+            `;
+        }
     }
 
     // ========================================================================
@@ -302,6 +445,44 @@ document.addEventListener("DOMContentLoaded", () => {
             const startIso = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const endIso = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
             const response = await fetch(`/api/calendar/combined?start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
+            
+            // Check for auth required error
+            if (response.status === 401) {
+                const data = await response.json();
+                if (data.error === 'google_auth_required') {
+                    openWidget('appointments', 'Google Calendar Authorization Required', `
+                        <div class="auth-required-container">
+                            <div class="auth-icon">🔐</div>
+                            <h3>Google Calendar Authorization Required</h3>
+                            <p>We need to renew your Google Calendar access to show your appointments.</p>
+                            <p>Click the button below to authorize:</p>
+                            <a href="/calendar/connect" class="auth-btn">Authorize Google Calendar</a>
+                            <p class="auth-note">You will be redirected to Google to grant access, then returned here.</p>
+                        </div>
+                        <style>
+                            .auth-required-container { text-align: center; padding: 2em; }
+                            .auth-icon { font-size: 3em; margin-bottom: 1em; }
+                            .auth-required-container h3 { color: #333; margin: 1em 0; }
+                            .auth-required-container p { color: #666; margin: 0.8em 0; }
+                            .auth-btn { 
+                                display: inline-block; 
+                                background-color: #4285F4; 
+                                color: white; 
+                                padding: 0.8em 2em; 
+                                border-radius: 6px; 
+                                text-decoration: none; 
+                                font-weight: bold;
+                                margin: 1em 0;
+                                transition: background-color 0.3s;
+                            }
+                            .auth-btn:hover { background-color: #357ae8; }
+                            .auth-note { font-size: 0.9em; color: #999; margin-top: 1.5em; }
+                        </style>
+                    `);
+                    return;
+                }
+            }
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch combined calendar data');
             }

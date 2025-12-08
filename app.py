@@ -10,13 +10,16 @@
 # IMPORTS AND DEPENDENCIES
 # ============================================================================
 
+# Allow HTTP for OAuth2 in development (NOT for production!)
+import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database.DB_access import get_connection
 from LLM_main_class import LLM_Conversation # Import LLM_Conversation class
 # Sørg for at db-importstien er korrekt
 import backend.service.database_logic as db 
 from database.DB_write import DB_write
-import os # For environment variable access
 import private_settings as ps
 
 
@@ -194,13 +197,7 @@ def api_chat():
     if not user_message:
         return jsonify({"reply": "Skriv noget, så hjælper jeg dig 😊"})
 
-    # Asking chat_gpt for a reply:
-
-    # changes the chat the user's id. 
-    # Yes this is called needlessly everytime a message is sent. Idc to change that rn. 
-    # I guess irl the login POST should handle creating a 'session chat' with changen ID' -Elia
-    chatbot.change_user_id(session['user_id'])
-
+    # Asking chat_gpt for a reply
     reply = chatbot.ask_llm(user_message)
 
     return jsonify({"reply": reply})
@@ -235,21 +232,36 @@ def api_weather():
         user-facing widgets.
     
     How:
-        Calls get_weather_data() from backend/service/weather_service.py,
+        Calls get_forecast() from backend/service/weather_service.py,
         which handles both DMI and fallback APIs (Open-Meteo).
         Returns the structured JSON data to the frontend for rendering.
     """
-    # 🟢 Fetch latest weather data using helper function
-    data = get_precipitation()
-    
-    # 🟢 Convert the Python dict to JSON and send it back to the browser
-    return jsonify(data)
+    try:
+        # 🟢 Fetch latest weather forecast data using helper function
+        forecast = get_forecast()
+        
+        if forecast is None:
+            return jsonify({
+                "error": "Could not fetch weather data",
+                "provider": None,
+                "data": None
+            }), 500
+        
+        # 🟢 Convert the Python dict to JSON and send it back to the browser
+        return jsonify(forecast)
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "provider": None,
+            "data": None
+        }), 500
 
 
 app.register_blueprint(api_auth_bp)
 app.register_blueprint(api_data_bp)
 app.register_blueprint(api_calendar_bp)
 app.register_blueprint(api_customers_bp)
+
 
 
 # This means that the app is run, if this file is run

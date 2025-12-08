@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for
 import backend.service.database_logic as db
 from backend.service import calendar as gcal
 from backend.service import merge as merge_service
+import logging
+from google.auth.exceptions import RefreshError
 
+logger = logging.getLogger(__name__)
 api_calendar_bp = Blueprint('calendar_api', __name__, url_prefix='')
 
 
@@ -11,6 +14,13 @@ def api_calendar_combined():
     """Return merged list of Google Calendar events and DB appointments.
 
     Query params: start, end (ISO datetimes). If omitted, defaults to next 7 days.
+    
+    Special response when token is invalid:
+    {
+        "error": "google_auth_required",
+        "message": "Google Calendar authorization required",
+        "auth_url": "/calendar/connect"
+    }
     """
     start = request.args.get('start')
     end = request.args.get('end')
@@ -26,11 +36,20 @@ def api_calendar_combined():
     else:
         end_iso = end
 
+    google_events = []
     try:
         google_events = gcal.fetch_google_events(start_iso, end_iso)
+    except RefreshError as e:
+        # Token is invalid/expired - return special error code
+        logger.warning("Google token refresh failed: %s", str(e))
+        return jsonify({
+            "error": "google_auth_required",
+            "message": "Google Calendar authorization required",
+            "auth_url": "/calendar/connect"
+        }), 401
     except Exception as e:
-        # If Google fetch fails, still try to return DB appointments
-        api_calendar_bp.logger.exception("Google fetch failed")
+        # If Google fetch fails for other reasons, still try to return DB appointments
+        logger.exception("Google fetch failed: %s", str(e))
         google_events = []
 
     # Fetch DB appointments (detailed joint view)
@@ -50,7 +69,7 @@ def signup_page():
     # require login in real app; kept permissive for dev
     authorization_url, state = gcal.authorization_url()
     session['google_auth_state'] = state
-    api_calendar_bp.logger.debug("redirecting user to Google OAuth consent screen")
+    logger.debug("redirecting user to Google OAuth consent screen")
     return redirect(authorization_url)
 
 
@@ -78,10 +97,10 @@ def google_oauth2callback():
 
 @api_calendar_bp.route('/calendar/connect')
 def calendar_connect():
-    api_calendar_bp.logger.debug("/calendar/connect route hit")
+    logger.debug("/calendar/connect route hit")
     authorization_url, state = gcal.authorization_url()
     session['google_auth_state'] = state
-    api_calendar_bp.logger.debug("redirecting user to Google OAuth consent: %s", authorization_url)
+    logger.debug("redirecting user to Google OAuth consent: %s", authorization_url)
     return redirect(authorization_url)
 
 
