@@ -131,16 +131,16 @@ def fetch_google_events(start_iso, end_iso, max_results=250):
     items = events_result.get("items", [])
     # normalize fields for downstream use
     normalized = []
-    for e in items:
-        start = e.get("start", {}).get("dateTime") or e.get("start", {}).get("date")
-        end = e.get("end", {}).get("dateTime") or e.get("end", {}).get("date")
+    for any in items:
+        start = any.get("start", {}).get("dateTime") or any.get("start", {}).get("date")
+        end = any.get("end", {}).get("dateTime") or any.get("end", {}).get("date")
         normalized.append({
-            "id": e.get("id"),
-            "summary": e.get("summary"),
-            "description": e.get("description"),
+            "id": any.get("id"),
+            "summary": any.get("summary"),
+            "description": any.get("description"),
             "start": start,
             "end": end,
-            "location": e.get("location"),
-            "raw": e
+            "location": any.get("location"),
+            "raw": any
         })
     return normalized
