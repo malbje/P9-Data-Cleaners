@@ -124,6 +124,8 @@ def dashboard():
     """
     if not ensure_logged_in(): 
         return redirect(url_for('login_page'))
+    
+    chatbot.change_user_id(session['user_id'])  # Update chatbot with current user ID
     return render_template('main_page.html')
 
 @app.route('/manual')
@@ -184,7 +186,6 @@ def logout():
 # ============================================================================
 # REGISTERED BLUEPRINTS defined in separate route files
 # ============================================================================
-
 
 # API route for AI assistant chat interaction
 @app.route('/api/chat', methods=['POST'])
@@ -263,7 +264,6 @@ app.register_blueprint(api_calendar_bp)
 app.register_blueprint(api_customers_bp)
 
 
-
 # This means that the app is run, if this file is run
 if __name__ == '__main__':
     """
@@ -272,6 +272,7 @@ if __name__ == '__main__':
     
     Note: Change debug=False for production deployment
     """
-    chatbot = LLM_Conversation()  # Initialize chatbot instance
+
+    chatbot = LLM_Conversation()  # Initialize chatbot for dev user
 
     app.run(debug=True)
