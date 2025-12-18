@@ -1,10 +1,10 @@
 """
 ================================================================================
-DATA CLEANERS - NOTIFICATION SYSTEM
+Unit Cleaning - NOTIFICATION SYSTEM
 ================================================================================
 
 This module implements the email-based notification subsystem for the
-Data Cleaners platform. It retrieves upcoming appointments from the Service
+Unit Cleaning platform. It retrieves upcoming appointments from the Service
 Layer, generates reminder messages, and handles delivery via SMTP or dry-run
 terminal output.
 
@@ -306,7 +306,7 @@ def _parse_args() -> argparse.Namespace:
         argparse.Namespace: Parsed flags.
     """
     parser = argparse.ArgumentParser(
-        description="Data Cleaners - Notification System (email + terminal)"
+        description="Unit Cleaning - Notification System (email + terminal)"
     )
 
     mode = parser.add_mutually_exclusive_group()

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Manual appointment booking and management interface
  * Handles form interactions, data loading, and API communication for staff booking system
- * @author Data Cleaners Team
+ * @author Unit Cleaning Team
  * @version 1.0.0
  */
 

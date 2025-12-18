@@ -1,8 +1,8 @@
 /**
- * @fileoverview Authentication system for Data Cleaners application
+ * @fileoverview Authentication system for Unit Cleaning application
  * Handles both login and signup functionality with form validation and API integration
  * Supports both single-form and dual-form layouts with defensive programming
- * @author Data Cleaners Team
+ * @author Unit Cleaning Team
  * @version 1.0.0
  */
 

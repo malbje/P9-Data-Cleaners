@@ -1,4 +1,4 @@
-#This is the main Flask application file for the Data Cleaners booking system.
+#This is the main Flask application file for the Unit Cleaning booking system.
 # we define the Flask app, configure it, and register Blueprints for API routes.
 # we use the routes/ folder to organize our API endpoints into separate files,
 # for better maintainability and to avoid making this file too big.

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Main dashboard JavaScript functionality
  * Handles widget interactions, modal system, chatbot, and user authentication
- * © Data Cleaners Team + OpenAI Chat Integration Upgrade
+ * © Unit Cleaning Team + OpenAI Chat Integration Upgrade
  */
 
 // ============================================================================
